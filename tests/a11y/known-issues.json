@@ -1,0 +1,122 @@
+[
+  {
+    "id": "axe-mathlive:light:symbols:nested-interactive:#equation-editor",
+    "reason": "MathLive's architecture: the focusable host wraps its internal keyboard sink. Upstream design; revisit on MathLive upgrade."
+  },
+  {
+    "id": "axe-mathlive:light:finder:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:light:drawing:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:light:my-library:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:light:settings:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:light:keyboard-shortcuts:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:dark:symbols:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:dark:finder:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:dark:drawing:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:dark:my-library:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:dark:settings:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:dark:keyboard-shortcuts:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:high-contrast:symbols:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:high-contrast:finder:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:high-contrast:drawing:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:high-contrast:my-library:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:high-contrast:settings:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:high-contrast:keyboard-shortcuts:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:light:custom-shortcuts-empty:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:light:custom-shortcuts-list:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:light:custom-shortcuts-form:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:dark:custom-shortcuts-empty:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:dark:custom-shortcuts-list:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:dark:custom-shortcuts-form:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:high-contrast:custom-shortcuts-empty:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:high-contrast:custom-shortcuts-list:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:high-contrast:custom-shortcuts-form:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:light:custom-shortcuts-import:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:dark:custom-shortcuts-import:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  },
+  {
+    "id": "axe-mathlive:high-contrast:custom-shortcuts-import:nested-interactive:#equation-editor",
+    "reason": "Same underlying issue as the light-theme symbols entry – the field is on screen in every mode, so it is flagged once per theme and scan."
+  }
+]

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Radicand</title>
+    <link rel="stylesheet" href="../ui/styles.css" />
+  </head>
+  <body>
+    <!-- Skip link: first focusable element. It skips forward past the
+         equation field to the workspace (mounted by main.ts), which shows
+         one mode at a time – the symbols by default, or whichever mode is
+         open – so the link is named after the region, not the default. -->
+    <a class="skip-link" href="#workspace">Skip to workspace</a>
+
+    <div class="app" id="app">
+      <header class="app__header">
+        <h1 class="app__title">Radicand</h1>
+      </header>
+
+      <main class="app__main">
+        <section
+          id="editor-region"
+          class="editor-region"
+          aria-label="Equation editor"
+          tabindex="-1"
+        >
+          <!-- The editor, palette and output controls are mounted here by main.ts. -->
+          <div id="editor-mount" class="editor-mount"></div>
+        </section>
+      </main>
+
+      <!--
+        Centralised polite live region for non-focus-stealing status messages
+        (e.g. "Copied as MathML"). Managed by a11y.ts. WCAG 2.2 SC 4.1.3.
+      -->
+      <div
+        id="sr-status"
+        class="visually-hidden"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      ></div>
+      <!-- Assertive channel reserved for errors only. -->
+      <div
+        id="sr-alert"
+        class="visually-hidden"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      ></div>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

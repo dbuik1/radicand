@@ -1,0 +1,42 @@
+name: Bug report
+description: Something in the editor does not work as it should.
+labels: [bug]
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: What did you do?
+      description: The steps that lead to the problem, one per line. Include the LaTeX you typed if it matters.
+      placeholder: |
+        1. Typed \frac in the equation
+        2. Pressed Tab
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+      description: Error messages, what was copied or pasted, or a screenshot if it helps.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Extension version
+      description: Shown on chrome://extensions under Radicand.
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and operating system
+      placeholder: Chrome 131 on Windows 11
+    validations:
+      required: true

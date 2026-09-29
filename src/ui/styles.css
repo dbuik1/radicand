@@ -1,0 +1,2269 @@
+/* =============================================================================
+   Radicand – panel styles
+   -----------------------------------------------------------------------------
+   One accent, hierarchy from whitespace rather than boxes, and WCAG 2.2 AA
+   as the floor throughout.
+
+   Conventions:
+   - Design tokens as custom properties; themes override the tokens only.
+   - Type in rem off an 18px root × the user's font-size setting.
+   - All interactive targets >= 24x24 CSS px (SC 2.5.8): chips 30px,
+     slim buttons 28px, buttons/inputs 36px, symbol keys 44px.
+   - Focus is never suppressed; 3px ring, 2px offset (SC 2.4.7, SC 2.4.11).
+   - Windows forced-colors: tokens yield to system keywords via the default
+     `forced-color-adjust: auto`; only the focus ring (and selection states
+     that would otherwise vanish) are re-asserted with system colours.
+   ========================================================================== */
+
+/* ---- Bundled maths typeface (SIL OFL) ------------------------------------ */
+/* STIX Two Math keeps even, sturdy stroke weights – no hairlines to vanish
+   for low-vision readers – and ships inside the extension, so the offline
+   invariant holds. Applied at the equation field's frame level only;
+   MathLive's internals are untouched. */
+@font-face {
+  font-family: 'STIX Two Math';
+  src: url('../assets/fonts/STIXTwoMath-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---- Design tokens ------------------------------------------------------- */
+/* No data-theme attribute = the "System" theme: tokens follow the OS
+   preference (light here, dark via the prefers-color-scheme block below),
+   and `color-scheme: light dark` lets native widgets follow it too. The
+   explicit themes pin both the tokens and the colour scheme, so native
+   widget chrome (select popups, number spinners) always matches the panel. */
+:root {
+  color-scheme: light dark;
+
+  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-mono: ui-monospace, Menlo, Consolas, monospace;
+  --font-math: 'STIX Two Math', 'Cambria Math', serif;
+  /* Root 18px × the font-size setting (Small 16 / Medium 18 / Large 20 /
+     Larger 22 / Largest 24); everything below is in rem. */
+  --font-size-base: 18px;
+  --font-size-scale: 1;
+
+  /* Type scale (at the 18px root): label 16px, small 15px, caption 14px. */
+  --font-label: 0.889rem;
+  --font-small: 0.833rem;
+  --font-caption: 0.778rem;
+  --font-code: 0.722rem;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+
+  --radius-control: 6px;
+  --radius-field: 8px;
+  --radius-pill: 999px;
+  --target-min: 24px; /* SC 2.5.8 */
+
+  /* Motion: background/border 120ms ease-out, chevrons 150ms; all zeroed
+     under prefers-reduced-motion below. */
+  --motion-fast: 120ms ease-out;
+  --motion-chevron: 150ms ease-out;
+
+  /* Colour tokens – light palette. Contrast vs #ffffff:
+     text 17.1:1 · muted 9.3:1 · border 5.0:1 · accent 6.7:1 (and white on
+     accent 6.7:1) · danger 7.3:1. */
+  --color-bg: #ffffff;
+  --color-surface: #f4f5f7;
+  --color-surface-2: #e8eaed;
+  --color-text: #1a1c1e;
+  --color-text-muted: #44474b;
+  --color-border: #6b7075;
+  --color-divider: #d8dbdf;
+  --color-accent: #0b5cad;
+  --color-accent-hover: #094b8d;
+  --color-accent-active: #07396b;
+  --color-accent-tint: #cfe3f7;
+  --color-accent-text: #ffffff;
+  --color-focus: #0b5cad;
+  --color-danger: #b00020;
+  --color-slider-track: #c6cad0;
+  --color-kbd-border: #babfc5;
+
+  /* Rest fills that differ per theme: secondary buttons sit on --btn-bg and
+     symbol keys on --key-bg (dark raises keys to surface-2 per the palette
+     sheet); hover/active fills step through the surfaces. */
+  --color-btn-bg: var(--color-bg);
+  --color-key-bg: var(--color-bg);
+  --color-hover: var(--color-surface);
+  --color-active: var(--color-surface-2);
+}
+
+/* ---- Light theme (explicit user choice) ---------------------------------- */
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+/* ---- Dark theme ---------------------------------------------------------- */
+/* Contrast vs #15171a: text 16.2:1 · muted 10.6:1 · border 5.6:1 · accent
+   8.0:1 (#15171a on accent 8.0:1) · focus 13.3:1 · danger 7.9:1. The focus
+   ring is amber, a hue nothing else in the palette uses, so it stays visible
+   on accent-filled controls such as the selected category chip. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg: #15171a;
+  --color-surface: #1f2226;
+  --color-surface-2: #262a2f;
+  --color-text: #f1f3f5;
+  --color-text-muted: #c2c7cd;
+  --color-border: #8a9099;
+  --color-divider: #33383e;
+  --color-accent: #6fb1ff;
+  --color-accent-hover: #8dc1ff;
+  --color-accent-active: #aed3ff;
+  --color-accent-tint: color-mix(in srgb, #6fb1ff 28%, #15171a);
+  --color-accent-text: #15171a;
+  --color-focus: #ffd166;
+  --color-danger: #ff8a90;
+  --color-slider-track: #33383e;
+  --color-kbd-border: #8a9099;
+  --color-btn-bg: var(--color-surface);
+  --color-key-bg: var(--color-surface-2);
+  --color-hover: var(--color-surface-2);
+  --color-active: var(--color-divider);
+}
+
+/* ---- High-contrast theme (explicit user choice) -------------------------- */
+/* vs #000000: text/borders 21:1 · accent 14.9:1 (black on accent 14.9:1) ·
+   danger 7.6:1. No surfaces or tints: structure comes from 1px white
+   borders; the accent-tint token resolves to the accent itself so selection
+   fills stay visible. */
+:root[data-theme='high-contrast'] {
+  color-scheme: dark;
+  --color-bg: #000000;
+  --color-surface: #000000;
+  --color-surface-2: #000000;
+  --color-text: #ffffff;
+  --color-text-muted: #ffffff;
+  --color-border: #ffffff;
+  --color-divider: #ffffff;
+  --color-accent: #ffd60a;
+  --color-accent-hover: #ffe14d;
+  --color-accent-active: #ffeb85;
+  --color-accent-tint: #ffd60a;
+  --color-accent-text: #000000;
+  /* Cyan, not the yellow accent, so the ring shows on accent-filled
+     controls: 16.7:1 on black. */
+  --color-focus: #00e5ff;
+  --color-danger: #ff6b6b;
+  --color-slider-track: #ffffff;
+  --color-kbd-border: #ffffff;
+  --color-btn-bg: #000000;
+  --color-key-bg: #000000;
+  --color-hover: #000000;
+  --color-active: #000000;
+}
+
+/* The "System" theme's dark half: applied while no explicit theme is chosen
+   (applyAppearance clears data-theme for 'system') and the OS prefers dark. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --color-bg: #15171a;
+    --color-surface: #1f2226;
+    --color-surface-2: #262a2f;
+    --color-text: #f1f3f5;
+    --color-text-muted: #c2c7cd;
+    --color-border: #8a9099;
+    --color-divider: #33383e;
+    --color-accent: #6fb1ff;
+    --color-accent-hover: #8dc1ff;
+    --color-accent-active: #aed3ff;
+    --color-accent-tint: color-mix(in srgb, #6fb1ff 28%, #15171a);
+    --color-accent-text: #15171a;
+    --color-focus: #ffd166;
+    --color-danger: #ff8a90;
+    --color-slider-track: #33383e;
+    --color-kbd-border: #8a9099;
+    --color-btn-bg: var(--color-surface);
+    --color-key-bg: var(--color-surface-2);
+    --color-hover: var(--color-surface-2);
+    --color-active: var(--color-divider);
+  }
+}
+
+/* ---- Reset / base -------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Ensure the HTML `hidden` attribute always wins, even over `display:flex`
+   rules – otherwise hidden tab panels would still show. */
+[hidden] {
+  display: none !important;
+}
+
+html {
+  /* The user font-size setting multiplies the base. Maths and UI scale
+     together because everything is expressed in rem. */
+  font-size: calc(var(--font-size-base) * var(--font-size-scale));
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.45;
+  background: var(--color-bg);
+  color: var(--color-text);
+  /* Reflow: never force two-dimensional scrolling (SC 1.4.10). */
+  overflow-x: hidden;
+}
+
+/* ---- Focus visibility (SC 2.4.7, SC 2.4.11) ------------------------------ */
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+/* Never remove focus styling. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ---- Layout -------------------------------------------------------------- */
+/* Three zones, top to bottom: the equation header and field (fixed), the
+   workspace (the only part that scrolls), and the actions bar (pinned). The
+   chain from html down to .editor-mount is a column of flex boxes with
+   min-height: 0 so the workspace can shrink and scroll inside the viewport
+   instead of pushing the actions bar off the bottom. */
+html,
+body {
+  height: 100%;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Panel chrome should not outrank the user's work: the h1 stays first in the
+   accessibility tree and heading order but takes no space on screen (the
+   .visually-hidden technique, not display: none). */
+.app__header {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.app__title {
+  font-size: var(--font-label);
+  font-weight: 650;
+  margin: 0;
+}
+
+.app__main,
+.editor-region,
+.editor-mount {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Zone A: the "Equation" heading on the left, the Style ▾ and More ▾ menus
+   on the right. The row exists for the heading anyway, so the menus consume
+   no vertical space of their own and never push the field down. */
+.editor-header {
+  flex: none;
+  display: flex;
+  /* At the larger font sizes the heading and both menus no longer share
+     320px; the menus drop to a second line rather than push the panel into
+     horizontal scrolling. Wider than that, the row never wraps. */
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-2);
+}
+
+/* With the heading and both menus switched off, the row has nothing in it
+   and gives up its padding rather than leaving a band of empty space above
+   the field. */
+.editor-header--empty {
+  padding: 0;
+}
+
+.editor-header__menus {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.editor-title {
+  font-size: var(--font-label);
+  font-weight: 700;
+  margin: 0;
+}
+
+.editor-field {
+  flex: none;
+  display: block;
+  margin: 0 var(--space-3);
+}
+
+/* Zone C: the workspace – one mode at a time – then a hairline and the
+   collapsed Equation source disclosure. */
+.panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-2);
+}
+
+/* ---- Workspace and its modes ---------------------------------------------- */
+/* One mode shows at a time; the others are `hidden`, so the workspace is
+   simply as tall as whatever is showing. It never shrinks: the panel body is
+   the scroller, and a shrunk workspace would let a tall mode overflow under
+   the Equation source disclosure below it. */
+.workspace {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+}
+
+/* Every mode but Symbols shares one header: its name, a one-line status,
+   and Close. Close is DOM-last (so it is the mode's last Tab stop, right
+   before the actions bar) but drawn top-right, which is what the grid is
+   for – reading order and tab order stay honest either way. */
+.mode {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'title close'
+    'status close'
+    'body  body';
+  align-items: start;
+  column-gap: var(--space-2);
+  row-gap: 2px;
+}
+
+/* Symbols is the default mode and carries its own layout (the palette). */
+.mode--symbols {
+  display: block;
+}
+
+.mode__title {
+  grid-area: title;
+  margin: 0;
+  font-size: var(--font-label);
+  font-weight: 700;
+}
+
+/* Reserves its line whether or not there is anything to say, so the body
+   never jumps up and down as a status comes and goes. */
+.mode__status {
+  grid-area: status;
+  margin: 0;
+  min-height: 1.3em;
+  font-size: var(--font-small);
+  color: var(--color-text-muted);
+}
+
+.mode__close {
+  grid-area: close;
+  align-self: start;
+}
+
+.mode__body {
+  grid-area: body;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  margin-top: var(--space-2);
+}
+
+/* Zone B: the actions bar, directly under the field and outside the
+   scrolling workspace, so the actions sit next to the equation they act on.
+   A hairline below it marks where the workspace scrolls. Wraps to two rows
+   at the narrow end rather than shrinking any target. */
+.actions-bar {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-bg);
+}
+
+/* The copy caption: a full-width line under the actions naming the current
+   copy format, and, for a few seconds after a copy, its result. It is the
+   on-screen confirmation of the Copy button, so it comes and goes with that
+   button and with nothing else: while Copy is on screen the line never
+   appears or vanishes and the bar's height never shifts. */
+.actions-bar__status {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: var(--font-caption);
+  color: var(--color-text-muted);
+}
+
+.actions-bar__status--done {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.actions-bar__status--error {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+/* A docked side panel is around 400px, and at the panel's larger base type
+   the three actions need every pixel of it: below 420px the bar trims its
+   own padding and the buttons' side padding so Copy, Speak and Save to
+   library hold one row. Labels and the 36px targets are untouched, and the
+   bar still wraps at the narrow end. */
+@media (max-width: 419px) {
+  .actions-bar {
+    gap: var(--space-1);
+    padding: var(--space-3) var(--space-2);
+  }
+  .actions-bar .btn {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+
+/* In a very short viewport a fixed top zone would leave the workspace no
+   room at all, so fall back to ordinary document flow and let the page
+   scroll; the actions still follow the field, so they are on screen
+   whenever the equation is. */
+@media (max-height: 419px) {
+  html,
+  body,
+  .app {
+    height: auto;
+  }
+  .panel-body {
+    overflow: visible;
+  }
+}
+
+/* ---- Equation field ------------------------------------------------------- */
+/* The one strong frame in the panel. The border is neutral at rest; the
+   accent appears only as focus ring, caret and selection, so accent always
+   means "active". */
+.math-field {
+  display: block;
+  position: relative;
+  width: 100%;
+  min-height: 88px;
+  padding: 14px;
+  /* Long equations scroll horizontally within the field rather than
+     overflowing into (and being clipped by) the panel. With MathLive's
+     `scrollIntoView`, the caret / newly inserted structure stays visible
+     even near the right edge. */
+  overflow-x: auto;
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-field);
+  /* Frame-level maths typeface (see the @font-face above); MathLive's
+     internal typesetting fonts are its own concern. */
+  font-family: var(--font-math);
+  /* The rendered maths size: 2.5rem × the "Equation size" percentage
+     (--equation-scale, set by settings-view.ts), further multiplied by
+     --equation-fit – a shrink-only factor the "autoFit" setting applies
+     (via main.ts) when content would otherwise overflow the field's width.
+     Neither var is set here: both default to 1 (unchanged). */
+  font-size: calc(2.5rem * var(--equation-scale, 1) * var(--equation-fit, 1));
+  /* Theme MathLive's caret / selection / placeholder colours: caret and
+     selection take the accent (selection fill is the accent tint). */
+  --caret-color: var(--color-accent);
+  --selection-background-color: var(--color-accent-tint);
+  --selection-color: var(--color-text);
+  /* Don't fill the whole containing group with a dark block – keep it subtle. */
+  --contains-highlight-background-color: transparent;
+  /* The empty placeholder box should be clearly visible but not black. */
+  --placeholder-color: var(--color-accent);
+  --placeholder-opacity: 1;
+  transition: border-color var(--motion-fast);
+}
+
+.math-field:focus-within {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* MathLive's in-field controls (virtual-keyboard toggle and menu toggle) are
+   not fully keyboard-operable and have contrast issues, so we hide both. The
+   accessible palette provides the on-screen keyboard and insert features
+   (matrices, structures, etc.). */
+.math-field::part(virtual-keyboard-toggle),
+.math-field::part(menu-toggle) {
+  display: none;
+}
+
+/* ---- Menus (Style ▾, More ▾, Copy format ▾) ------------------------------ */
+/* The WAI-ARIA menu-button pattern (menu.ts). The list floats over the
+   workspace from its trigger; `.menu--end` aligns it to the trigger's right
+   edge and `.menu--up` opens it above (for the bottom-pinned actions bar).
+   menu.ts shifts the list sideways on open when that edge would put it
+   outside the panel; the max-width below is what makes that shift always
+   find room. */
+.menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.menu__chevron {
+  font-size: 0.8em;
+  line-height: 1;
+}
+
+.menu__list {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  z-index: 30;
+  min-width: 200px;
+  max-width: calc(100vw - 2 * var(--space-3));
+  padding: var(--space-1);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+.menu--end .menu__list {
+  left: auto;
+  right: 0;
+}
+
+.menu--up .menu__list {
+  top: auto;
+  bottom: calc(100% + var(--space-1));
+}
+
+.menu__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: var(--font-label);
+  text-align: left;
+  color: var(--color-text);
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.menu__item:hover {
+  background: var(--color-hover);
+}
+
+/* The focused item is the menu's highlight: surface fill plus the accent
+   ring, drawn inside the item so the list's own edge never clips it. */
+.menu__item:focus-visible {
+  outline: none;
+  background: var(--color-surface);
+  border-color: var(--color-accent);
+}
+
+.menu__check {
+  flex: none;
+  width: 16px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.menu__item[aria-checked='true'] .menu__check::before {
+  content: '✓';
+}
+
+/* Part of the selection carries the style: an honest half state. */
+.menu__item[aria-checked='mixed'] .menu__check::before {
+  content: '–';
+}
+
+.menu__glyph {
+  flex: none;
+  width: 24px;
+  text-align: center;
+  font-family: var(--font-math);
+  font-size: 1rem;
+}
+
+.menu__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.menu__detail {
+  font-size: var(--font-small);
+  color: var(--color-text-muted);
+}
+
+.menu__shortcut {
+  margin-left: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--font-code);
+  color: var(--color-text-muted);
+}
+
+.menu__separator {
+  height: 1px;
+  margin: var(--space-1) 0;
+  background: var(--color-divider);
+}
+
+@media (forced-colors: active) {
+  .menu__list {
+    border-color: CanvasText;
+  }
+  .menu__item:focus-visible {
+    border-color: Highlight;
+  }
+  .menu__separator {
+    background: CanvasText;
+  }
+}
+
+/* The split Copy button: the primary "Copy" half and the narrow format
+   half share one rounded outline, divided by a translucent hairline. */
+.copy-split {
+  display: inline-flex;
+}
+
+.copy-split__main {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Copy is the panel's main action, so it is the largest target in the bar:
+   a 44px height and a step up in type over its neighbours. */
+.actions-bar .copy-split__main {
+  min-height: 44px;
+  padding-left: 20px;
+  padding-right: 20px;
+  font-size: 1rem;
+}
+
+.actions-bar .copy-split__more {
+  min-height: 44px;
+}
+
+/* Below 420px the bar trims its side padding to hold one row (see the
+   actions bar); Copy keeps a little more than its neighbours. */
+@media (max-width: 419px) {
+  .actions-bar .copy-split__main {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+.copy-split__more {
+  min-width: 32px;
+  padding: var(--space-1) var(--space-2);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.copy-split__more .menu__chevron {
+  font-size: 1em;
+}
+
+/* Two abutting focus rings would merge; lift the focused half above its
+   neighbour so its ring is drawn whole. */
+.copy-split__main:focus-visible,
+.copy-split__more:focus-visible {
+  position: relative;
+  z-index: 1;
+}
+
+@media (forced-colors: active) {
+  .copy-split__more {
+    border-left-color: ButtonText;
+  }
+}
+
+/* ---- First-use slash-fraction hint ---------------------------------------- */
+/* A small, dismissible note shown near the field the first time ever that
+   typing `/` builds a fraction. It is visible but not modal/blocking: it never
+   steals focus, and it stays until dismissed with its button or with Escape
+   from the field (see main.ts) – never on a timer, which would fail
+   SC 2.2.1. */
+/* A plain status line above the field – no fill or border, so it reads as
+   a note about the field rather than a second box. */
+.slash-hint {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  padding: var(--space-1) 0;
+  font-size: var(--font-small);
+}
+
+.slash-hint__text {
+  flex: 1 1 12em;
+}
+
+.slash-hint__action {
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  padding: var(--space-1) var(--space-2);
+  font: inherit;
+  font-size: var(--font-caption);
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-btn-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color var(--motion-fast);
+}
+
+.slash-hint__action:hover {
+  background: var(--color-hover);
+}
+
+/* ---- Disclosure summaries (Symbols / Equation source / Settings) ---------- */
+/* 36px rows with a chevron that rotates 90° when open; each section's open
+   state persists per user (wired in the views). */
+.disclosure__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  font-size: var(--font-label);
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-control);
+  list-style: none;
+  transition: background-color var(--motion-fast);
+}
+
+.disclosure__summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure__summary::before {
+  content: '';
+  flex: none;
+  border-style: solid;
+  border-width: 0.28em 0 0.28em 0.42em;
+  border-color: transparent transparent transparent currentColor;
+  transition: transform var(--motion-chevron);
+}
+
+details[open] > .disclosure__summary::before {
+  transform: rotate(90deg);
+}
+
+.disclosure__summary:hover {
+  background: var(--color-hover);
+}
+
+/* ---- Divider hairline ----------------------------------------------------- */
+.divider {
+  border: none;
+  height: 1px;
+  background: var(--color-divider);
+  margin: var(--space-1) 0;
+}
+
+/* ---- Symbol search -------------------------------------------------------- */
+/* The combobox row: visible label beside the input, results inline below
+   (in document flow, like the matrix picker – nothing overlays the tabs). */
+.symbol-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.symbol-search__input {
+  flex: 1;
+  /* Leaves room for the Insert… control on the same row at 320px. */
+  min-width: 120px;
+}
+
+/* The result count sits between the box and the list, on its own line so
+   neither the input nor the Insert… control is squeezed by it. */
+.symbol-search__count {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: var(--font-small);
+  color: var(--color-text-muted);
+}
+
+/* The other two ways in, on the search row: a compact Insert… ▾ menu on a
+   narrow panel, plain buttons where there is room (swapped at 700px, near
+   the bottom of this file). */
+.from-buttons {
+  display: none;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.from-buttons__label {
+  font-size: var(--font-small);
+  color: var(--color-text-muted);
+}
+
+/* The list shared by the Symbols search and the `\` finder under the field
+   (symbol-list.ts): one row shape, one highlight, two owners. */
+.symbol-list {
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  max-height: 296px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.symbol-search__list {
+  flex-basis: 100%;
+}
+
+.symbol-list__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  padding: 2px 8px;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+/* The active row is marked the way the rest of the panel marks a selection
+   (the matrix picker's in-range cells, the menu's focused item): the accent
+   tint filled in behind an accent ring, drawn inside the row so the list's
+   own edge never clips it. A solid accent slab reads as a button, and it
+   repaints the row's text and command on every arrow key. */
+.symbol-list__option--active {
+  background: var(--color-accent-tint);
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+/* The high-contrast theme has no tints – its tint token resolves to the
+   accent itself – so there the fill is solid and the text goes with it. */
+:root[data-theme='high-contrast'] .symbol-list__option--active {
+  color: var(--color-accent-text);
+}
+
+.symbol-list__glyph {
+  min-width: 28px;
+  text-align: center;
+  font-family: var(--font-math);
+  font-size: var(--font-label);
+}
+
+.symbol-list__name {
+  flex: 1;
+}
+
+/* A `\` finder row for a command the symbol index does not describe: the
+   command is written once, in the name's place, so it is set in the same
+   monospace as the commands in the column beside it. */
+.symbol-list__name--command {
+  font-family: var(--font-mono);
+  font-size: var(--font-code);
+}
+
+.symbol-list__cmd {
+  max-width: 34%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--font-code);
+  color: var(--color-text-muted);
+}
+
+/* Against the tint fill the command stays muted, as it is on every other
+   row; only where the fill is solid must it take the row's own colour. */
+:root[data-theme='high-contrast'] .symbol-list__option--active .symbol-list__cmd {
+  color: inherit;
+}
+
+@media (forced-colors: active) {
+  .symbol-list__option--active .symbol-list__cmd {
+    color: inherit;
+  }
+}
+
+.symbol-search__empty,
+.command-finder__empty {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: var(--font-small);
+  color: var(--color-text-muted);
+}
+
+/* ---- The `\` finder ------------------------------------------------------- */
+/* Sits directly under the equation field, in flow: nothing is overlaid, so
+   nothing can clip in a 320px panel. */
+.command-finder:not(:empty) {
+  margin-top: var(--space-1);
+}
+
+/* The finder never scrolls: focus stays in the equation field while it is
+   open, so anything below the fold would be unreachable from the keyboard.
+   Its length is capped at six suggestions instead (command-match.ts), which
+   also leaves the workspace its room. */
+.command-finder__list {
+  max-height: none;
+  overflow-y: visible;
+}
+
+/* ---- The quick search ----------------------------------------------------- */
+/* Ctrl+/ opens it under the field, where the `\` finder's list appears: one
+   surface holding the box, a key hint and the results, in flow like the
+   finder, so nothing covers the equation or clips in a narrow panel. */
+.quick-search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  padding: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.quick-search__hint,
+.quick-search__count,
+.quick-search__empty {
+  margin: 0;
+  font-size: var(--font-caption);
+  color: var(--color-text-muted);
+}
+
+/* The surface is the popup's own; the list inside it needs no second frame. */
+.quick-search__list {
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+/* The active option must survive forced colours (it is state, not chrome). */
+@media (forced-colors: active) {
+  .symbol-list__option--active {
+    background: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+}
+
+/* ---- Draw-to-find --------------------------------------------------------- */
+.draw-find {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  /* The surface is 180px tall, so its width sets the widest drawing the
+     box invites; recognition tolerates roughly double a symbol's natural
+     width, so the region is capped near a 2:1 surface rather than
+     spanning a wide panel or tab. */
+  max-width: 360px;
+}
+
+/* The dashed border (a pattern, not a colour) is what tells the drawing
+   surface apart from the equation field's solid focused outline. */
+.draw-find__surface {
+  --draw-ink-width: 3.5px;
+  position: relative;
+  height: 180px;
+  background: var(--color-surface);
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-field);
+  color: var(--color-text); /* read by the canvas as the ink colour */
+  cursor: crosshair;
+  touch-action: none;
+}
+
+:root[data-theme='high-contrast'] .draw-find__surface {
+  --draw-ink-width: 4px;
+  border-width: 2px;
+}
+
+.draw-find__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.draw-find__hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.draw-find__hint-title {
+  font-size: var(--font-small);
+  font-weight: 600;
+}
+
+.draw-find__hint-sub {
+  font-size: var(--font-caption);
+}
+
+.draw-find__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The route to the text search sits at the right of the ink controls. */
+.draw-find__search-instead {
+  margin-left: auto;
+}
+
+.draw-find__search-instead kbd {
+  margin-left: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--font-code);
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.draw-find__status {
+  margin: 0;
+  min-height: 1.2em;
+  font-size: var(--font-small);
+  color: var(--color-text-muted);
+}
+
+.draw-find__status--strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+/* The candidates sit between two hairlines, not in a box. */
+.draw-find__list {
+  margin: 0;
+  padding: var(--space-1) 0;
+  list-style: none;
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.draw-find__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  padding: 2px 8px;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.draw-find__option--best {
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+.draw-find__glyph {
+  min-width: 28px;
+  text-align: center;
+  font-family: var(--font-math);
+  font-size: var(--font-label);
+}
+
+.draw-find__name {
+  flex: 1;
+}
+
+.draw-find__cmd {
+  max-width: 34%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--font-code);
+  color: var(--color-text-muted);
+}
+
+.draw-find__option--best .draw-find__cmd {
+  color: inherit;
+}
+
+.draw-find__nomatch {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.draw-find__nomatch-text {
+  margin: 0;
+  font-size: var(--font-small);
+  color: var(--color-text-muted);
+}
+
+/* The best-match highlight is state, not chrome: it must survive forced
+   colours. The ink survives on its own (a canvas bitmap
+   is not force-recoloured) and is painted with the surface's used text
+   colour, which resolves to CanvasText here. */
+@media (forced-colors: active) {
+  .draw-find__option--best {
+    background: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+}
+
+/* ---- Symbol palette ------------------------------------------------------- */
+.palette__tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: var(--space-4);
+}
+
+/* The category strip scrolls sideways rather than wrapping into rows that
+   push the symbol well off screen; a fade and a chevron at the right edge
+   say there is more, and appear only when there is. */
+.palette__strip {
+  position: relative;
+  min-width: 0;
+}
+
+.palette__tablist {
+  display: flex;
+  gap: 6px;
+  /* A scroller clips what is drawn outside it: the padding holds a chip's
+     3px focus ring and its 2px offset, the negative margin keeps the chips
+     where they were. */
+  padding: 5px;
+  margin: -5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-padding-inline: var(--space-3);
+}
+
+.palette__tablist::-webkit-scrollbar {
+  display: none;
+}
+
+.palette__strip-more {
+  position: absolute;
+  top: 0;
+  /* Flush with the tablist's right edge, which its focus-ring padding
+     pushes 5px past the strip. */
+  right: -5px;
+  display: none;
+  align-items: center;
+  height: 100%;
+  padding-left: var(--space-3);
+  color: var(--color-text-muted);
+  background: linear-gradient(to right, transparent, var(--color-bg) var(--space-3));
+  pointer-events: none;
+}
+
+.palette__strip--more .palette__strip-more {
+  display: flex;
+}
+
+/* Category chips: pill-shaped tabs, distinguished from action buttons by
+   shape rather than colour alone (SC 1.4.1). One Tab stop, roving tabindex. */
+.palette__tab {
+  flex: none;
+  min-height: 30px;
+  padding: 2px 12px;
+  font: inherit;
+  font-size: var(--font-small);
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background-color var(--motion-fast), border-color var(--motion-fast);
+}
+
+.palette__tab:hover {
+  background: var(--color-hover);
+}
+
+.palette__tab[aria-selected='true'] {
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+  border-color: var(--color-accent);
+}
+
+.palette__tab[aria-selected='true']:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+/* The palette well: a quiet fill that groups the selected category's keys –
+   the only surface besides the equation field's frame. */
+.palette__panel {
+  background: var(--color-surface);
+  border-radius: var(--radius-field);
+  padding: var(--space-2);
+}
+
+/* Symbol keys flow in a grid that fits as many 44px-plus columns as the
+   panel allows: six at 360px, dropping to five at 320px (SC 1.4.10). */
+.palette__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: var(--space-1);
+}
+
+.palette__empty {
+  margin: 0;
+  padding: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-small);
+}
+
+.palette__btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: var(--space-1);
+  font: inherit;
+  font-size: 1.056rem;
+  line-height: 1;
+  color: var(--color-text);
+  background: var(--color-key-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  transition: background-color var(--motion-fast);
+}
+
+.palette__btn:hover {
+  background: var(--color-hover);
+}
+
+.palette__btn:active {
+  background: var(--color-active);
+}
+
+/* ---- Matrix panel --------------------------------------------------------- */
+/* The quick sizes as full-width keys, then the inline custom-size disclosure. */
+.matrix-sizes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-1);
+}
+
+.matrix-sizes .palette__btn {
+  font-size: var(--font-label);
+  font-weight: 600;
+}
+
+.matrix-picker {
+  margin-top: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.matrix-picker__trigger {
+  align-self: flex-start;
+}
+
+/* Inline, not modal: the picker opens in place inside the palette well, keeps
+   surrounding context visible and needs no focus trap. */
+.matrix-picker__popover {
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-field);
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.matrix-picker__heading {
+  font-size: var(--font-small);
+  font-weight: 700;
+}
+
+.matrix-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(6, var(--target-min));
+  gap: 3px;
+}
+
+.matrix-picker__cell {
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-bg);
+  cursor: pointer;
+  transition: background-color var(--motion-fast), border-color var(--motion-fast);
+}
+
+/* The 6×6 grid and the Rows/Columns inputs are redundant encodings of the
+   same value; the tint fill (paired with the accent border) marks the range. */
+.matrix-picker__cell--in-range {
+  background: var(--color-accent-tint);
+  border-color: var(--color-accent);
+}
+
+.matrix-picker__status {
+  font-size: var(--font-small);
+  font-weight: 600;
+}
+
+.matrix-picker__manual {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.matrix-picker__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.matrix-picker__field label {
+  font-size: var(--font-caption);
+  font-weight: 600;
+}
+
+.matrix-picker__field input {
+  width: 64px;
+  min-height: 36px;
+  padding: var(--space-1) 10px;
+  font: inherit;
+  font-size: var(--font-label);
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+/* ---- Equation-size control ------------------------------------------------ */
+/* Label / slider / value on an auto 1fr auto grid; stacks to two intentional
+   lines below 340px (SC 1.4.10) – no accidental mid-row wrap. The number
+   input is the required non-drag path (SC 2.5.7). */
+.eq-size {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 6px;
+}
+
+.eq-size__label {
+  font-size: var(--font-small);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.eq-size__number {
+  width: 56px;
+  min-height: 32px;
+  padding: 2px var(--space-2);
+  font: inherit;
+  font-size: var(--font-small);
+  text-align: right;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+/* Chrome reserves inner room for the spin buttons, which clips "100" at this
+   compact width – hide them here; arrow keys still step the value and the
+   slider is the pointer path. */
+.eq-size__number::-webkit-inner-spin-button,
+.eq-size__number::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.eq-size__unit {
+  font-size: var(--font-small);
+  color: var(--color-text-muted);
+}
+
+/* Slider: 4px track with an accent fill up to the thumb (--slider-fill is set
+   from the script), 20px accent thumb with a 2px bg-coloured ring. */
+.eq-size__range {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-width: 6rem;
+  /* The input is the pointer target: 24px tall (SC 2.5.8) around the 4px
+     track and 20px thumb. */
+  height: var(--target-min);
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.eq-size__range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    var(--color-accent) var(--slider-fill, 0%),
+    var(--color-slider-track) var(--slider-fill, 0%)
+  );
+}
+
+.eq-size__range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 2px solid var(--color-bg);
+  box-shadow: 0 0 0 1px var(--color-border);
+}
+
+.eq-size__range::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-slider-track);
+}
+
+.eq-size__range::-moz-range-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-accent);
+}
+
+.eq-size__range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  border: 2px solid var(--color-bg);
+  box-shadow: 0 0 0 1px var(--color-border);
+}
+
+/* The out-of-range message drops to its own full-width line. */
+.eq-size .field__error {
+  grid-column: 1 / -1;
+}
+
+/* Below 340px the row stacks: label + value first, the slider on its own
+   full-width line. */
+@media (max-width: 339px) {
+  .eq-size {
+    grid-template-columns: 1fr auto auto;
+  }
+  .eq-size__label {
+    grid-row: 1;
+    grid-column: 1;
+  }
+  .eq-size__number {
+    grid-row: 1;
+    grid-column: 2;
+  }
+  .eq-size__unit {
+    grid-row: 1;
+    grid-column: 3;
+  }
+  .eq-size__range {
+    grid-row: 2;
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---- Buttons (shared) ----------------------------------------------------- */
+.btn {
+  min-height: 36px;
+  padding: var(--space-1) 14px;
+  font: inherit;
+  font-size: var(--font-label);
+  font-weight: 600;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: background-color var(--motion-fast), border-color var(--motion-fast);
+}
+
+/* The accent fill is reserved for the single primary action per view (Copy;
+   Insert in the matrix picker) – one visual default per view. */
+.btn--primary {
+  color: var(--color-accent-text);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+.btn--primary:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+.btn--primary:active {
+  background: var(--color-accent-active);
+  border-color: var(--color-accent-active);
+}
+
+.btn--secondary {
+  color: var(--color-text);
+  background: var(--color-btn-bg);
+}
+.btn--secondary:hover {
+  background: var(--color-hover);
+}
+.btn--secondary:active {
+  background: var(--color-active);
+}
+
+/* A slimmer button for controls sharing a line with a heading or a list
+   row: still comfortably above the 24px target floor (SC 2.5.8) without
+   growing the row it sits in. */
+.btn--slim {
+  min-height: 28px;
+  min-width: var(--target-min);
+  padding: 2px 10px;
+  font-size: var(--font-caption);
+}
+
+/* ---- Format select (the source view's "Show as") ------------------------- */
+.format-select {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.format-select__label {
+  font-weight: 600;
+  font-size: var(--font-label);
+  white-space: nowrap;
+}
+
+.format-select__control {
+  min-height: 36px;
+  padding: var(--space-1) 10px;
+  font: inherit;
+  font-size: var(--font-label);
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+/* ---- Source view ---------------------------------------------------------- */
+.source__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-1) 0 var(--space-2);
+}
+
+.source__input {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  line-height: 1.45;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  resize: vertical;
+}
+
+.source__input--readonly {
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+/* ---- Settings ------------------------------------------------------------- */
+.settings__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-1) 0 var(--space-2) 2px;
+}
+
+/* Grouped fieldsets: chunking the form cuts scan time; labels sit above
+   full-width controls – the position that never truncates at 320px. */
+.settings__group {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* A group heading has to outrank the field labels beneath it, and it cannot
+   do that on size – it is the smaller text of the two. It reads as a heading
+   instead: upper case and tracked out, with the group's own gap keeping it
+   clear of the first field. */
+.settings__legend {
+  padding: 0;
+  margin-bottom: var(--space-1);
+  font-size: var(--font-caption);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.field__label {
+  font-weight: 600;
+  font-size: var(--font-small);
+}
+
+.field__control {
+  min-height: 36px;
+  padding: var(--space-1) 10px;
+  font: inherit;
+  font-size: var(--font-label);
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+/* A number input with its unit alongside (e.g. "500 ms"). */
+.field__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.field__control--number {
+  width: 90px;
+  text-align: right;
+}
+
+.field__unit {
+  font-size: var(--font-small);
+  color: var(--color-text-muted);
+}
+
+/* Checkbox fields lay out as control-then-label, with the hint below the
+   label so the whole block reads as one setting. */
+.field--checkbox .field__row {
+  align-items: flex-start;
+  gap: 10px;
+}
+
+/* A real `<input type="checkbox">` with a custom paint: 2px muted border,
+   4px radius, accent fill with a contrast-checked tick when checked. Sized
+   to the 24px target floor (SC 2.5.8). Reverts to the native appearance
+   under forced colours (below). */
+.field__checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: var(--target-min);
+  height: var(--target-min);
+  margin: 0;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  border: 2px solid var(--color-text-muted);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color var(--motion-fast), border-color var(--motion-fast);
+}
+
+.field__checkbox:checked {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.field__checkbox:checked::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  background: var(--color-accent-text);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M1.5 6.5 4.5 9.5 10.5 2.5' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M1.5 6.5 4.5 9.5 10.5 2.5' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+.field__label--checkbox {
+  display: block;
+  cursor: pointer;
+}
+
+.field--checkbox .field__hint {
+  display: block;
+  margin-top: 2px;
+}
+
+.field__hint {
+  font-size: var(--font-caption);
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+/* Invalid input state: never colour alone – a visible message accompanies
+   the border (wired per control in the views). */
+input:user-invalid,
+.field__control--invalid {
+  border: 2px solid var(--color-danger);
+}
+
+.field__error {
+  font-size: var(--font-caption);
+  color: var(--color-danger);
+}
+
+/* A library hit in the search results renders its saved body where a
+   symbol row shows its glyph; give it room but never let it blow the row. */
+.symbol-list__glyph--rendered {
+  max-width: 40%;
+  overflow: hidden;
+  font-size: var(--font-small);
+}
+
+/* ---- Expression library ---------------------------------------------------- */
+/* The Save to library form and My library: a form and a list of
+   [Insert][Edit] rows – one roving Tab stop, like every grid in the
+   panel. */
+.btn--danger {
+  color: var(--color-danger);
+  background: var(--color-btn-bg);
+  border-color: var(--color-danger);
+}
+
+/* The form sits directly on the page, like every other mode body: its
+   only filled surface is the preview, so the fields never read as a card
+   with a second box inside it, and a 320px column keeps its full width. */
+.library-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.library-form__title {
+  margin: 0;
+  font-size: var(--font-label);
+}
+
+.library-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.library-form__label {
+  font-weight: 600;
+  font-size: var(--font-small);
+}
+
+.library-form__body {
+  font-family: var(--font-mono);
+  font-size: var(--font-code);
+  resize: vertical;
+}
+
+.library-form__field .btn {
+  align-self: flex-start;
+}
+
+.library-form__preview {
+  min-height: 40px;
+  padding: var(--space-3);
+  overflow-x: auto;
+  background: var(--color-surface);
+  border-radius: var(--radius-field);
+}
+
+/* A name with maths in it, shown rendered under the Name field. */
+.library-form__name-preview {
+  margin: 0;
+  overflow-x: auto;
+}
+
+/* Maths inside a formula name sits in the line of text around it. */
+.name-maths {
+  white-space: nowrap;
+}
+
+/* High contrast has no surface tint, so the preview keeps a border there. */
+:root[data-theme='high-contrast'] .library-form__preview {
+  border: 1px solid var(--color-border);
+}
+
+.library-form__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* LaTeX, trigger and keywords: everything the quick save path (name, then
+   Enter) does not need. */
+.library-form__more-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+}
+
+.library-panel__controls {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.library-panel__filter {
+  flex: 1;
+  min-width: 100px;
+  min-height: 36px;
+  padding: var(--space-1) 10px;
+  font: inherit;
+  font-size: var(--font-label);
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.library-panel__sort {
+  min-height: 36px;
+}
+
+/* A plain list between two hairlines: each row is the name over a
+   one-line preview, with the trigger at the right – no box per row, so a
+   long name has the whole width and every row is the same height. */
+.library-panel__list {
+  display: flex;
+  flex-direction: column;
+  max-height: 320px;
+  padding: var(--space-1) 0;
+  overflow-y: auto;
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.library-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* Rows scrolled out of the list skip layout and paint; the reserved
+     height keeps the scrollbar honest before they are laid out. A skipped
+     row has no content-based minimum, so it must not shrink in the column. */
+  flex-shrink: 0;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 60px;
+}
+
+.library-row__insert {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  min-width: 0;
+  padding: var(--space-2);
+  font: inherit;
+  text-align: left;
+  color: var(--color-text);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+.library-row__insert:hover {
+  background: var(--color-hover);
+}
+
+.library-row__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.library-row__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.library-row__preview {
+  /* One line of maths, as tall as it needs: a fraction or root cut to a
+     text line's height reads as a broken formula. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-small);
+  color: var(--color-text-muted);
+}
+
+.library-row__trigger {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-code);
+  color: var(--color-text-muted);
+}
+
+.library-row__edit {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.library-panel__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* The starter-pack caption takes its own line under the tool buttons. */
+.library-panel__tools-hint {
+  flex-basis: 100%;
+}
+
+.library-form__radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--target-min);
+  font-size: var(--font-small);
+}
+
+/* ---- Custom shortcuts ------------------------------------------------------ */
+/* The My library list with the trigger leading each row: a fixed monospace
+   column, so the triggers line up down the list and read as what to type. */
+.shortcut-row__trigger {
+  flex: none;
+  width: 52px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+  font-size: var(--font-code);
+  font-weight: 600;
+}
+
+.shortcut-row__preview {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.shortcut-row__glyph {
+  flex: none;
+  color: var(--color-text);
+}
+
+.shortcut-row__code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+  font-size: var(--font-code);
+}
+
+.shortcuts-panel__list-view,
+.shortcuts-panel__empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.shortcuts-common {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.shortcuts-common__group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shortcuts-common__name {
+  margin: 0;
+  font-size: var(--font-small);
+  color: var(--color-text-muted);
+}
+
+/* Items take their own width and wrap: a wide result (a matrix, a limit)
+   never spills into its neighbour the way a fixed grid cell would. */
+.shortcuts-common__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shortcuts-common__item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.shortcuts-common__trigger {
+  font-family: var(--font-mono);
+  font-size: var(--font-code);
+  font-weight: 600;
+}
+
+.shortcuts-common__glyph {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.shortcuts-import__summary {
+  margin: 0;
+  font-size: var(--font-small);
+}
+
+.shortcut-list__custom {
+  align-self: flex-start;
+  margin-top: var(--space-3);
+}
+
+/* ---- Keyboard shortcuts list ---------------------------------------------- */
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.shortcut-list__row {
+  display: flex;
+  /* The key chip never breaks mid-shortcut, so when the action's name and
+     the chip no longer share 320px at the larger font sizes the chip drops
+     under the name rather than past the panel edge. */
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.shortcut-list__desc {
+  font-size: var(--font-small);
+}
+
+.shortcut-list kbd {
+  font-family: var(--font-mono);
+  font-size: var(--font-code);
+  font-weight: 600;
+  border: 1px solid var(--color-kbd-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 1px 6px;
+  background: var(--color-surface);
+  white-space: nowrap;
+}
+
+.shortcut-list__link {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: var(--target-min);
+  font-size: var(--font-small);
+  font-weight: 600;
+}
+
+/* ---- Links ----------------------------------------------------------------
+   Default browser link colours (blue, visited purple) fail contrast against
+   this panel's own background tokens on both the light and dark themes. Use
+   the same --color-accent token already checked to >= 4.5:1 against every
+   theme's background, and keep the underline explicit so the link affordance
+   never relies on colour alone (SC 1.4.1). Windows High Contrast
+   (forced-colors) instead gets the system LinkText colour. Excludes
+   .skip-link, which is its own filled control with its own colours. */
+a:not(.skip-link) {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+a:not(.skip-link):visited {
+  color: var(--color-accent);
+}
+
+a:not(.skip-link):hover {
+  color: color-mix(in srgb, var(--color-accent) 80%, var(--color-text));
+}
+
+/* ---- Skip link ------------------------------------------------------------ */
+/* First focusable control; the palette sits after the field now, so it skips
+   forward to the symbols section (SC 2.4.1). */
+.skip-link {
+  position: absolute;
+  left: var(--space-2);
+  top: var(--space-2);
+  z-index: 100;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+  border-radius: var(--radius-control);
+  font-size: var(--font-label);
+  font-weight: 600;
+  /* Visible only when focused. */
+  transform: translateY(-150%);
+  transition: transform var(--motion-fast);
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+/* ---- Visually-hidden (kept in the a11y tree) ------------------------------ */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Reduced motion ------------------------------------------------------- */
+/* ---- Wider surfaces ------------------------------------------------------- */
+/* The docked panel is narrow; a detached window or tab is not. Given the
+   room, the Insert… menu gives way to the two plain buttons it holds (one
+   press instead of two) and the category strip wraps instead of scrolling,
+   so every chip is visible at once. */
+@media (min-width: 700px) {
+  .symbol-search .from-menu {
+    display: none;
+  }
+
+  .from-buttons {
+    display: flex;
+  }
+
+  .palette__tablist {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .palette__strip-more,
+  .palette__strip--more .palette__strip-more {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---- Increased contrast preference ---------------------------------------- */
+@media (prefers-contrast: more) {
+  :root {
+    --color-border: #1a1c1e;
+    --color-text-muted: #2b2e31;
+  }
+  :root[data-theme='dark'] {
+    --color-border: #ffffff;
+    --color-text-muted: #ffffff;
+  }
+  :focus-visible {
+    outline-width: 4px;
+  }
+}
+/* The System theme's dark half needs the dark contrast boosts, not the light
+   ones the bare :root rule above would give it. */
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --color-border: #ffffff;
+    --color-text-muted: #ffffff;
+  }
+}
+
+/* ---- Forced colours / Windows High Contrast (SC 1.4.11) -------------------
+   Tokens yield to the system palette via the default
+   `forced-color-adjust: auto`; we re-assert only what would otherwise
+   disappear: the focus ring, and selection states expressed purely as
+   background fills. Custom-painted controls revert to native appearance. */
+@media (forced-colors: active) {
+  :focus-visible,
+  .math-field:focus-within {
+    outline-color: Highlight;
+  }
+  .palette__tab[aria-selected='true'] {
+    background: Highlight;
+    color: HighlightText;
+    border-color: Highlight;
+  }
+  .matrix-picker__cell--in-range {
+    background: Highlight;
+    border-color: Highlight;
+  }
+  .field__checkbox {
+    appearance: auto;
+    -webkit-appearance: auto;
+  }
+  .skip-link {
+    background: Canvas;
+    color: CanvasText;
+    border: 1px solid CanvasText;
+  }
+  a:not(.skip-link) {
+    color: LinkText;
+  }
+}
