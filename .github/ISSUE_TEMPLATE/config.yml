@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/dbuik1/radicand/security/advisories/new
+    about: Report it privately – please do not open a public issue.
+  - name: User guide
+    url: https://github.com/dbuik1/radicand/blob/main/docs/user-guide.md
+    about: How every feature works, with its keyboard shortcuts.

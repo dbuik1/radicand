@@ -1,0 +1,60 @@
+{
+  "name": "radicand",
+  "version": "1.0.0",
+  "author": "David Buik",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dbuik1/radicand.git"
+  },
+  "description": "Write, hear and copy maths equations in an accessible side-panel editor. Keyboard-first, screen-reader-friendly, fully offline.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "copy-assets": "node scripts/copy-mathlive-assets.mjs",
+    "predev": "npm run copy-assets",
+    "dev": "vite",
+    "prebuild": "npm run copy-assets",
+    "build": "tsc --noEmit && vite build",
+    "postbuild": "node scripts/check-no-network.mjs && node scripts/check-command-index.mjs && node scripts/check-css-selectors.mjs",
+    "check:network": "node scripts/check-no-network.mjs",
+    "check:css": "node scripts/check-css-selectors.mjs",
+    "check:exports": "node scripts/check-unused-exports.mjs",
+    "icons": "node scripts/generate-icons.mjs",
+    "symbols:generate": "node scripts/generate-symbol-index.mjs",
+    "commands:generate": "node scripts/generate-command-index.mjs",
+    "draw:prototypes": "node --experimental-strip-types scripts/generate-draw-prototypes.mjs",
+    "draw:heldout": "node scripts/extract-draw-benchmark.mjs",
+    "draw:benchmark": "node --experimental-strip-types scripts/bench-draw-recognition.mjs",
+    "draw:prune": "node scripts/prune-draw-prototypes.mjs",
+    "typecheck": "tsc --noEmit && node scripts/check-unused-exports.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "pretest:e2e": "npm run copy-assets",
+    "test:e2e": "node tests/e2e/run.mjs",
+    "test:ext": "node tests/ext/run.mjs",
+    "pretest:a11y": "npm run copy-assets",
+    "test:a11y": "node tests/a11y/run.mjs"
+  },
+  "dependencies": {
+    "mathlive": "0.110.0",
+    "minisearch": "7.2.0",
+    "speech-rule-engine": "4.1.4"
+  },
+  "overrides": {
+    "@xmldom/xmldom": "0.9.12"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "2.7.0",
+    "@types/chrome": "0.2.0",
+    "axe-core": "4.12.1",
+    "happy-dom": "20.10.6",
+    "playwright": "1.61.1",
+    "typescript": "5.9.3",
+    "vite": "7.3.6",
+    "vitest": "4.1.9"
+  }
+}

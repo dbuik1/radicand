@@ -1,0 +1,257 @@
+{
+ "version": 1,
+ "mathlive": "0.110.0",
+ "extraCommands": [
+  "left",
+  "right",
+  "middle",
+  "begin",
+  "end",
+  "bmod",
+  "pmod",
+  "pmatrix",
+  "bmatrix",
+  "genfrac",
+  "arcsinh",
+  "arccosh",
+  "arctanh",
+  "sech",
+  "csch",
+  "arcsech",
+  "arccsch"
+ ],
+ "names": [
+  "Delta",
+  "Gamma",
+  "Lambda",
+  "Leftarrow",
+  "Leftrightarrow",
+  "Omega",
+  "Phi",
+  "Pi",
+  "Psi",
+  "Rightarrow",
+  "Sigma",
+  "Theta",
+  "Xi",
+  "alpha",
+  "ast",
+  "beta",
+  "boldsymbol",
+  "chi",
+  "cup",
+  "delta",
+  "emptyset",
+  "epsilon",
+  "equiv",
+  "eta",
+  "exists",
+  "forall",
+  "frac",
+  "gamma",
+  "hat",
+  "iiint",
+  "iint",
+  "infty",
+  "iota",
+  "kappa",
+  "lambda",
+  "mapsto",
+  "mathbb",
+  "mathcal",
+  "mathfrak",
+  "mathit",
+  "mathrm",
+  "mathscr",
+  "mathsf",
+  "mathtt",
+  "mp",
+  "nabla",
+  "neq",
+  "notin",
+  "nu",
+  "omega",
+  "partial",
+  "phi",
+  "prod",
+  "propto",
+  "psi",
+  "rho",
+  "sigma",
+  "sqrt",
+  "sum",
+  "tau",
+  "theta",
+  "times",
+  "upsilon",
+  "varepsilon",
+  "varphi",
+  "vartheta",
+  "vec",
+  "xi",
+  "zeta"
+ ],
+ "ambiguous": {
+  "approx": [
+   "approxcolon",
+   "approxcoloncolon",
+   "approxeq"
+  ],
+  "arccos": [
+   "arccosh"
+  ],
+  "arcsin": [
+   "arcsinh"
+  ],
+  "arctan": [
+   "arctanh"
+  ],
+  "bar": [
+   "barwedge"
+  ],
+  "cap": [
+   "capitalDifferentialD"
+  ],
+  "cdot": [
+   "cdotp",
+   "cdots"
+  ],
+  "circ": [
+   "circeq",
+   "circlearrowleft",
+   "circlearrowright",
+   "circledR",
+   "circledS",
+   "circledast",
+   "circledcirc",
+   "circleddash"
+  ],
+  "cos": [
+   "cosec",
+   "cosh"
+  ],
+  "cot": [
+   "cotg",
+   "coth"
+  ],
+  "csc": [
+   "csch"
+  ],
+  "div": [
+   "divideontimes",
+   "divides"
+  ],
+  "ge": [
+   "genfrac",
+   "geq",
+   "geqq",
+   "geqslant",
+   "gets"
+  ],
+  "gg": [
+   "ggg",
+   "gggtr"
+  ],
+  "in": [
+   "inf",
+   "infty",
+   "injlim",
+   "int",
+   "intclockwise",
+   "intctrclockwise",
+   "intercal",
+   "interleave",
+   "intop"
+  ],
+  "int": [
+   "intclockwise",
+   "intctrclockwise",
+   "intercal",
+   "interleave",
+   "intop"
+  ],
+  "le": [
+   "leadsto",
+   "left",
+   "leftarrow",
+   "leftarrowtail",
+   "leftarrowtriangle",
+   "leftharpoondown",
+   "leftharpoonup",
+   "leftleftarrows",
+   "leftrightarrow",
+   "leftrightarrows",
+   "leftrightarrowtriangle",
+   "leftrightharpoons",
+   "leftrightsquigarrow",
+   "leftslice",
+   "leftthreetimes",
+   "leq",
+   "leqq",
+   "leqslant",
+   "lessapprox",
+   "lessdot",
+   "lesseqgtr",
+   "lesseqqgtr",
+   "lessgtr",
+   "lesssim"
+  ],
+  "lim": [
+   "liminf",
+   "limsup"
+  ],
+  "ll": [
+   "llap",
+   "llbracket",
+   "llcorner",
+   "lll",
+   "llless"
+  ],
+  "mathbf": [
+   "mathbfit"
+  ],
+  "mu": [
+   "multimap"
+  ],
+  "ne": [
+   "nearrow",
+   "neg",
+   "neq",
+   "nexists"
+  ],
+  "oint": [
+   "ointctrclockwise"
+  ],
+  "overline": [
+   "overlinesegment"
+  ],
+  "pi": [
+   "pitchfork"
+  ],
+  "pm": [
+   "pmatrix",
+   "pmod"
+  ],
+  "sec": [
+   "sech"
+  ],
+  "sin": [
+   "sinh"
+  ],
+  "subset": [
+   "subseteq",
+   "subseteqq",
+   "subsetneq",
+   "subsetneqq"
+  ],
+  "subseteq": [
+   "subseteqq"
+  ],
+  "tan": [
+   "tanh"
+  ],
+  "to": [
+   "top"
+  ]
+ }
+}

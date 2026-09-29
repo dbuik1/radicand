@@ -1,0 +1,15 @@
+node_modules/
+dist/
+# Vendored MathLive fonts/sounds, regenerated from the pinned dependency.
+public/
+# Downloaded symbol-index source datasets (npm run symbols:generate).
+scripts/.cache/
+*.local
+.DS_Store
+.vite/
+npm-debug.log*
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+Thumbs.db
