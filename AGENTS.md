@@ -32,11 +32,26 @@ Hard invariants:
   the panel renders (also run as `postbuild`)
 - `npm run check:exports` – every exported value has an importer (also run
   by `typecheck`)
+- `npm run check:notes` – no working-notes directory is committed or linked
+  (plans, research, reviews, design briefs and spikes live elsewhere)
 
 Editor behaviours (autocomplete, deletion, navigation, matrix keys in
 `src/sidepanel/editor/`) are heavily interlocking and have regressed each
 other before: reproduce bugs with a failing e2e spec first, keep it as a
 regression test, and run the **full** e2e suite before pushing.
+
+## Workflow
+
+- Never commit to `main` directly. Every change goes on a short-lived
+  branch from `main` (`feat/…`, `fix/…`, `docs/…`, `chore/…`) and reaches
+  `main` through a pull request, one change per pull request.
+- Run the full check list above before pushing; CI runs it again on the
+  pull request and must be green before merging.
+- The pull request title is a Conventional Commit: pull requests are
+  squash-merged, so the title becomes the commit on `main`.
+- Commits carry no AI co-author or session trailers.
+- A release is a version tag on `main` – see
+  [docs/releasing.md](docs/releasing.md).
 
 ## Conventions
 

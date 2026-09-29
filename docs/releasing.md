@@ -8,17 +8,22 @@ creating the release if it does not exist yet. That zip is what goes to
 the Chrome Web Store.
 
 1. Make sure CI is green on `main`.
-2. Bump the version – the manifest takes it from `package.json`:
+2. Bump the version on a branch and merge it like any other change – the
+   manifest takes the version from `package.json`:
 
    ```bash
-   npm version 1.0.1 -m "chore: release %s"
+   git switch -c chore/release-1.0.1
+   npm version 1.0.1 --no-git-tag-version
+   git commit -am "chore: release 1.0.1"
    ```
 
-   This commits the change and creates the tag `v1.0.1`.
-3. Push the commit and the tag:
+   Open a pull request titled `chore: release 1.0.1` and merge it once CI
+   is green.
+3. Tag the merged commit on `main`:
 
    ```bash
-   git push origin main --follow-tags
+   git switch main && git pull
+   git tag v1.0.1 && git push origin v1.0.1
    ```
 
    Without push access from the command line, publish the release on

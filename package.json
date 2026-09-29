@@ -23,6 +23,7 @@
     "check:network": "node scripts/check-no-network.mjs",
     "check:css": "node scripts/check-css-selectors.mjs",
     "check:exports": "node scripts/check-unused-exports.mjs",
+    "check:notes": "node scripts/check-no-private-notes.mjs",
     "icons": "node scripts/generate-icons.mjs",
     "symbols:generate": "node scripts/generate-symbol-index.mjs",
     "commands:generate": "node scripts/generate-command-index.mjs",
