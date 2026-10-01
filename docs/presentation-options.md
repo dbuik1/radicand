@@ -27,9 +27,8 @@ allows us to control, and what we recommend for this editor.
 - **Window/tab size:** fully under our control. `chrome.windows.create` takes
   `width`/`height`/`left`/`top`; the user can then resize freely and the window
   persists. A tab uses the whole viewport.
-- **Default presentation:** the toolbar action currently opens the side panel
-  (`openPanelOnActionClick`). We could instead open a window or tab by default,
-  or remember the user's last choice.
+- **Default presentation:** the toolbar action opens whichever surface the
+  user chose in Settings (the side panel unless changed): see below.
 - **Reusing one UI:** the same page (`src/sidepanel/index.html`) works in all of
   the side panel, window and tab with no changes – it only uses
   permission-free extension-page APIs (`chrome.storage`, `runtime.getURL`,
@@ -40,27 +39,46 @@ allows us to control, and what we recommend for this editor.
 
 Because the side panel can't be widened programmatically, the practical way to
 give users "more space / their preferred form" is to let them **pop the editor
-out**. The Settings panel has an **"Open the editor in"** control with:
+out**. The More ▾ menu has **Open in a new window** and **Open in a new tab**:
 
-- **This panel** – the resting value the control returns to after each use;
-  choosing it does nothing, since the editor is already here.
-- **New window** – opens the editor in a floating, resizable popup window with a
-  sensible default size (820×960), which the user can then resize.
+- **Side panel** – the default, and where the editor already is when those two
+  items are chosen.
+- **New window** – opens the editor in a floating, resizable popup window. It
+  starts at a default size (820×960); after that it reopens at the size and
+  position the user last left it. The bounds are saved (debounced, from
+  `chrome.windows.onBoundsChanged`) in `chrome.storage.local`, so they stay on
+  this computer, and are clamped on reopening so the window is on screen and
+  at least 400×480. See `src/popout-bounds.ts`.
 - **New tab** – opens the editor full-width in a browser tab.
 
 When a new window or tab opens successfully, the docked side panel closes
 itself so the editor is never open twice. None of these need extra
 permissions (an extension may open its own pages).
 
+## The toolbar icon and its shortcut
+
+Settings › Interface has a **Toolbar icon opens** select (*Side panel*, *New
+window*, *New tab*), stored as `defaultSurface` in the ordinary settings record
+(`chrome.storage.sync`, falling back to local). The service worker
+(`src/background.ts`) applies it at start-up, on install and whenever the
+record changes:
+
+- *Side panel* – `chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick:
+  true })`, so Chrome opens the panel itself and the click never reaches the
+  worker.
+- *New window* or *New tab* – `openPanelOnActionClick: false`, so the click
+  reaches `chrome.action.onClicked`, which opens the pop-out window (at its
+  remembered bounds) or a tab.
+
+The `_execute_action` command (Ctrl+Shift+U, Cmd+Shift+U on a Mac) is turned
+into a toolbar click by Chrome, so the shortcut opens the same surface. The
+symbols command (Ctrl+Shift+Y) opens it too, then shows or hides the symbols.
+Both can be rebound at `chrome://extensions/shortcuts`. `chrome.sidePanel.open`
+is only allowed in response to a user gesture; a keyboard command is one.
+
 ## Possible future enhancements
 
-1. **Remember a preferred default surface** (side panel / window / tab) as a
-   setting, and have the toolbar action honour it.
-2. **Persist the window's last size/position** so "New window" reopens exactly
-   as the user left it.
-3. **A "pop out" affordance in the panel header** (not just in Settings) for
-   one-click switching.
-4. A **keyboard command** (`commands` API) to open the editor in the preferred
-   surface from anywhere.
+1. **A "pop out" affordance in the panel header** (not just in the More ▾
+   menu) for one-click switching.
 
 All of these layer straightforwardly on top of `presentation.ts`.

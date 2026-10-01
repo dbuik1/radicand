@@ -181,7 +181,7 @@ describe('expression library store', () => {
 
   it('exports a record another profile imports intact', async () => {
     const { library } = await freshLibrary();
-    library.addLibraryEntry({ name: 'Mine', body: 'x+1', keywords: 'k1', trigger: 'mine' });
+    library.addLibraryEntry({ name: 'Mine', body: 'x+1', keywords: 'k1', trigger: 'mine', category: 'Algebra' });
     const exported = library.exportLibrary();
     expect(JSON.parse(exported)).toMatchObject({ version: 1 });
 
@@ -198,6 +198,7 @@ describe('expression library store', () => {
       body: 'x+1',
       keywords: 'k1',
       trigger: 'mine',
+      category: 'Algebra',
     });
   });
 

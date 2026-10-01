@@ -32,6 +32,7 @@ import { installAccentClickRedirect, installLimitArrowKeys } from './navigation'
 import { installMatrixKeys } from './matrix';
 import { depthAtOffset } from './offsets';
 import { createCommandFinder } from './finder';
+import { installSelectionCapture, wrapIntoFirstSlot } from './selection-wrap';
 import type { FinderInsertListener } from './finder';
 
 const MATHML_NS = 'http://www.w3.org/1998/Math/MathML';
@@ -385,6 +386,23 @@ export function createEditor(host: HTMLElement, options: EditorOptions = {}): Ed
   // trigger rejects the latex-mode text (the style-branch precedent) and
   // inserts the saved body, placeholders selected and Tab-navigable.
   const triggers = options.triggers;
+  const selectionWrap = installSelectionCapture(mf);
+  // Inserts a trigger's body, wrapping what was selected when the command
+  // began into its first empty slot; reports whether it did.
+  const insertTrigger = (body: string): boolean => {
+    const selected = selectionWrap.take();
+    const wrapped = selected === null ? null : wrapIntoFirstSlot(body, selected);
+    mf.executeCommand(['complete', 'reject']);
+    // The typed backslash already replaced the selection, and undo would stop
+    // at that gap. Putting the selection back, selected, lets the wrap
+    // replace it in place, so one Ctrl+Z restores the field as it was.
+    if (wrapped !== null && selected !== null) {
+      mf.insert(selected, { focus: true, selectionMode: 'item' });
+    }
+    mf.insert(wrapped ?? body, { focus: true, selectionMode: 'placeholder' });
+    mf.executeCommand('scrollIntoView');
+    return wrapped !== null;
+  };
   installCommandAutoAccept(
     mf,
     boxTrailingStructure,
@@ -394,11 +412,9 @@ export function createEditor(host: HTMLElement, options: EditorOptions = {}): Ed
       accept: (name) => {
         const entry = triggers.lookup(name);
         if (entry === null) return false;
-        mf.executeCommand(['complete', 'reject']);
-        mf.insert(entry.body, { focus: true, selectionMode: 'placeholder' });
-        mf.executeCommand('scrollIntoView');
+        const wrapped = insertTrigger(entry.body);
         triggers.recordUse(entry.id);
-        announce(`Inserted ${entry.name}`);
+        announce(`Inserted ${entry.name}${wrapped ? ' around the selection' : ''}`);
         return true;
       },
     },
@@ -414,7 +430,7 @@ export function createEditor(host: HTMLElement, options: EditorOptions = {}): Ed
   // deletion.ts, matrix keys, the library triggers in autocomplete.ts), so a
   // trigger accepted on the same key still wins; there is no mode conflict
   // either, since those act in 'math' mode and the finder only in 'latex'.
-  host.appendChild(createCommandFinder(mf, options.onFinderInsert, triggers));
+  host.appendChild(createCommandFinder(mf, options.onFinderInsert, triggers, insertTrigger));
 
   // Also box structures committed *without* the auto-accept path (e.g. when the
   // user presses space/Tab/Enter themselves), on a debounce anchored to a

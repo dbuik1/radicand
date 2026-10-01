@@ -162,3 +162,75 @@ export async function aShortcutWinsOverALibraryTriggerWithTheSameName(page) {
   await page.waitForTimeout(150);
   assertEqual(await latex(page), 's', 'the shortcut answers a shared trigger');
 }
+
+/**
+ * Wrapping a selection. A shortcut fired while text is selected puts the
+ * selection into the template's first slot instead of replacing it.
+ */
+async function selectInField(page, value, from, to) {
+  await page.evaluate((v) => { window.__mf.setValue(v); window.__mf.focus(); }, value);
+  await fieldTakesKeys(page);
+  await page.waitForTimeout(30);
+  await page.evaluate(([a, b]) => { window.__mf.selection = { ranges: [[a, b]] }; }, [from, to]);
+  await page.waitForTimeout(30);
+}
+
+async function typeTrigger(page, letters, confirm = ' ') {
+  await page.keyboard.press('Backslash');
+  await page.waitForTimeout(25);
+  for (const ch of letters) {
+    await page.keyboard.press(ch);
+    await page.waitForTimeout(25);
+  }
+  await page.keyboard.press(confirm);
+  await page.waitForTimeout(150);
+}
+
+export async function shortcutWrapsTheSelectionIntoItsFirstSlot(page) {
+  await addShortcut(page, { trigger: 'abs', latex: '\\left|\\placeholder{}\\right|' });
+  await selectInField(page, 'a+x+b', 2, 3);
+  await typeTrigger(page, 'abs');
+  assertEqual(await latex(page), 'a+\\left|x\\right|+b', 'the selection fills the first slot');
+  // The caret sits after the wrapper: typing continues outside it.
+  await page.keyboard.press('c');
+  await page.waitForTimeout(40);
+  assertEqual(await latex(page), 'a+\\left|x\\right|c+b', 'the caret lands after the wrapped selection');
+}
+
+export async function wrappedSelectionKeepsLaterSlotsEmptyAndNavigable(page) {
+  await addShortcut(page, {
+    trigger: 'pd',
+    latex: '\\frac{\\partial \\placeholder{}}{\\partial \\placeholder{}}',
+  });
+  await selectInField(page, 'f', 0, 1);
+  await typeTrigger(page, 'pd', 'Tab');
+  assertMatch(
+    await latex(page),
+    /^\\frac\{\\partial f\}\{\\partial \\placeholder\{\}\}$/,
+    'only the first slot takes the selection',
+  );
+}
+
+export async function shortcutWrapUndoesInOneStep(page) {
+  await addShortcut(page, { trigger: 'abs', latex: '\\left|\\placeholder{}\\right|' });
+  await selectInField(page, 'a+x+b', 2, 3);
+  await typeTrigger(page, 'abs');
+  await page.keyboard.press('Control+z');
+  await page.waitForTimeout(150);
+  assertEqual(await latex(page), 'a+x+b', 'one Ctrl+Z restores the unwrapped equation');
+}
+
+export async function shortcutWithoutSelectionInsertsAsBefore(page) {
+  await addShortcut(page, { trigger: 'abs', latex: '\\left|\\placeholder{}\\right|' });
+  await page.evaluate(() => { window.__mf.setValue(''); window.__mf.focus(); });
+  await fieldTakesKeys(page);
+  await typeTrigger(page, 'abs');
+  assertEqual(await latex(page), '\\left|\\placeholder{}\\right|', 'no selection: the empty template');
+}
+
+export async function shortcutWithoutASlotReplacesTheSelection(page) {
+  await addShortcut(page, { trigger: 'RR', latex: '\\mathbb{R}' });
+  await selectInField(page, 'a+x+b', 2, 3);
+  await typeTrigger(page, 'RR');
+  assertEqual(await latex(page), 'a+\\mathbb{R}+b', 'a template without a slot replaces the selection');
+}

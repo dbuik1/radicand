@@ -14,6 +14,7 @@ import { installAutoFit } from './editor/auto-fit';
 import { createEditorHeader } from './editor-header';
 import { installSettingsShortcut } from './more-menu';
 import { installCopyShortcut } from './output';
+import { rememberWindowBoundsIfPopout } from './presentation';
 import { bindPart, installPartAnnouncements } from './part-visibility';
 import { createSourceView } from './source';
 import { installSlashFractionHint } from './slash-hint';
@@ -68,6 +69,7 @@ async function boot(): Promise<void> {
   // the in-memory entries synchronously and follow onLibraryChange.
   void loadLibrary();
   void loadShortcuts();
+  void rememberWindowBoundsIfPopout();
 
   mount.replaceChildren();
 

@@ -15,6 +15,12 @@ describe('settings (no chrome.storage available)', () => {
     expect(getSettings().theme).toBe('dark');
   });
 
+  it('falls back to the side panel for a surface it does not know', async () => {
+    expect(DEFAULT_SETTINGS.defaultSurface).toBe('panel');
+    expect((await updateSettings({ defaultSurface: 'tab' })).defaultSurface).toBe('tab');
+    expect((await updateSettings({ defaultSurface: 'nonsense' } as never)).defaultSurface).toBe('panel');
+  });
+
   it('keeps display and copy formats independent', async () => {
     const next = await updateSettings({ displayFormat: 'mathml' });
     expect(next.displayFormat).toBe('mathml');

@@ -204,6 +204,12 @@ export interface SearchCombobox {
   close: () => void;
   /** Whether the list or the no-matches note is showing. */
   isShowingResults: () => boolean;
+  /**
+   * For the owner's focusout handler: true when focus went to the equation
+   * field within the grace window after the box gained it, in which case the
+   * box has been refocused and must not close.
+   */
+  keepFocusFromField: (event: FocusEvent) => boolean;
 }
 
 /**
@@ -224,6 +230,9 @@ const COMBOBOX_CLASSES = {
     empty: 'quick-search__empty',
   },
 } as const;
+
+/** Longer than MathLive's deferred field focus, shorter than a keypress. */
+const FIELD_REFOCUS_GRACE_MS = 150;
 
 export interface SearchComboboxOptions {
   /** Id prefix (`<prefix>-input`, `<prefix>-listbox`) and class set. */
@@ -407,6 +416,13 @@ function createSearchCombobox(
   // Warm the engine up as soon as the user shows intent, so the first
   // results appear without a load hiccup.
   input.addEventListener('focus', () => void loadSearchEngine(), { once: true });
+  // MathLive finishes focusing its field on a 60 ms timer, so a field focused
+  // just before the box took focus (Escape back to it, a click on it) takes
+  // focus back a moment later. That is not the user leaving the box.
+  let focusedAt = -Infinity;
+  input.addEventListener('focus', () => {
+    focusedAt = performance.now();
+  });
 
   input.addEventListener('keydown', (event: KeyboardEvent) => {
     switch (event.key) {
@@ -444,6 +460,13 @@ function createSearchCombobox(
     empty,
     close,
     isShowingResults: () => !listbox.hidden || !empty.hidden,
+    keepFocusFromField: (event: FocusEvent): boolean => {
+      const to = event.relatedTarget;
+      const toField = to instanceof Element && to.closest('math-field') !== null;
+      if (!toField || performance.now() - focusedAt >= FIELD_REFOCUS_GRACE_MS) return false;
+      setTimeout(() => input.focus(), 0);
+      return true;
+    },
   };
 }
 
@@ -504,7 +527,9 @@ export function createSymbolSearch(
   // also cancels the pending debounce and orphans any in-flight search, so
   // the list cannot pop open again under an unfocused input.
   root.addEventListener('focusout', (event: FocusEvent) => {
-    if (!root.contains(event.relatedTarget as Node | null)) close();
+    if (root.contains(event.relatedTarget as Node | null)) return;
+    if (search.keepFocusFromField(event)) return;
+    close();
   });
 
   // The search box is one of the pieces of interface a user can switch off
@@ -540,9 +565,6 @@ export interface QuickSearch {
   close: (toField: boolean) => void;
   isOpen: () => boolean;
 }
-
-/** Longer than MathLive's deferred field focus, shorter than a keypress. */
-const FIELD_REFOCUS_GRACE_MS = 150;
 
 /**
  * The quick search: a search box that opens directly under the equation
@@ -586,18 +608,9 @@ export function createQuickSearch(editor: EditorController): QuickSearch {
     close(true);
   });
 
-  // MathLive finishes focusing its field on a 60 ms timer, so a field
-  // focused just before the box opened (Escape back to it, a click on it)
-  // takes focus back a moment later. That is not the user leaving the box.
-  let openedAt = -Infinity;
   root.addEventListener('focusout', (event: FocusEvent) => {
-    const to = event.relatedTarget as Node | null;
-    if (root.contains(to)) return;
-    const toField = to instanceof Element && to.closest('math-field') !== null;
-    if (toField && performance.now() - openedAt < FIELD_REFOCUS_GRACE_MS) {
-      setTimeout(() => input.focus(), 0);
-      return;
-    }
+    if (root.contains(event.relatedTarget as Node | null)) return;
+    if (search.keepFocusFromField(event)) return;
     close(false);
   });
 
@@ -608,7 +621,6 @@ export function createQuickSearch(editor: EditorController): QuickSearch {
     open: () => {
       root.hidden = false;
       input.value = '';
-      openedAt = performance.now();
       input.focus();
       root.scrollIntoView({ block: 'nearest' });
     },

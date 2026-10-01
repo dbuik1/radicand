@@ -13,9 +13,11 @@
  * every preview. The name is always visible; the preview joins it when
  * ready.
  *
- * The list is rebuilt from scratch on every content change and filter or
- * sort edit. Focus that was inside the list survives the swap: rows carry
- * the entry id, and the same entry's button is refocused afterwards. A use
+ * Every content change and filter or sort edit re-fills the one list from
+ * rows cached per entry, so typing in the filter neither re-sorts, re-renders
+ * names nor re-wires the keyboard handling. Focus that was inside the list
+ * survives the swap: rows carry the entry id, and the same entry's button is
+ * refocused afterwards. A use
  * count moving (an insert) does not rebuild at all – the "Recently used"
  * order catches up when the panel is next opened, so a run of inserts never
  * reorders the list under the user's hands.
@@ -45,6 +47,8 @@ import { STARTER_PACK } from './library-starter';
 import { hasNameMaths, renderName, spokenName } from './name-maths';
 import { SAVE_SHORTCUT_LABEL } from './shortcut-labels';
 import { triggerProblem } from './triggers';
+import { categoriesOf, categoryKey } from './library-filter';
+import type { CategoryOption } from './library-filter';
 
 type SortOrder = 'used' | 'name' | 'added';
 type RowButton = 'insert' | 'edit';
@@ -53,10 +57,11 @@ type RowButton = 'insert' | 'edit';
  * Shown in the list, and announced, when the filter matches nothing. Names
  * the way out (clearing the filter) and what that shows.
  */
-function noMatchText(total: number): string {
+function noMatchText(total: number, categoryChosen: boolean): string {
+  const what = categoryChosen ? 'filters' : 'filter';
   return total === 1
-    ? 'No formulae match – clear the filter to see your one formula'
-    : `No formulae match – clear the filter to see all ${total}`;
+    ? `No formulae match – clear the ${what} to see your one formula`
+    : `No formulae match – clear the ${what} to see all ${total}`;
 }
 
 /** "formula" or "formulae" for a count. */
@@ -150,7 +155,18 @@ export function buildLibraryPanel(
     sort.appendChild(option);
   }
 
-  controls.append(filterLabel, filter, sortLabel, sort);
+  // Only offered once an entry has a category (from an import): a control
+  // that can only ever say "All categories" is noise.
+  const categoryLabel = document.createElement('label');
+  categoryLabel.className = 'visually-hidden';
+  categoryLabel.textContent = 'Category';
+  categoryLabel.htmlFor = 'library-category';
+  const categorySelect = document.createElement('select');
+  categorySelect.id = 'library-category';
+  categorySelect.className = 'library-panel__category';
+  categorySelect.hidden = true;
+
+  controls.append(filterLabel, filter, sortLabel, sort, categoryLabel, categorySelect);
 
   // A one-shot Undo for the last deletion; valid until the next mutation.
   const undoBtn = document.createElement('button');
@@ -178,12 +194,21 @@ export function buildLibraryPanel(
   });
 
   // ------------------------------------------------------------- the list
-  // A NEW list element is built per rebuild (and swapped into this host),
-  // so the roving-tabindex keydown wiring is created exactly once per list
-  // and dies with it – rebuilding can never stack handlers (same pattern
-  // as the palette's buildGrid).
+  // One list element for the panel's lifetime: its roving-tabindex wiring is
+  // created once and reads `buttons`, which every rebuild refills in place,
+  // so rebuilding can never stack handlers.
   const listHost = document.createElement('div');
   listHost.className = 'library-panel__list-host';
+  const list = document.createElement('div');
+  list.className = 'library-panel__list';
+  list.setAttribute('role', 'toolbar');
+  list.setAttribute('aria-label', 'Library formulae');
+  const buttons: HTMLButtonElement[] = [];
+  const roving = wireRovingTabindex(list, buttons, {
+    columns: () => 2,
+    onEscape,
+  });
+  listHost.appendChild(list);
 
   const empty = document.createElement('p');
   empty.className = 'palette__empty';
@@ -263,6 +288,7 @@ export function buildLibraryPanel(
           body: entry.body,
           ...(entry.trigger !== undefined ? { trigger: entry.trigger } : {}),
           ...(entry.keywords !== undefined ? { keywords: entry.keywords } : {}),
+          ...(entry.category !== undefined ? { category: entry.category } : {}),
         },
         excludeId: entry.id,
         submitLabel: 'Save changes',
@@ -273,6 +299,7 @@ export function buildLibraryPanel(
             body: fields.body,
             trigger: fields.trigger ?? '',
             keywords: fields.keywords ?? '',
+            category: fields.category ?? '',
           });
           announce(`Saved changes to "${spokenName(fields.name)}"`);
         },
@@ -285,12 +312,131 @@ export function buildLibraryPanel(
 
   let currentFilter = '';
   let currentSort: SortOrder = 'used';
+  /** Key of the chosen category; null shows every category. */
+  let currentCategory: string | null = null;
   /** A use count moved while sorted by use: the order is out of date. */
   let orderStale = false;
 
+  interface Row {
+    entry: LibraryEntry;
+    element: HTMLElement;
+    insert: HTMLButtonElement;
+    edit: HTMLButtonElement;
+    /** Lower-cased text the filter matches against. */
+    search: string;
+    category: string | null;
+  }
+
+  /**
+   * Rows are built once per entry object (the store replaces an entry's
+   * object when it changes), so a keystroke re-renders no names and an edit
+   * rebuilds only the row it touched.
+   */
+  const rowCache = new WeakMap<LibraryEntry, Row>();
+
+  const rowFor = (entry: LibraryEntry, readOnly: boolean): Row => {
+    const cached = rowCache.get(entry);
+    if (cached) return cached;
+    const row = document.createElement('div');
+    row.className = 'library-row';
+    row.dataset['id'] = entry.id;
+
+    const insert = document.createElement('button');
+    insert.type = 'button';
+    insert.className = 'library-row__insert';
+    insert.setAttribute('aria-label', spokenName(entry.name));
+    // The rendered name speaks for itself; a tooltip would show words.
+    if (!hasNameMaths(entry.name)) insert.title = entry.name;
+    // Name over a one-line preview, the trigger at the right; the button's
+    // accessible name stays the name, with any maths in it as words.
+    const text = document.createElement('span');
+    text.className = 'library-row__text';
+    const name = document.createElement('span');
+    name.className = 'library-row__name';
+    renderName(name, entry.name);
+    const preview = document.createElement('span');
+    preview.className = 'library-row__preview';
+    preview.setAttribute('aria-hidden', 'true');
+    preview.dataset['body'] = entry.body;
+    text.append(name, preview);
+    insert.append(text);
+    if (entry.trigger) {
+      const trigger = document.createElement('span');
+      trigger.className = 'library-row__trigger';
+      trigger.setAttribute('aria-hidden', 'true');
+      trigger.textContent = `\\${entry.trigger}`;
+      insert.append(trigger);
+    }
+    insert.tabIndex = -1;
+    insert.addEventListener('mousedown', (event) => event.preventDefault());
+    insert.addEventListener('click', (event) => insertEntry(entry, event.detail !== 0));
+    // Observed once: a row filtered out leaves the document and reports
+    // again when it returns, so no preview is rendered while it is away.
+    if (lazyObserver) lazyObserver.observe(preview);
+    else renderPreview(preview, entry.body);
+
+    const edit = document.createElement('button');
+    edit.type = 'button';
+    edit.className = 'btn btn--secondary btn--slim library-row__edit';
+    edit.textContent = 'Edit';
+    edit.setAttribute('aria-label', `Edit "${spokenName(entry.name)}"`);
+    edit.tabIndex = -1;
+    edit.disabled = readOnly;
+    edit.addEventListener('click', () => openEdit(entry, edit));
+
+    row.append(insert, edit);
+    const made: Row = {
+      entry,
+      element: row,
+      insert,
+      edit,
+      search: `${entry.name} ${spokenName(entry.name)} ${entry.keywords ?? ''} ${entry.trigger ?? ''}`.toLowerCase(),
+      category: categoryKey(entry),
+    };
+    rowCache.set(entry, made);
+    return made;
+  };
+
+  /** What depends only on the stored entries and the sort order. */
+  let derived: {
+    all: readonly LibraryEntry[];
+    order: SortOrder;
+    ordered: LibraryEntry[];
+    categories: CategoryOption[];
+    seeded: boolean;
+  } | null = null;
+  let lastReadOnly: boolean | null = null;
+  let categorySignature = '';
+
+  /** Show the category control only when there is something to choose. */
+  const syncCategories = (categories: CategoryOption[]): void => {
+    const signature = categories.map((c) => `${c.key}\0${c.label}`).join('\n');
+    if (currentCategory !== null && !categories.some((c) => c.key === currentCategory)) {
+      currentCategory = null;
+    }
+    if (signature !== categorySignature) {
+      categorySignature = signature;
+      const all = document.createElement('option');
+      all.value = '';
+      all.textContent = 'All categories';
+      categorySelect.replaceChildren(
+        all,
+        ...categories.map((c) => {
+          const option = document.createElement('option');
+          option.value = c.key;
+          option.textContent = c.label;
+          return option;
+        }),
+      );
+    }
+    categorySelect.value = currentCategory ?? '';
+    const offered = categories.length > 0;
+    if (!offered && categorySelect.contains(document.activeElement)) filter.focus();
+    categorySelect.hidden = !offered;
+    categoryLabel.hidden = !offered;
+  };
+
   const rebuild = (): { shown: number; total: number } => {
-    // Every observed preview is about to be discarded with its row.
-    lazyObserver?.disconnect();
     // Focus inside the list must land on the same entry after the swap.
     const active = document.activeElement;
     const focused =
@@ -303,90 +449,48 @@ export function buildLibraryPanel(
 
     const readOnly = isLibraryReadOnly();
     const all = getLibraryEntries();
+    if (derived === null || derived.all !== all || derived.order !== currentSort) {
+      const same = derived?.all === all;
+      derived = {
+        all,
+        order: currentSort,
+        ordered: sorted(all, currentSort),
+        categories: same ? derived!.categories : categoriesOf(all),
+        seeded: same ? derived!.seeded : hasSeededEntries(),
+      };
+    }
+    syncCategories(derived.categories);
     const needle = currentFilter.trim().toLowerCase();
-    const shown = sorted(
-      needle === ''
-        ? all
-        : all.filter((entry) =>
-            `${entry.name} ${spokenName(entry.name)} ${entry.keywords ?? ''} ${entry.trigger ?? ''}`
-              .toLowerCase()
-              .includes(needle),
-          ),
-      currentSort,
-    );
 
-    const list = document.createElement('div');
-    list.className = 'library-panel__list';
-    list.setAttribute('role', 'toolbar');
-    list.setAttribute('aria-label', 'Library formulae');
-    const buttons: HTMLButtonElement[] = [];
+    const shownRows: Row[] = [];
+    for (const entry of derived.ordered) {
+      const row = rowFor(entry, readOnly);
+      if (lastReadOnly !== readOnly) row.edit.disabled = readOnly;
+      if (needle !== '' && !row.search.includes(needle)) continue;
+      if (currentCategory !== null && row.category !== currentCategory) continue;
+      shownRows.push(row);
+    }
+    lastReadOnly = readOnly;
+
+    buttons.length = 0;
     const nextRowButtons = new Map<string, Record<RowButton, HTMLButtonElement>>();
-    shown.forEach((entry) => {
-      const row = document.createElement('div');
-      row.className = 'library-row';
-      row.dataset['id'] = entry.id;
+    for (const row of shownRows) {
+      buttons.push(row.insert, row.edit);
+      nextRowButtons.set(row.entry.id, { insert: row.insert, edit: row.edit });
+    }
+    list.replaceChildren(...shownRows.map((row) => row.element));
+    roving.reset();
 
-      const insert = document.createElement('button');
-      insert.type = 'button';
-      insert.className = 'library-row__insert';
-      insert.setAttribute('aria-label', spokenName(entry.name));
-      // The rendered name speaks for itself; a tooltip would show words.
-      if (!hasNameMaths(entry.name)) insert.title = entry.name;
-      // Name over a one-line preview, the trigger at the right; the button's
-      // accessible name stays the name, with any maths in it as words.
-      const text = document.createElement('span');
-      text.className = 'library-row__text';
-      const name = document.createElement('span');
-      name.className = 'library-row__name';
-      renderName(name, entry.name);
-      const preview = document.createElement('span');
-      preview.className = 'library-row__preview';
-      preview.setAttribute('aria-hidden', 'true');
-      preview.dataset['body'] = entry.body;
-      text.append(name, preview);
-      insert.append(text);
-      if (entry.trigger) {
-        const trigger = document.createElement('span');
-        trigger.className = 'library-row__trigger';
-        trigger.setAttribute('aria-hidden', 'true');
-        trigger.textContent = `\\${entry.trigger}`;
-        insert.append(trigger);
-      }
-      insert.tabIndex = buttons.length === 0 ? 0 : -1;
-      insert.addEventListener('mousedown', (event) => event.preventDefault());
-      insert.addEventListener('click', (event) => insertEntry(entry, event.detail !== 0));
-      if (lazyObserver) lazyObserver.observe(preview);
-      else renderPreview(preview, entry.body);
-
-      const edit = document.createElement('button');
-      edit.type = 'button';
-      edit.className = 'btn btn--secondary btn--slim library-row__edit';
-      edit.textContent = 'Edit';
-      edit.setAttribute('aria-label', `Edit "${spokenName(entry.name)}"`);
-      edit.tabIndex = -1;
-      edit.disabled = readOnly;
-      edit.addEventListener('click', () => openEdit(entry, edit));
-
-      buttons.push(insert, edit);
-      nextRowButtons.set(entry.id, { insert, edit });
-      row.append(insert, edit);
-      list.appendChild(row);
-    });
-
-    if (shown.length === 0) {
+    if (shownRows.length === 0) {
       empty.textContent =
         all.length === 0
           ? 'Nothing in your library yet. Save the current equation with the ' +
             `"Save to library" button or ${SAVE_SHORTCUT_LABEL}, then insert the whole ` +
             'equation from here in one step.'
-          : noMatchText(all.length);
+          : noMatchText(all.length, currentCategory !== null);
       empty.hidden = false;
     } else {
       empty.hidden = true;
-      wireRovingTabindex(list, buttons, {
-        columns: () => 2,
-        onEscape,
-      });
     }
 
     if (readOnly) {
@@ -398,13 +502,12 @@ export function buildLibraryPanel(
 
     importBtn.disabled = readOnly;
     starterBtn.disabled = readOnly;
-    const seeded = hasSeededEntries();
+    const seeded = derived.seeded;
     starterBtn.textContent = seeded ? 'Remove starter formulae' : 'Add starter formulae';
     starterHint.textContent = seeded
       ? 'Removing takes back only the starter formulae you have not edited'
       : "Quadratic formula, standard deviation, Maxwell's equations and more";
     rowButtons = nextRowButtons;
-    listHost.replaceChildren(list);
     orderStale = false;
 
     if (focused && !(focused.id !== undefined && focusRow(focused.id, focused.kind))) {
@@ -412,7 +515,7 @@ export function buildLibraryPanel(
       if (buttons[0]) buttons[0].focus();
       else filter.focus();
     }
-    return { shown: shown.length, total: all.length };
+    return { shown: shownRows.length, total: all.length };
   };
 
   // ------------------------------------------------- portability tools
@@ -600,8 +703,8 @@ export function buildLibraryPanel(
   };
 
   let countTimer: ReturnType<typeof setTimeout> | undefined;
-  filter.addEventListener('input', () => {
-    currentFilter = filter.value;
+  /** Re-filter, then speak the count once the user pauses. */
+  const refilter = (): void => {
     const { shown, total } = rebuild();
     // Spoken once typing pauses, so a screen reader hears the final count
     // rather than one per keystroke.
@@ -609,9 +712,19 @@ export function buildLibraryPanel(
     countTimer = setTimeout(() => {
       if (filter.value !== currentFilter) return;
       announce(
-        shown === 0 ? noMatchText(total) : `${shown} of ${formulae(total)}`,
+        shown === 0
+          ? noMatchText(total, currentCategory !== null)
+          : `${shown} of ${formulae(total)}`,
       );
     }, 400);
+  };
+  filter.addEventListener('input', () => {
+    currentFilter = filter.value;
+    refilter();
+  });
+  categorySelect.addEventListener('change', () => {
+    currentCategory = categorySelect.value === '' ? null : categorySelect.value;
+    refilter();
   });
   sort.addEventListener('change', () => {
     currentSort = sort.value as SortOrder;

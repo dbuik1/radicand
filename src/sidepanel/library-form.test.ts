@@ -95,3 +95,55 @@ describe('library form layout', () => {
     expect(namePreview.querySelector('.name-maths')).not.toBeNull();
   });
 });
+
+describe('library form category', () => {
+  beforeEach(() => {
+    vi.unstubAllGlobals();
+    document.body.innerHTML = '';
+  });
+
+  const field = (form: HTMLElement): HTMLInputElement =>
+    [...form.querySelectorAll<HTMLElement>('.library-form__field')]
+      .find((wrap) => wrap.querySelector('label')!.textContent === 'Category (optional)')!
+      .querySelector('input')!;
+
+  it('trims the category and saves an empty one as none', async () => {
+    const { createLibraryForm } = await freshForm();
+    const onSubmit = vi.fn();
+    const form = createLibraryForm({
+      initial: { name: 'x', body: 'x^2' },
+      submitLabel: 'Save',
+      onSubmit,
+      onClose: () => {},
+    });
+    document.body.appendChild(form);
+    const category = field(form);
+    category.value = '  Algebra ';
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    expect(onSubmit.mock.calls[0]![0]).toMatchObject({ category: 'Algebra' });
+
+    category.value = '   ';
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    expect(onSubmit.mock.calls[1]![0]).not.toHaveProperty('category');
+  });
+
+  it("suggests the categories already in use and starts from the entry's own", async () => {
+    vi.resetModules();
+    vi.stubGlobal('chrome', undefined);
+    const library = await import('./library');
+    const { createLibraryForm } = await import('./library-form');
+    library.addLibraryEntry({ name: 'a', body: 'x', category: 'Statistics' });
+    library.addLibraryEntry({ name: 'b', body: 'y', category: 'Algebra' });
+    const form = createLibraryForm({
+      initial: { name: 'x', body: 'x^2', category: 'Algebra' },
+      submitLabel: 'Save',
+      onSubmit: () => {},
+      onClose: () => {},
+    });
+    document.body.appendChild(form);
+    const category = field(form);
+    expect(category.value).toBe('Algebra');
+    const list = document.getElementById(category.getAttribute('list')!)!;
+    expect([...list.querySelectorAll('option')].map((o) => o.value)).toEqual(['Algebra', 'Statistics']);
+  });
+});
