@@ -23,7 +23,8 @@ Contents
 
 ## 1. Open the panel
 
-The Chrome Web Store listing is pending review. Until it is published,
+Install Radicand from the
+[Chrome Web Store](https://chromewebstore.google.com/detail/radicand-%E2%80%93-accessible-mat/mgpjglegefndcbfgdhbchjiafeffcbai), or
 install a release by hand as the [README](../README.md#install) describes.
 
 Press **Ctrl+Shift+U** (**Cmd+Shift+U** on a Mac), or click the extension's
@@ -356,8 +357,11 @@ The panel is built for keyboard-only use with a screen reader:
 - Nothing you switch off in Settings › Interface removes a function: the
   shortcuts stay, and switching a piece off is announced.
 
-The panel meets WCAG 2.2 AA and is checked against it in its automated
-tests.
+The panel targets WCAG 2.2 AA and is checked against it in its automated
+tests. Known issues remain, chiefly in the equation field the MathLive
+library provides, and are being worked on. Radicand changes quickly and
+has not had an independent accessibility audit; reports from people who
+use assistive technology are especially welcome.
 
 ## 14. When something looks wrong
 
