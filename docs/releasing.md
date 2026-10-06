@@ -40,3 +40,18 @@ When a release changes what the panel looks like, regenerate the store
 images with `node scripts/generate-store-images.mjs` and replace them on
 the listing too; [docs/store/listing.md](store/listing.md) holds the
 listing text.
+
+## Release notes
+
+Every release's notes, on GitHub and in the store's update description,
+end with the accessibility statement, so nobody reads "targets WCAG 2.2
+AA" as a conformance claim:
+
+> Radicand targets WCAG 2.2 AA and is checked by an automated audit and
+> keyboard tests on every change. Known issues remain, chiefly in the
+> equation field the MathLive library provides, and are being worked on.
+> Radicand changes quickly and has not had an independent accessibility
+> audit; reports from people who use assistive technology are welcome.
+
+Update the statement when either half stops being true: when the known
+issues are fixed, or when an independent audit is done.
