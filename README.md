@@ -27,8 +27,12 @@ keyboard shortcuts.
 
 ## Install
 
-Radicand has been submitted to the Chrome Web Store and its listing is
-pending review. Until it is published, install a release by hand:
+Install Radicand from the
+[Chrome Web Store](https://chromewebstore.google.com/detail/radicand-%E2%80%93-accessible-mat/mgpjglegefndcbfgdhbchjiafeffcbai),
+then open the panel with the toolbar icon or **Ctrl+Shift+U**
+(**Cmd+Shift+U** on a Mac). Chrome keeps it up to date.
+
+To install a release by hand instead:
 
 1. Download `radicand-<version>.zip` from
    [Releases](../../releases) and unzip it.
@@ -43,7 +47,9 @@ Chrome 116 or newer is required.
 
 The editor targets WCAG 2.2 AA, checked by an axe-core audit and
 end-to-end keyboard tests on every change. It works at 400 % zoom and in
-Windows High Contrast. Reports from people who use assistive technology are
+Windows High Contrast. Known issues remain, chiefly in the equation field
+the MathLive library provides, and are being worked on. Radicand changes
+quickly and has not had an independent accessibility audit. Reports from people who use assistive technology are
 especially welcome – see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Privacy
