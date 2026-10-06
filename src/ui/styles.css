@@ -1874,7 +1874,10 @@ input:user-invalid,
   border-radius: var(--radius-control);
 }
 
-.library-panel__sort {
+.library-panel__sort,
+.library-panel__category {
+  min-width: 0;
+  max-width: 40%;
   min-height: 36px;
 }
 

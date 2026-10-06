@@ -7,7 +7,7 @@
  * Fields: Name (focused on mount), the LaTeX body (with a "Blank out
  * selection" control that turns the selected part of the body text into a
  * `\placeholder{}` slot – template authoring without new syntax), Trigger,
- * Keywords, a read-only live preview, and Save/Cancel. `#?` typed in the
+ * Keywords, Category, a read-only live preview, and Save/Cancel. `#?` typed in the
  * body is normalised to `\placeholder{}` on save; `validateLatex` errors
  * surface inline as you type, described to their field, and block saving,
  * so a body that would render as an error atom is never stored. Enter in a
@@ -18,6 +18,7 @@ import { convertLatexToMarkup, validateLatex } from 'mathlive';
 import type { LatexSyntaxError, ParserErrorCode } from 'mathlive';
 import { announce } from './a11y';
 import { getLibraryEntries } from './library';
+import { categoriesOf } from './library-filter';
 import { hasNameMaths, renderName } from './name-maths';
 import type { NewLibraryEntry } from './library';
 import { triggerProblem } from './triggers';
@@ -27,7 +28,7 @@ export interface LibraryFormOptions {
   /** Heading above the fields; omitted when the host shows its own title. */
   title?: string;
   /**
-   * Fold LaTeX, Trigger and Keywords behind a "More options" disclosure so
+   * Fold LaTeX, Trigger, Keywords and Category behind a "More options" disclosure so
    * the quick path is Name then Enter (the capture form). The disclosure
    * opens itself when one of those fields has a problem to show.
    */
@@ -263,6 +264,22 @@ export function createLibraryForm(options: LibraryFormOptions): HTMLElement {
   keywordsInput.value = options.initial.keywords ?? '';
   keywordsInput.autocomplete = 'off';
 
+  // Existing categories are offered, so a name is reused rather than
+  // respelled into a second category.
+  const categoryInput = document.createElement('input');
+  categoryInput.type = 'text';
+  categoryInput.className = 'field__control library-form__input';
+  categoryInput.value = options.initial.category ?? '';
+  categoryInput.autocomplete = 'off';
+  const categoryList = document.createElement('datalist');
+  categoryList.id = `library-categories-${fieldIdCounter++}`;
+  for (const { label } of categoriesOf(getLibraryEntries())) {
+    const option = document.createElement('option');
+    option.value = label;
+    categoryList.appendChild(option);
+  }
+  categoryInput.setAttribute('list', categoryList.id);
+
   const more = options.moreOptions ? document.createElement('details') : null;
   if (more) more.className = 'library-form__more';
 
@@ -328,11 +345,13 @@ export function createLibraryForm(options: LibraryFormOptions): HTMLElement {
     }
     const trigger = triggerInput.value.trim();
     const keywords = keywordsInput.value.trim();
+    const category = categoryInput.value.trim();
     options.onSubmit({
       name: nameInput.value.trim() || 'Untitled formula',
       body: latex.value(),
       ...(trigger !== '' ? { trigger } : {}),
       ...(keywords !== '' ? { keywords } : {}),
+      ...(category !== '' ? { category } : {}),
     });
     options.onClose();
   });
@@ -354,6 +373,8 @@ export function createLibraryForm(options: LibraryFormOptions): HTMLElement {
   nameWrap.appendChild(namePreview);
   const triggerWrap = formField('Trigger (optional, used as \\trigger)', triggerInput, triggerError);
   const keywordsWrap = formField('Keywords (optional)', keywordsInput);
+  const categoryWrap = formField('Category (optional)', categoryInput);
+  categoryWrap.appendChild(categoryList);
 
   const buttons = document.createElement('div');
   buttons.className = 'library-form__buttons';
@@ -365,11 +386,11 @@ export function createLibraryForm(options: LibraryFormOptions): HTMLElement {
     summary.textContent = 'More options';
     const moreBody = document.createElement('div');
     moreBody.className = 'library-form__more-body';
-    moreBody.append(bodyWrap, preview, triggerWrap, keywordsWrap);
+    moreBody.append(bodyWrap, preview, triggerWrap, keywordsWrap, categoryWrap);
     more.append(summary, moreBody);
     form.append(nameWrap, more, buttons);
   } else {
-    form.append(nameWrap, bodyWrap, preview, triggerWrap, keywordsWrap, buttons);
+    form.append(nameWrap, bodyWrap, preview, triggerWrap, keywordsWrap, categoryWrap, buttons);
   }
   refresh();
   renderNamePreview();

@@ -17,11 +17,24 @@ export interface RovingOptions {
   onEscape?: () => void;
 }
 
+/** Handle returned by {@link wireRovingTabindex}. */
+export interface RovingHandle {
+  /**
+   * Re-derive the tab stop after `buttons` was changed in place: the first
+   * button becomes the only one in the tab sequence.
+   */
+  reset: () => void;
+}
+
+/**
+ * `buttons` is read live, so a caller may refill the same array in place
+ * (a filtered list) and call `reset` instead of wiring a second time.
+ */
 export function wireRovingTabindex(
   toolbar: HTMLElement,
   buttons: HTMLButtonElement[],
   options: RovingOptions = {},
-): void {
+): RovingHandle {
   let activeIndex = 0;
 
   const focusAt = (index: number, wrap: boolean): void => {
@@ -82,13 +95,23 @@ export function wireRovingTabindex(
     }
   });
 
-  buttons.forEach((btn, index) => {
-    btn.addEventListener('focus', () => {
-      if (index === activeIndex) return;
-      const current = buttons[activeIndex];
-      if (current) current.tabIndex = -1;
-      btn.tabIndex = 0;
-      activeIndex = index;
-    });
+  // One delegated listener, so the button set can change without rewiring.
+  toolbar.addEventListener('focusin', (event) => {
+    const index = buttons.indexOf(event.target as HTMLButtonElement);
+    if (index === -1 || index === activeIndex) return;
+    const current = buttons[activeIndex];
+    if (current) current.tabIndex = -1;
+    const btn = buttons[index];
+    if (btn) btn.tabIndex = 0;
+    activeIndex = index;
   });
+
+  return {
+    reset: () => {
+      activeIndex = 0;
+      buttons.forEach((btn, index) => {
+        btn.tabIndex = index === 0 ? 0 : -1;
+      });
+    },
+  };
 }

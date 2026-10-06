@@ -1,9 +1,22 @@
-# Accessibility audit – baseline (September 2026, produced from commit 9862dda)
+# Accessibility audit – baseline (1 October 2026, produced from commit 6419408)
 
 Produced by `npm run test:a11y` (Playwright driving the real side-panel build in
 headless Chromium; axe-core restricted to WCAG 2.0/2.1/2.2 A+AA tags, plus
 custom keyboard / focus / target-size / reflow / live-region / naming checks).
 Themes audited: **light, dark, high-contrast**.
+
+Latest run: 30 violations (30 known, 0 new), 0 stale known issues, 60
+warnings (axe-incomplete). Every check in sections B–G passed.
+
+Scan inventory: each theme is axe-scanned in ten states – `symbols`, `finder`
+(the `\` finder open), `drawing`, `my-library`, `settings`,
+`keyboard-shortcuts`, and the four custom-shortcuts states
+`custom-shortcuts-empty`, `custom-shortcuts-list`, `custom-shortcuts-form`
+and `custom-shortcuts-import` – so 30 scans in all. The other checks are the
+tab-order walk, focus visibility, target size, reflow (320 px, seven modes
+across five font sizes), live regions (including My library and Custom
+shortcuts keeping keyboard focus through their flows, the latter ending in an
+escape step) and names and headings.
 
 > Methodology note: an earlier version of the harness reported roughly 150
 > findings that proved to be tooling artefacts (outline styles read on
@@ -37,7 +50,10 @@ stale and fails the run until it is removed.
 
 1. **`nested-interactive` on `math-field`** – the focusable host wraps its
    focusable internal sink. This is MathLive's architecture; not safely fixable
-   from the outside. Revisit on MathLive upgrades.
+   from the outside. Revisit on MathLive upgrades. A MathLive 0.111.0 upgrade
+   was trialled: the element's role changed from `math` to `group`, but axe
+   still flags `#equation-editor` with "Element has focusable descendants", so
+   the known issue stays (the project remains on 0.110.0).
 
 ## Recently fixed
 
@@ -48,11 +64,38 @@ stale and fails the run until it is removed.
 
 ## Manual-review notes (warnings, not violations)
 
-- `axe-incomplete:*:color-contrast` on the Style menu's "Blackboard bold"
-  toggle: axe could not compute the contrast of its double-struck ℝ glyph
-  automatically. The button uses the same solid token colours as its passing
-  siblings, so this is almost certainly a measurement limitation, but check
-  it visually when convenient.
+- Style menu "Blackboard bold" item (ℝ glyph) – manual contrast check, replacing
+  the earlier axe-incomplete note (axe no longer reports this item as
+  incomplete). There is no separate Blackboard theme: the item is the
+  `mathbb` entry of the Style ▾ menu and is checked in each of the three
+  themes. Measured from computed styles in the built panel (headless
+  Chromium; focus reached with the keyboard so `:focus-visible` applies).
+  The glyph and label share one colour. Text needs 4.5:1; the 2px focus ring
+  needs 3:1 against the item fill it sits on.
+
+  | Theme | State | Foreground | Background | Text ratio | Focus ring ratio |
+  | --- | --- | --- | --- | --- | --- |
+  | Light | off | #1a1c1e | #ffffff | 17.09 | – |
+  | Light | on (checked) | #1a1c1e | #ffffff | 17.09 | – |
+  | Light | hover | #1a1c1e | #f4f5f7 | 15.67 | – |
+  | Light | focus | #1a1c1e | #f4f5f7 | 15.67 | 6.11 (#0b5cad) |
+  | Dark | off | #f1f3f5 | #15171a | 16.14 | – |
+  | Dark | on (checked) | #f1f3f5 | #15171a | 16.14 | – |
+  | Dark | hover | #f1f3f5 | #262a2f | 12.98 | – |
+  | Dark | focus | #f1f3f5 | #1f2226 | 14.36 | 7.15 (#6fb1ff) |
+  | High contrast | off | #ffffff | #000000 | 21.00 | – |
+  | High contrast | on (checked) | #ffffff | #000000 | 21.00 | – |
+  | High contrast | hover | #ffffff | #000000 | 21.00 | – |
+  | High contrast | focus | #ffffff | #000000 | 21.00 | 14.88 (#ffd60a) |
+
+  Verdict: every state passes in all three themes; no colour token changed.
+  The checked state is distinguished by the ✓ in the item's check column and
+  `aria-checked`, not by colour; in high contrast the hover state has no fill
+  change by design (it is not a contrast failure).
+- Remaining `axe-incomplete` warnings (20 per theme) are the Style trigger's
+  decorative chevron (`color-contrast`) and `aria-valid-attr-value` on
+  `#style-trigger`, repeated across scans; both need manual review rather than
+  being failures.
 - Real screen-reader behaviour (NVDA/JAWS/VoiceOver reading of the maths
   content itself) cannot be automated here; the checks above cover the
   programmatic API surface (names, roles, live regions) that screen readers

@@ -63,12 +63,14 @@ function triggerCandidate(entry: TriggerEntry): CommandCandidate {
  * until a `\`-command is typed. `onInserted` hears every insertion that has
  * a glyph to show in a recent list. `triggers` supplies the user's own
  * `\`-triggers, listed among the commands and read afresh on every query so
- * a shortcut saved a moment ago is offered at once.
+ * a shortcut saved a moment ago is offered at once; `insertTrigger` inserts
+ * one of them, wrapping a selection the command began with.
  */
 export function createCommandFinder(
   mf: MathfieldElement,
   onInserted?: FinderInsertListener,
   triggers?: EditorTriggers,
+  insertTrigger?: (body: string) => boolean,
 ): HTMLElement {
   // The popover this list replaces. With it off, MathLive computes no
   // suggestions at all and leaves ArrowUp/ArrowDown in LaTeX mode inert,
@@ -116,16 +118,21 @@ export function createCommandFinder(
   const insert = (candidate: CommandCandidate): void => {
     // MathLive's own commit path: drop the typed LaTeX text, then insert –
     // one undoable step, placeholders selected and Tab-navigable.
-    mf.executeCommand(['complete', 'reject']);
-    mf.insert(candidate.latex, { focus: true, selectionMode: 'placeholder' });
-    mf.executeCommand('scrollIntoView');
+    let wrapped = false;
+    if (candidate.triggerId !== undefined && insertTrigger !== undefined) {
+      wrapped = insertTrigger(candidate.latex);
+    } else {
+      mf.executeCommand(['complete', 'reject']);
+      mf.insert(candidate.latex, { focus: true, selectionMode: 'placeholder' });
+      mf.executeCommand('scrollIntoView');
+    }
     if (candidate.triggerId !== undefined) {
       triggers?.recordUse(candidate.triggerId);
     } else if (candidate.glyph !== '' && onInserted) {
       onInserted({ glyph: candidate.glyph, label: candidate.label, latex: candidate.latex });
     }
     clearTimeout(announceTimer);
-    announce(`Inserted ${candidate.label}`);
+    announce(`Inserted ${candidate.label}${wrapped ? ' around the selection' : ''}`);
     close();
   };
 

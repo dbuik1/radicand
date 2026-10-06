@@ -228,6 +228,55 @@ describe('library view', () => {
     });
   });
 
+  it('offers a category filter only once an entry has a category, combined with the search', async () => {
+    const { library, view } = await freshModules();
+    library.addLibraryEntry({ name: 'Quadratic formula', body: 'x', category: 'Algebra' });
+    library.addLibraryEntry({ name: 'Std dev', body: 'y', category: 'Statistics' });
+    library.addLibraryEntry({ name: 'Mean', body: 'z', category: 'Statistics' });
+    const { editor } = stubEditor();
+    const panel = view.buildLibraryPanel(editor).element;
+    document.body.appendChild(panel);
+
+    const select = panel.querySelector<HTMLSelectElement>('#library-category')!;
+    expect(select.hidden).toBe(false);
+    expect(document.querySelector('label[for="library-category"]')!.textContent).toBe('Category');
+    expect([...select.options].map((o) => o.textContent)).toEqual([
+      'All categories',
+      'Algebra',
+      'Statistics',
+    ]);
+    expect(panel.querySelectorAll('.library-row')).toHaveLength(3);
+
+    select.value = 'statistics';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(panel.querySelectorAll('.library-row')).toHaveLength(2);
+
+    const filter = panel.querySelector<HTMLInputElement>('#library-filter')!;
+    filter.value = 'mean';
+    filter.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(panel.querySelectorAll('.library-row')).toHaveLength(1);
+
+    filter.value = 'quad';
+    filter.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(panel.querySelectorAll('.library-row')).toHaveLength(0);
+    expect(panel.querySelector('.palette__empty')!.textContent).toBe(
+      'No formulae match – clear the filters to see all 3',
+    );
+
+    select.value = '';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(panel.querySelectorAll('.library-row')).toHaveLength(1);
+  });
+
+  it('keeps the category filter hidden while no entry has a category', async () => {
+    const { library, view } = await freshModules();
+    library.addLibraryEntry({ name: 'Quadratic formula', body: 'x' });
+    const { editor } = stubEditor();
+    const panel = view.buildLibraryPanel(editor).element;
+    document.body.appendChild(panel);
+    expect(panel.querySelector<HTMLSelectElement>('#library-category')!.hidden).toBe(true);
+  });
+
   it('filters by name and keywords', async () => {
     const { library, view } = await freshModules();
     library.addLibraryEntry({ name: 'Quadratic formula', body: 'x' });

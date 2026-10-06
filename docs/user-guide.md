@@ -30,9 +30,18 @@ Press **Ctrl+Shift+U** (**Cmd+Shift+U** on a Mac), or click the extension's
 toolbar icon. The panel opens at the side of the browser window with the
 cursor already in the equation field, so you can start typing at once.
 
+The toolbar icon and the shortcut open the side panel unless you choose
+otherwise: **More ▾ › Settings › Interface › Toolbar icon opens** also
+offers *New window* and *New tab*, and applies the next time you click the
+icon or press the shortcut. To change the shortcut itself, open
+`chrome://extensions/shortcuts` in a tab, or use the *Change shortcuts in
+Chrome…* link in the Keyboard shortcuts list.
+
 If the side panel feels narrow, **More ▾ › Open in a new window** or
 **Open in a new tab** gives the editor a window of its own. Everything
-works the same there.
+works the same there. The window reopens at the size and place you last
+left it, kept on this computer only and moved back onto the screen if the
+monitor it was on has gone.
 
 ## 2. Write an equation
 
@@ -184,7 +193,7 @@ you have one. The name starts as the equation itself between dollar signs;
 type a better one if you like – the name is what you will search for later.
 Maths between dollar signs in the name is shown as maths – *Area of a
 circle $\pi r^2$* – and read out as words; `\$` is a plain dollar sign.
-*More options* opens the LaTeX, with a preview, a trigger and keywords.
+*More options* opens the LaTeX, with a preview, a trigger, keywords and a category.
 
 **Empty slots in a saved equation.** Select part of the LaTeX in the form
 and press *Blank out selection* to turn it into an empty slot. The equation
@@ -195,7 +204,12 @@ then comes back as a template you fill in with Tab.
 - **Insert… › My library** beside the search box, or **More ▾ › My
   library**, lists everything you have saved. Filter by typing, sort by
   recently used, name or recently added, and press **Enter** on an entry
-  to insert it.
+  to insert it. Once any entry has a category (set in the **Category**
+  field of the save or edit form, which suggests the ones you already
+  use, or carried in by an import), a **Category** menu appears beside the sort menu:
+  choose a category to list only its formulae, combined with whatever
+  you have typed, and choose **All categories** to see everything again.
+  If nothing matches, the list says to clear the filters.
 - The **symbol search** (**Ctrl+/**, or the *Search symbols* box) matches
   saved equations as well as symbols.
 - A **trigger** of your own. Give an entry a trigger such as `quad` in the
@@ -221,6 +235,15 @@ button in Keyboard shortcuts, opens the list.
 **Use one.** Type the trigger in the equation, such as `\al`, and press
 **space**, **Tab** or **Enter**. Like library triggers, custom shortcuts
 never fire on their own.
+
+**Wrap a selection.** Select part of the equation first, then type the
+trigger and confirm it: the selection goes into the shortcut's first empty
+slot instead of being replaced, so selecting `x` and typing `\abs` gives
+`|x|` when `\abs` is `\left|` slot `\right|`. Any further slots stay empty
+and the caret lands after the result. **Ctrl+Z** brings back the selection
+as it was. A shortcut with no empty slot has nowhere to put the selection,
+so it replaces it; with nothing selected, a shortcut inserts as usual. This
+works the same for library triggers.
 
 **Add or edit.** *Add shortcut* opens a form with the trigger, the LaTeX it
 inserts, and an optional name and keywords. A trigger is two or more
@@ -253,7 +276,9 @@ Its open or closed state is remembered.
 panel. Settings apply to every window and tab the editor is open in, and
 follow you to other computers signed into the same Chrome profile.
 
-**Interface.** One checkbox per piece of the panel: the Equation heading, the
+**Interface.** *Toolbar icon opens* chooses what the icon and its shortcut
+open: the side panel, a new window or a new tab ([section 1](#1-open-the-panel)).
+Then one checkbox per piece of the panel: the Equation heading, the
 Style and More menus, the symbol palette, its search box, its categories and
 keys, the Insert… control, the equation source, and the Copy, Speak and Save
 buttons. Switch off what you do not use and the panel becomes as bare as an

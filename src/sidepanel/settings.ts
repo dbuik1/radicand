@@ -12,6 +12,7 @@
  * identically.
  */
 import type { OutputFormat, Settings } from '../types';
+import { DEFAULT_SURFACE, normaliseSurface } from '../surface';
 import { DEFAULT_INTERFACE_PARTS, normaliseInterfaceParts } from './interface-parts';
 import {
   SETTINGS_STORAGE_KEY as STORAGE_KEY,
@@ -33,6 +34,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoFit: true,
   tidyBrackets: true,
   parts: { ...DEFAULT_INTERFACE_PARTS },
+  defaultSurface: DEFAULT_SURFACE,
   sourceOpen: false,
   paletteCategory: 'Recent',
 };
@@ -177,6 +179,7 @@ function normalise(raw: unknown): Settings {
       typeof r.tidyBrackets === 'boolean' ? r.tidyBrackets : DEFAULT_SETTINGS.tidyBrackets,
     // `symbolsOpen` is the pre-`parts` key for the symbol palette's flag.
     parts: normaliseInterfaceParts(r.parts, r.symbolsOpen),
+    defaultSurface: normaliseSurface(r.defaultSurface),
     sourceOpen: typeof r.sourceOpen === 'boolean' ? r.sourceOpen : DEFAULT_SETTINGS.sourceOpen,
     paletteCategory:
       typeof r.paletteCategory === 'string' && r.paletteCategory.length > 0

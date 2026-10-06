@@ -20,7 +20,7 @@ export interface LibraryEntry extends StoredEntry {
   trigger?: string;
   /** '; '-separated synonyms for the search. */
   keywords?: string;
-  /** Free text; no filter UI in v1. */
+  /** Free text; the library's Category filter groups entries by it. */
   category?: string;
 }
 

@@ -11,6 +11,12 @@ export type OutputFormat = 'mathml' | 'latex';
  */
 export type Theme = 'system' | 'light' | 'dark' | 'high-contrast';
 
+/**
+ * Where the editor opens: the docked side panel, a detached pop-out window
+ * or a browser tab.
+ */
+export type Surface = 'panel' | 'window' | 'tab';
+
 /** Speech rule set exposed to the user. */
 export type SpeechRuleSet = 'clearspeak' | 'mathspeak';
 
@@ -83,6 +89,11 @@ export interface Settings {
    * equation field stays that way across sessions and windows.
    */
   parts: Record<InterfacePart, boolean>;
+  /**
+   * The surface the toolbar icon, and the keyboard shortcut that stands in
+   * for it, open the editor in.
+   */
+  defaultSurface: Surface;
   /** Open state of the Equation source disclosure. Closed by default. */
   sourceOpen: boolean;
   /**

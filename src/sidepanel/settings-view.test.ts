@@ -42,6 +42,21 @@ describe('settings view', () => {
     }
   });
 
+  it('offers the toolbar icon surface as one labelled select that says when it applies', () => {
+    const select = selectById(view, 'set-surface');
+    expect(view.querySelector('label[for="set-surface"]')?.textContent).toBe('Toolbar icon opens');
+    expect(Array.from(select.options).map((o) => o.value)).toEqual(['panel', 'window', 'tab']);
+    expect(select.value).toBe('panel');
+    const hint = view.querySelector(`#${select.getAttribute('aria-describedby')}`);
+    expect(hint?.textContent).toContain('Applies next time you click the toolbar icon');
+
+    change(select, 'window');
+    expect(getSettings().defaultSurface).toBe('window');
+    void updateSettings({ defaultSurface: 'tab' });
+    expect(select.value).toBe('tab');
+    void updateSettings({ defaultSurface: 'panel' });
+  });
+
   it('hosts the equation-size slider and number input under Appearance', () => {
     const number = view.querySelector<HTMLInputElement>('#eq-size-number');
     const range = view.querySelector<HTMLInputElement>('.eq-size__range');

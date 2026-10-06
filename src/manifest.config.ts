@@ -44,9 +44,10 @@ export default defineManifest({
   },
   // Keyboard shortcuts for editor control. The suggested keys are only defaults;
   // users can change or clear them at chrome://extensions/shortcuts.
-  // - `_execute_action`: Reserved command that fires the toolbar action, which via
-  //   setPanelBehavior({ openPanelOnActionClick: true }) natively toggles the side
-  //   panel open/closed. No description field (Chrome supplies the action's title).
+  // - `_execute_action`: Reserved command that fires the toolbar action. With the
+  //   side panel chosen (setPanelBehavior({ openPanelOnActionClick: true })) it
+  //   natively toggles the panel open/closed; otherwise background.ts opens the
+  //   chosen window or tab. No description field (Chrome supplies the action's title).
   // - 'toggle-symbols': Custom command handled in background.ts to open the panel
   //   and show or hide the symbols workspace.
   commands: {

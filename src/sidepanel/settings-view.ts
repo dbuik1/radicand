@@ -18,7 +18,7 @@
 import type { InterfacePartSpec } from './interface-parts';
 import { INTERFACE_PARTS } from './interface-parts';
 import { hiddenParts, setPart, showEveryPart } from './part-visibility';
-import type { Settings, Theme, SpeechRuleSet, SpeechVerbosity } from '../types';
+import type { Settings, Surface, Theme, SpeechRuleSet, SpeechVerbosity } from '../types';
 import { getSettings, updateSettings, onSettingsChange } from './settings';
 import { configureSpeech } from './speech';
 import { announce } from './a11y';
@@ -47,6 +47,7 @@ function labelledSelect<T extends string>(
   options: SelectOption<T>[],
   selected: T,
   onChange: (value: T) => void,
+  hintText?: string,
 ): HTMLElement {
   const wrap = document.createElement('div');
   wrap.className = 'field';
@@ -69,6 +70,14 @@ function labelledSelect<T extends string>(
   select.addEventListener('change', () => onChange(select.value as T));
 
   wrap.append(label, select);
+  if (hintText) {
+    const hint = document.createElement('span');
+    hint.id = `${id}-hint`;
+    hint.className = 'field__hint';
+    hint.textContent = hintText;
+    select.setAttribute('aria-describedby', hint.id);
+    wrap.append(hint);
+  }
   return wrap;
 }
 
@@ -237,7 +246,9 @@ function buildPartField(spec: InterfacePartSpec, shown: boolean): HTMLElement {
  * The Interface group: what the panel shows around the equation field. The
  * field is not in it – it is the one thing that is always there – so the
  * group can be emptied completely and the editor still works, by keyboard as
- * much as by pointer.
+ * much as by pointer. The one control that is not a piece – which surface
+ * the toolbar icon opens – sits here because it too decides what the editor
+ * looks like when it appears.
  *
  * "Show every piece" is the way back from that state in one action, and is
  * inert while nothing is hidden rather than absent, so the group reads the
@@ -258,9 +269,31 @@ function buildInterfaceGroup(settings: Settings): HTMLElement {
   actions.className = 'field';
   actions.appendChild(restore);
 
+  const surfaceNames: Record<Surface, string> = {
+    panel: 'the side panel',
+    window: 'a new window',
+    tab: 'a new tab',
+  };
+  const surface = labelledSelect<Surface>(
+    'set-surface',
+    'Toolbar icon opens',
+    [
+      { label: 'Side panel', value: 'panel' },
+      { label: 'New window', value: 'window' },
+      { label: 'New tab', value: 'tab' },
+    ],
+    settings.defaultSurface,
+    (defaultSurface) => {
+      void updateSettings({ defaultSurface });
+      announce(`The toolbar icon will open ${surfaceNames[defaultSurface]}`);
+    },
+    'Applies next time you click the toolbar icon or use its keyboard shortcut',
+  );
+
   return group(
     'Interface',
     ...INTERFACE_PARTS.map((spec) => buildPartField(spec, settings.parts[spec.part])),
+    surface,
     actions,
   );
 }
@@ -564,6 +597,7 @@ function syncControls(root: HTMLElement, settings: Settings): void {
   };
   set('set-theme', settings.theme);
   set('set-fontsize', String(settings.fontScale));
+  set('set-surface', settings.defaultSurface);
   set('set-command-delay', String(settings.commandDelay));
   set('set-ruleset', settings.speechRuleSet);
   set('set-verbosity', settings.speechVerbosity);

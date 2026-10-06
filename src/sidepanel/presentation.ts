@@ -13,14 +13,8 @@
  * customisable.
  */
 
-const PANEL_PATH = 'src/sidepanel/index.html';
-
-/** Default size for the detached window; the user can resize from there. */
-const WINDOW_DEFAULT = { width: 820, height: 960 } as const;
-
-function panelUrl(): string {
-  return chrome.runtime.getURL(PANEL_PATH);
-}
+import { rememberPopoutBounds } from '../popout-bounds';
+import { createEditorTab, createPopoutWindow } from '../surface';
 
 /**
  * Whether *this* document is genuinely the docked side panel, as opposed to
@@ -63,16 +57,13 @@ async function closeIfDockedSidePanel(): Promise<void> {
   }
 }
 
-/** Open the editor in a detached, resizable popup window. */
+/**
+ * Open the editor in a detached, resizable popup window, at the size and
+ * place the user last left it (see popout-bounds.ts).
+ */
 export function openInWindow(): void {
   if (typeof chrome === 'undefined' || !chrome.windows?.create) return;
-  chrome.windows
-    .create({
-      url: panelUrl(),
-      type: 'popup',
-      width: WINDOW_DEFAULT.width,
-      height: WINDOW_DEFAULT.height,
-    })
+  createPopoutWindow()
     .then(() => closeIfDockedSidePanel())
     .catch((error: unknown) => {
       console.error('Failed to open the editor in a new window:', error);
@@ -82,10 +73,28 @@ export function openInWindow(): void {
 /** Open the editor in a full browser tab. */
 export function openInTab(): void {
   if (typeof chrome === 'undefined' || !chrome.tabs?.create) return;
-  chrome.tabs
-    .create({ url: panelUrl() })
+  createEditorTab()
     .then(() => closeIfDockedSidePanel())
     .catch((error: unknown) => {
       console.error('Failed to open the editor in a new tab:', error);
     });
+}
+
+/**
+ * When this document is the detached popup window, keep its size and
+ * position for the next time it opens. Does nothing in the docked panel or a
+ * tab, whose geometry is not ours to remember.
+ */
+export async function rememberWindowBoundsIfPopout(): Promise<void> {
+  if (typeof chrome === 'undefined' || !chrome.tabs?.getCurrent || !chrome.windows?.getCurrent) {
+    return;
+  }
+  try {
+    const [tab, win] = await Promise.all([chrome.tabs.getCurrent(), chrome.windows.getCurrent()]);
+    if (tab === undefined && win?.type === 'popup' && win.id !== undefined) {
+      rememberPopoutBounds(win.id);
+    }
+  } catch {
+    // Without the window there is nothing to remember.
+  }
 }

@@ -71,6 +71,20 @@ try {
   check('service worker registered', Boolean(worker));
   const extensionId = new URL(worker.url()).host;
 
+  // The keyboard shortcut that opens the editor is the reserved
+  // `_execute_action` command, which Chrome turns into a toolbar click, so it
+  // follows whichever surface the toolbar icon opens. Both platforms need a
+  // suggested key, and neither may reuse the other command's.
+  const commands = manifest.commands ?? {};
+  const openKey = commands._execute_action?.suggested_key;
+  check(
+    'the manifest has a keyboard shortcut that opens the editor',
+    Boolean(openKey?.default) && Boolean(openKey?.mac),
+    JSON.stringify(commands._execute_action ?? null),
+  );
+  const keys = Object.values(commands).flatMap((c) => [c.suggested_key?.default, c.suggested_key?.mac]);
+  check('no two manifest commands share a suggested key', new Set(keys).size === keys.length, keys.join(', '));
+
   const page = await context.newPage();
   currentPage = page;
   // MathLive focuses its keyboard sink ~60 ms after a click (and after a
@@ -381,6 +395,11 @@ try {
       before,
       { timeout: 5000 },
     ).catch(() => {});
+    // Focus reaches the field on MathLive's short timer, and sits on the page
+    // until then.
+    await page
+      .waitForFunction(() => document.activeElement?.tagName === 'MATH-FIELD', undefined, { timeout: 2000 })
+      .catch(() => {});
     const afterEnter = await quickState();
     const inserted = await page.locator('#source-input').inputValue();
     check(
@@ -389,6 +408,33 @@ try {
       `source ${JSON.stringify(inserted)}, shown: ${afterEnter.shown}, focus on ${JSON.stringify(afterEnter.tag)}`,
     );
     await closeMode();
+
+    // MathLive's deferred field focus lands inside the grace window after the
+    // Symbols box gains focus: the field's focus is forced here the way that
+    // timer does it, and the list must survive.
+    await page.locator('#symbol-search-input').fill('for all');
+    await page.locator('#symbol-search-listbox [role="option"]').first().waitFor({ timeout: 10000 });
+    await page.evaluate(() => {
+      const input = document.getElementById('symbol-search-input');
+      // Synchronous, so the timing cannot drift on a slow machine: the box
+      // gains focus (the event the grace window counts from) and the field
+      // takes it in the same task, as MathLive's deferred focus does.
+      input.focus();
+      input.dispatchEvent(new FocusEvent('focus'));
+      document.querySelector('math-field').focus();
+    });
+    // A negative assertion: wait past MathLive's 60 ms timer so the steal, if
+    // it is going to land, has.
+    await page.waitForTimeout(300);
+    const afterSteal = await page.evaluate(() => ({
+      listHidden: document.getElementById('symbol-search-listbox')?.hidden ?? true,
+      focused: document.activeElement?.id ?? '',
+    }));
+    check(
+      'Symbols search keeps its list when the field takes focus just after it gained it',
+      !afterSteal.listHidden && afterSteal.focused === 'symbol-search-input',
+      `list hidden: ${afterSteal.listHidden}, focus on ${JSON.stringify(afterSteal.focused)}`,
+    );
 
     // Escape is progressive: close the results list, clear the query, then
     // hand focus back to the equation field.
@@ -683,6 +729,77 @@ try {
     await closeMode();
   });
 
+  await section('the toolbar icon follows the chosen surface', async () => {
+    // The side panel opens on a toolbar click only while Chrome's panel
+    // behaviour says so; any other choice hands the click to the worker,
+    // which opens the window or tab. A real click cannot be sent from
+    // Playwright, so the behaviour Chrome holds is what is checked.
+    const opensPanel = () => worker.evaluate(async () => (await chrome.sidePanel.getPanelBehavior()).openPanelOnActionClick);
+    const waitFor = async (want) => {
+      for (let i = 0; i < 50; i += 1) {
+        if ((await opensPanel()) === want) return true;
+        await page.waitForTimeout(100);
+      }
+      return false;
+    };
+    check('the toolbar icon opens the side panel by default', await waitFor(true));
+    await openFromMore('Settings');
+    const select = page.locator('#set-surface');
+    check(
+      'Settings says when the toolbar choice applies',
+      (await page.locator('#set-surface-hint').textContent()).includes('Applies next time'),
+    );
+    await select.selectOption('tab');
+    await storedSettingsHave({ defaultSurface: 'tab' });
+    check('choosing a tab hands the toolbar click to the worker', await waitFor(false));
+    await select.selectOption('panel');
+    await storedSettingsHave({ defaultSurface: 'panel' });
+    check('choosing the side panel gives the click back to Chrome', await waitFor(true));
+    await closeMode();
+  });
+
+  await section('the pop-out window remembers its bounds', async () => {
+    // The pop-out opens at the bounds saved in chrome.storage.local, and
+    //   resizing it stores the new ones.
+    const seeded = { left: 40, top: 50, width: 700, height: 600, area: { left: 0, top: 0, width: 1920, height: 1080 } };
+    await page.evaluate((bounds) => chrome.storage.local.set({ popoutBounds: bounds }), seeded);
+    // Headless Chromium sizes every popup to the screen whatever it is asked
+    // for, so what is checked is the request the panel makes.
+    await page.evaluate(() => {
+      const create = chrome.windows.create.bind(chrome.windows);
+      window.__popupRequests = [];
+      chrome.windows.create = (options) => {
+        window.__popupRequests.push(options);
+        return create(options);
+      };
+    });
+    const popupPromise = context.waitForEvent('page', { timeout: 10000 });
+    await openFromMore('Open in a new window');
+    const popup = await popupPromise;
+    await popup.locator('math-field').waitFor({ timeout: 15000 });
+    const request = await page.evaluate(() => window.__popupRequests[0] ?? null);
+    check(
+      'the pop-out reopens at the saved size and place',
+      request?.type === 'popup' &&
+        request.width === 700 && request.height === 600 && request.left === 40 && request.top === 50,
+      JSON.stringify(request),
+    );
+    const opened = await page.evaluate(async () => (await chrome.windows.getAll({ windowTypes: ['popup'] }))[0] ?? null);
+    await page.evaluate((id) => chrome.windows.update(id, { width: 640, height: 520 }), opened?.id);
+    const stored = await page
+      .waitForFunction(
+        () =>
+          chrome.storage.local
+            .get('popoutBounds')
+            .then((r) => (Math.abs((r.popoutBounds?.width ?? 0) - 640) <= 20 ? r.popoutBounds : false)),
+        undefined,
+        { timeout: 10000 },
+      )
+      .then((handle) => handle.jsonValue(), () => null);
+    check('resizing the pop-out stores its new bounds', stored !== null, 'popoutBounds stayed at the seeded size');
+    await popup.close();
+  });
+
   await section('the expression library', async () => {
     // 6b. The expression library round-trips through real chrome.storage.local:
     //     Alt+S captures the equation, My library lists it, Insert puts it
@@ -944,6 +1061,66 @@ try {
     // Leave storage clean for the checks that follow – once the use count's
     // debounced write has landed, so it cannot write the library back.
     await storedLibraryEntryHas({ id: insertFromList.id, uses: 1 });
+    await page.evaluate(() => chrome.storage.local.remove('library'));
+  });
+
+  await section('library category filter', async () => {
+    // The category control appears only for a library with categories, is a
+    // labelled select a keyboard can drive, and narrows the list with the
+    // text search; an empty result names the way out.
+    await page.evaluate(() =>
+      chrome.storage.local.set({
+        library: { version: 1, entries: [{ id: 'own-1', name: 'Own', body: 'x', created: 1, modified: 1, uses: 0 }] },
+      }),
+    );
+    await reloadPanel();
+    await openMode('My library');
+    await page.locator('.library-row').first().waitFor({ timeout: 5000 });
+    check('the category filter is hidden while no entry has a category', !(await page.locator('#library-category').isVisible()));
+    await page.locator('.library-row__edit').first().click();
+    await page.getByLabel('Category (optional)').fill(' Algebra ');
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    await page.locator('#library-category').waitFor({ state: 'visible', timeout: 5000 });
+    check(
+      'a category set in the edit form appears in the filter at once',
+      (await page.locator('#library-category option').allTextContents()).join('|') === 'All categories|Algebra',
+    );
+    await page.evaluate(() => {
+      const entry = (i, name, category) => ({
+        id: `cat-${i}`,
+        name,
+        body: `x_{${i}}`,
+        created: i,
+        modified: i,
+        uses: 0,
+        ...(category ? { category } : {}),
+      });
+      return chrome.storage.local.set({
+        library: {
+          version: 1,
+          entries: [entry(1, 'Alpha', 'Algebra'), entry(2, 'Beta', 'Statistics'), entry(3, 'Gamma', 'Statistics')],
+        },
+      });
+    });
+    await reloadPanel();
+    await openMode('My library');
+    const select = page.getByLabel('Category', { exact: true });
+    await select.waitFor({ timeout: 5000 });
+    const rows = page.locator('.library-row');
+    check('the category filter lists every category once', (await select.locator('option').allTextContents()).join('|') === 'All categories|Algebra|Statistics');
+    await select.focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.waitForFunction(() => document.querySelectorAll('.library-row').length === 2);
+    check('choosing a category from the keyboard narrows the list', (await rows.count()) === 2);
+    await page.locator('#library-filter').fill('alpha');
+    await page.waitForFunction(() => document.querySelectorAll('.library-row').length === 0);
+    const emptyText = await page.locator('.library-panel .palette__empty').textContent();
+    check('a category and search with no match say how to clear them', /clear the filters/.test(emptyText ?? ''), emptyText ?? '');
+    await page.locator('#library-filter').fill('');
+    await select.selectOption({ label: 'All categories' });
+    await page.waitForFunction(() => document.querySelectorAll('.library-row').length === 3);
+    check('All categories shows the whole library again', (await rows.count()) === 3);
     await page.evaluate(() => chrome.storage.local.remove('library'));
   });
 
