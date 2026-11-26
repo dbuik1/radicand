@@ -90,7 +90,7 @@ Write maths equations in the browser's side panel and copy them as MathML or LaT
   ```
 - `clipboardWrite`:
   ```text
-  The Copy button and Alt+C put the equation on the clipboard as MathML and LaTeX so it can be pasted into a document.
+  The two copy buttons and Alt+C put the equation on the clipboard as MathML or LaTeX so it can be pasted into a document.
   ```
 
 **Remote code**: No, I am not using remote code. Every script is in the

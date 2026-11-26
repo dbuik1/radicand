@@ -94,6 +94,15 @@ try {
     ),
   );
   for (let i = 0; i < angle; i += 1) await panel.press('.symbol-search__input', 'ArrowDown');
+  // Moving through the list scrolls the panel and leaves the search label
+  // cut in half: scroll on until the box itself is the first thing shown.
+  await panel.evaluate(() => {
+    const input = document.querySelector('.symbol-search__input');
+    const fixedBottom = document.querySelector('.actions-bar').getBoundingClientRect().bottom;
+    for (let el = input.parentElement; el; el = el.parentElement) {
+      if (el.scrollTop > 0) el.scrollTop += input.getBoundingClientRect().top - fixedBottom - 6;
+    }
+  });
   await panel.waitForTimeout(200);
   const texSearching = await shoot({ keepFocus: true });
   await panel.fill('.symbol-search__input', '');
@@ -132,6 +141,8 @@ try {
       ?.click();
   });
   await panel.waitForSelector('.library-row__insert', { timeout: 5000 });
+  // The confirmation line clears by itself; the picture is of the list.
+  await panel.waitForSelector('.actions-bar__status', { state: 'hidden', timeout: 10000 });
   const library = await shoot();
   await openTab('symbols');
 
