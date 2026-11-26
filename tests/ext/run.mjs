@@ -161,7 +161,13 @@ try {
   // A reload is complete once the panel has started up, which ends with
   // focus in the equation field; anything opened before then can have focus
   // taken from it.
-  const reloadPanel = async () => {
+  // Sections start from an empty field, so a reload drops the kept equation
+  // unless the section is about keeping it.
+  const reloadPanel = async ({ keepEquation = false } = {}) => {
+    if (!keepEquation) {
+      await page.evaluate(() => document.querySelector('math-field')?.setValue(''));
+      await page.evaluate(() => chrome.storage.session.remove('draft'));
+    }
     await page.reload();
     await page.locator('math-field').waitFor({ timeout: 15000 });
     await page.waitForFunction(() => document.activeElement?.tagName === 'MATH-FIELD', undefined, {
@@ -1135,6 +1141,24 @@ try {
       await page.waitForTimeout(250);
     }
     check('speech locale maps load from the extension origin', sawLocalMathmaps());
+  });
+
+  await section('the equation survives a reload', async () => {
+    // 7a. The field's LaTeX is kept in chrome.storage.session, so a reload
+    //     (or a close and reopen) brings the equation back.
+    await page.evaluate(() => document.querySelector('math-field').setValue(''));
+    await focusField();
+    await page.keyboard.type('k+7');
+    await page.waitForFunction(
+      () => chrome.storage.session.get('draft').then((r) => r.draft === 'k+7'),
+      undefined,
+      { timeout: 5000 },
+    );
+    await reloadPanel({ keepEquation: true });
+    const kept = await page
+      .waitForFunction(() => document.querySelector('math-field').getValue('latex') === 'k+7', undefined, { timeout: 5000 })
+      .then(() => true, () => false);
+    check('the equation is back after a reload', kept, await page.evaluate(() => document.querySelector('math-field').getValue('latex')));
   });
 
   await section('LaTeX cannot fetch a remote address', async () => {

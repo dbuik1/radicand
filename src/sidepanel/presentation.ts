@@ -15,6 +15,7 @@
 
 import { rememberPopoutBounds } from '../popout-bounds';
 import { createEditorTab, createPopoutWindow } from '../surface';
+import { flushDraft } from './draft';
 
 /**
  * Whether *this* document is genuinely the docked side panel, as opposed to
@@ -63,7 +64,9 @@ async function closeIfDockedSidePanel(): Promise<void> {
  */
 export function openInWindow(): void {
   if (typeof chrome === 'undefined' || !chrome.windows?.create) return;
-  createPopoutWindow()
+  // The new surface reads the kept equation as it starts, so store it first.
+  flushDraft()
+    .then(() => createPopoutWindow())
     .then(() => closeIfDockedSidePanel())
     .catch((error: unknown) => {
       console.error('Failed to open the editor in a new window:', error);
@@ -73,7 +76,8 @@ export function openInWindow(): void {
 /** Open the editor in a full browser tab. */
 export function openInTab(): void {
   if (typeof chrome === 'undefined' || !chrome.tabs?.create) return;
-  createEditorTab()
+  flushDraft()
+    .then(() => createEditorTab())
     .then(() => closeIfDockedSidePanel())
     .catch((error: unknown) => {
       console.error('Failed to open the editor in a new tab:', error);
