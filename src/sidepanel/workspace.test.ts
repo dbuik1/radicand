@@ -6,7 +6,14 @@ import { setPart } from './part-visibility';
 import type { EditorController } from './editor';
 
 function stubEditor(): EditorController & { focused: number } {
-  const element = document.createElement('div');
+  // Enough of a mathfield for the text style keys to read a state from.
+  const element = Object.assign(document.createElement('div'), {
+    applyStyle: () => {},
+    queryStyle: () => 'none',
+    getValue: () => '',
+    selection: { ranges: [[0, 0]] },
+    position: 0,
+  });
   element.tabIndex = 0;
   const editor = {
     focused: 0,

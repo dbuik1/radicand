@@ -72,8 +72,8 @@ describe('applying a part flag to an element', () => {
   it('reports what is switched off, in the order Settings lists it', async () => {
     expect(hiddenParts()).toEqual([]);
     await setPart('speak', false);
-    await setPart('styleMenu', false);
-    expect(hiddenParts()).toEqual(['styleMenu', 'speak']);
+    await setPart('equationHeading', false);
+    expect(hiddenParts()).toEqual(['equationHeading', 'speak']);
     expect(isPartShown('speak')).toBe(false);
     expect(isPartShown('copy')).toBe(true);
   });
@@ -117,9 +117,9 @@ describe('announcing what went', () => {
   it('names the piece when one changes', async () => {
     track(installPartAnnouncements(() => {}));
     await setPart('speak', false);
-    expect(await announced()).toBe('Speak button hidden');
+    expect(await announced()).toBe('Read aloud button hidden');
     await setPart('speak', true);
-    expect(await announced()).toBe('Speak button shown');
+    expect(await announced()).toBe('Read aloud button shown');
   });
 
   it('counts them instead when several change at once', async () => {

@@ -1,8 +1,8 @@
 /**
- * The Custom shortcuts workspace mode: the user's own `\`-triggers as a list
+ * The Shortcuts tab: the user's own `\`-triggers as a list
  * of [Insert][Edit] rows – the trigger at the left, the name over the
  * rendered result and its LaTeX – with the same one-Tab-stop roving list as
- * My library. Add and Edit open a form in place of the list; Delete asks for
+ * the library. Add and Edit open a form in place of the list; Delete asks for
  * a second press and leaves an Undo until the next change.
  *
  * With no shortcuts yet the list is replaced by the three ways to get some
@@ -12,7 +12,7 @@
  *
  * Every trigger the form or an import accepts is checked against the whole
  * `\`-trigger namespace (triggerProblem): a shortcut can never shadow a LaTeX
- * command or a My library trigger, and an import names the ones it skips.
+ * command or a library trigger, and an import names the ones it skips.
  */
 import type { EditorController } from './editor';
 import { announce, report } from './a11y';
@@ -346,14 +346,13 @@ export function buildCustomShortcutsPanel(
   const controls = document.createElement('div');
   controls.className = 'library-panel__controls';
   const filterLabel = document.createElement('label');
-  filterLabel.className = 'visually-hidden';
+  filterLabel.className = 'field__label library-panel__label';
   filterLabel.textContent = 'Filter shortcuts';
   filterLabel.htmlFor = 'shortcuts-filter';
   const filter = document.createElement('input');
   filter.type = 'search';
   filter.id = 'shortcuts-filter';
   filter.className = 'library-panel__filter';
-  filter.placeholder = 'Filter shortcuts';
   filter.autocomplete = 'off';
   const addBtn = button('Add shortcut');
   controls.append(filterLabel, filter, addBtn);
@@ -693,7 +692,7 @@ export function buildCustomShortcutsPanel(
   });
 
   const openImport = (fileName: string, imported: Shortcut[]): void => {
-    // A trigger that is a LaTeX command or a My library trigger is never
+    // A trigger that is a LaTeX command or a library trigger is never
     // imported: the form would refuse it, so the file cannot sneak it in.
     // A copy renamed on import must avoid them too.
     const unavailable = (trigger: string): boolean => {
@@ -766,7 +765,7 @@ export function buildCustomShortcutsPanel(
       if (inLibrary.length > 0) {
         const one = inLibrary.length === 1;
         sentences.push(
-          `${listed(inLibrary)} ${one ? 'is also a trigger' : 'are also triggers'} in My library, ` +
+          `${listed(inLibrary)} ${one ? 'is also a trigger' : 'are also triggers'} in the library, ` +
             `so ${one ? 'it' : 'they'} will be skipped. Change ${one ? 'it' : 'them'} there to import ${one ? 'it' : 'them'}.`,
         );
       }

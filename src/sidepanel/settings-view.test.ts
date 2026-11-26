@@ -42,13 +42,11 @@ describe('settings view', () => {
     }
   });
 
-  it('offers the toolbar icon surface as one labelled select that says when it applies', () => {
+  it('offers the toolbar icon surface as one labelled select', () => {
     const select = selectById(view, 'set-surface');
     expect(view.querySelector('label[for="set-surface"]')?.textContent).toBe('Toolbar icon opens');
     expect(Array.from(select.options).map((o) => o.value)).toEqual(['panel', 'window', 'tab']);
     expect(select.value).toBe('panel');
-    const hint = view.querySelector(`#${select.getAttribute('aria-describedby')}`);
-    expect(hint?.textContent).toContain('Applies next time you click the toolbar icon');
 
     change(select, 'window');
     expect(getSettings().defaultSurface).toBe('window');
@@ -112,7 +110,7 @@ describe('settings view', () => {
     expect(input.checked).toBe(true);
   });
 
-  it('offers one checkbox per piece of interface, labelled and described', () => {
+  it('offers one checkbox per piece of interface, labelled', () => {
     for (const spec of INTERFACE_PARTS) {
       const input = view.querySelector<HTMLInputElement>(`#set-part-${spec.part}`);
       const label = view.querySelector(`label[for="set-part-${spec.part}"]`);
@@ -120,8 +118,11 @@ describe('settings view', () => {
       expect(input?.type).toBe('checkbox');
       expect(input?.checked).toBe(true);
       expect(label?.textContent).toBe(spec.label);
-      expect(hint?.textContent).toBe(spec.hint);
-      expect(input?.getAttribute('aria-describedby')).toBe(`set-part-${spec.part}-hint`);
+      // A hint is there only where it adds a fact the label does not carry.
+      expect(hint?.textContent ?? undefined).toBe(spec.hint);
+      expect(input?.getAttribute('aria-describedby')).toBe(
+        spec.hint ? `set-part-${spec.part}-hint` : null,
+      );
       // The checkbox and its heading share one row, like every other
       // checkbox in the form, rather than the heading dropping below it.
       expect(input?.parentElement?.classList.contains('field__row')).toBe(true);

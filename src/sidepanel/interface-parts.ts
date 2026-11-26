@@ -16,16 +16,15 @@
  *
  * `mode` says what "off" means for that piece. Interactive controls are taken
  * out of the page altogether – an invisible button that still takes a Tab
- * stop would be worse than either state. The two headings instead stay in the
- * accessibility tree, visually hidden: the "Equation" heading is the field's
- * accessible name (WCAG 4.1.2), so removing it would leave the field unnamed.
+ * stop would be worse than either state. The "Equation" heading instead stays
+ * in the accessibility tree, visually hidden: it is the field's accessible
+ * name (WCAG 4.1.2), so removing it would leave the field unnamed.
  */
 import type { InterfacePart } from '../types';
 import {
   COPY_SHORTCUT_LABEL,
   SAVE_SHORTCUT_LABEL,
   SEARCH_SHORTCUT_LABEL,
-  SETTINGS_SHORTCUT_LABEL,
   SYMBOLS_SHORTCUT_LABEL,
 } from './shortcut-labels';
 
@@ -33,8 +32,11 @@ export interface InterfacePartSpec {
   part: InterfacePart;
   /** Checkbox label in Settings: the piece, named as the user sees it. */
   label: string;
-  /** One line under the label: what goes, and what still works without it. */
-  hint: string;
+  /**
+   * One line under the label, only where it says something the label cannot:
+   * what still works with the piece switched off.
+   */
+  hint?: string;
   /**
    * How the piece leaves: `remove` takes it out of the page, `hide-visually`
    * keeps it for assistive technology only (headings that name something).
@@ -46,67 +48,46 @@ export const INTERFACE_PARTS: readonly InterfacePartSpec[] = [
   {
     part: 'equationHeading',
     label: 'Equation heading',
-    hint: 'The word "Equation" above the field. Screen readers still announce it as the field\'s name.',
+    hint: 'Screen readers still announce it.',
     mode: 'hide-visually',
   },
   {
-    part: 'styleMenu',
-    label: 'Style menu',
-    hint: 'Bold, italic, colour and text style for the selection.',
+    part: 'copy',
+    label: 'Copy buttons',
+    hint: `${COPY_SHORTCUT_LABEL} still copies.`,
     mode: 'remove',
   },
   {
-    part: 'moreMenu',
-    label: 'More menu',
-    hint: `Open in a window or tab, the equation source, keyboard shortcuts and settings. Settings also opens with ${SETTINGS_SHORTCUT_LABEL}.`,
+    part: 'speak',
+    label: 'Read aloud button',
     mode: 'remove',
   },
   {
     part: 'symbols',
-    label: 'Symbol palette',
-    hint: `The whole area below the field: search, categories and symbol keys. ${SYMBOLS_SHORTCUT_LABEL} shows and hides it too.`,
+    label: 'Tabs below the field',
+    hint: `${SYMBOLS_SHORTCUT_LABEL} shows and hides them too.`,
     mode: 'remove',
   },
   {
     part: 'symbolSearch',
     label: 'Symbol search box',
-    hint: `Finds a symbol by name or description. ${SEARCH_SHORTCUT_LABEL} puts the cursor in it and brings it back if it is off.`,
+    hint: `${SEARCH_SHORTCUT_LABEL} brings it back.`,
     mode: 'remove',
   },
   {
     part: 'symbolCategories',
     label: 'Symbol categories and keys',
-    hint: 'The category strip and the grid of symbols under it.',
-    mode: 'remove',
-  },
-  {
-    part: 'symbolSources',
-    label: 'Insert from Drawing and My library',
-    hint: 'The Insert… control on the search row: Drawing sketches a symbol, My library inserts a whole saved equation. Both stay in the More menu.',
-    mode: 'remove',
-  },
-  {
-    part: 'source',
-    label: 'Equation source',
-    hint: 'The LaTeX or MathML box under the symbols, where the source can be read and edited.',
-    mode: 'remove',
-  },
-  {
-    part: 'copy',
-    label: 'Copy button',
-    hint: `Copy, the format it copies in, and the line that confirms it. ${COPY_SHORTCUT_LABEL} still copies the equation.`,
-    mode: 'remove',
-  },
-  {
-    part: 'speak',
-    label: 'Speak button',
-    hint: 'Reads the equation aloud. The speech settings below still apply to it.',
     mode: 'remove',
   },
   {
     part: 'saveToLibrary',
     label: 'Save to library button',
-    hint: `Saves the equation for reuse. ${SAVE_SHORTCUT_LABEL} still saves it.`,
+    hint: `${SAVE_SHORTCUT_LABEL} still saves.`,
+    mode: 'remove',
+  },
+  {
+    part: 'source',
+    label: 'Equation source',
     mode: 'remove',
   },
 ];

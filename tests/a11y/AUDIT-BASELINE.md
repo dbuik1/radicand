@@ -14,8 +14,8 @@ Scan inventory: each theme is axe-scanned in ten states – `symbols`, `finder`
 `custom-shortcuts-empty`, `custom-shortcuts-list`, `custom-shortcuts-form`
 and `custom-shortcuts-import` – so 30 scans in all. The other checks are the
 tab-order walk, focus visibility, target size, reflow (320 px, seven modes
-across five font sizes), live regions (including My library and Custom
-shortcuts keeping keyboard focus through their flows, the latter ending in an
+across five font sizes), live regions (including the Library and Shortcuts
+tabs keeping keyboard focus through their flows, the latter ending in an
 escape step) and names and headings.
 
 > Methodology note: an earlier version of the harness reported roughly 150
@@ -31,7 +31,7 @@ escape step) and names and headings.
 | Check | Result |
 | --- | --- |
 | axe WCAG A/AA – app-owned DOM | **0 violations** in all three themes |
-| Keyboard tab order | The audited walk covers the default state: the Style ▾ and More ▾ menu buttons are one stop each (arrow keys move inside the open menu), the symbol search and the Insert… control are one stop each, then the category tabs and the symbol grid; plus the "Equation source" disclosure's "Show as" select and textarea (open during the walk) and one headless-walk artefact stop on `<body>`. Skip link first in document order; Style ▾, More ▾, math field, symbol search, Insert…, palette tabs, symbol grid, Copy, Copy format ▾, Speak and Save to library all reachable; the other modes (Drawing, My library, Settings, Keyboard shortcuts) are opened in turn by the audits and each ends in its own Close button; no traps; no positive tabindex |
+| Keyboard tab order | The audited walk covers the default state: Settings, the math field, the actions toolbar (one stop, on the main copy button; arrow keys reach the other copy button and Read aloud), "Skip symbols", the tab bar (one stop; arrow keys choose a tab), the symbol search, the category tabs and the symbol grid; plus the source disclosure's "Show as" select and textarea (open during the walk), "Back to equation" as the last stop, and one headless-walk artefact stop on `<body>`. "Skip symbols" lands on the source and "Back to equation" on the field; the Draw, Library and Shortcuts tabs, Settings and the keyboard shortcut list are opened in turn by the audits; no traps; no positive tabindex |
 | Focus visibility (SC 2.4.7) | Visible indicator on every Tab stop in light, dark and high-contrast |
 | Target size (SC 2.5.8, 24×24) | All interactive targets pass, including palette buttons, matrix-picker cells and every mode's controls measured while that mode is open |
 | Reflow (SC 1.4.10) | No page-level horizontal scroll at 320 px, with the `\` finder open as well as closed |
@@ -64,6 +64,10 @@ stale and fails the run until it is removed.
 
 ## Manual-review notes (warnings, not violations)
 
+- The measurements in this note were taken on the Style menu, which has
+  gone: text styles are now keys in the Styles category of the Symbols tab,
+  drawn like every other symbol key. The note is kept as the record of the
+  earlier check and has not been repeated on the keys.
 - Style menu "Blackboard bold" item (ℝ glyph) – manual contrast check, replacing
   the earlier axe-incomplete note (axe no longer reports this item as
   incomplete). There is no separate Blackboard theme: the item is the

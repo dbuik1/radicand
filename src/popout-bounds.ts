@@ -1,6 +1,6 @@
 /**
- * Where the pop-out window goes. Shared by the panel (More ▾ › Open in a new
- * window) and the service worker (toolbar icon and shortcut), which are
+ * Where the pop-out window goes. Shared by the panel (Open in window, in
+ * Settings) and the service worker (toolbar icon and shortcut), which are
  * bundled separately.
  *
  * The last size and position are kept in `chrome.storage.local` – they belong

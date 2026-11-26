@@ -1,6 +1,6 @@
 /**
  * Expression library model and persistence: user-saved named expressions,
- * re-insertable from My library, the symbol search and (optionally)
+ * re-insertable from the Library tab, the symbol search and (optionally)
  * `\`-triggers. This module owns the *data* – the views live elsewhere –
  * on the shared entry store (entry-store.ts), which handles persistence,
  * read-only protection, import/export and the starter pack; this file adds
@@ -76,7 +76,7 @@ export const isLibraryReadOnly = store.isReadOnly;
 export const addLibraryEntry: (fields: NewLibraryEntry) => LibraryEntry = store.add;
 export const updateLibraryEntry: (id: string, patch: Partial<NewLibraryEntry>) => LibraryEntry | null =
   store.update;
-/** My library's undo: a deleted entry goes back exactly as it was. */
+/** The library's undo: a deleted entry goes back exactly as it was. */
 export const restoreLibraryEntry = store.restore;
 export const deleteLibraryEntry = store.delete;
 export const recordLibraryUse = store.recordUse;

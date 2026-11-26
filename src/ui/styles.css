@@ -64,25 +64,25 @@
     sans-serif;
   --font-mono: ui-monospace, Menlo, Consolas, monospace;
   --font-math: 'STIX Two Math', 'Cambria Math', serif;
-  /* Root 18px × the font-size setting (Small 16 / Medium 18 / Large 20 /
-     Larger 22 / Largest 24); everything below is in rem. */
-  --font-size-base: 18px;
+  /* Root 16px × the font-size setting; everything below is in rem. */
+  --font-size-base: 16px;
   --font-size-scale: 1;
 
-  /* Type scale (at the 18px root): label 16px, small 15px, caption 14px. */
-  --font-label: 0.889rem;
-  --font-small: 0.833rem;
-  --font-caption: 0.778rem;
-  --font-code: 0.722rem;
+  /* Type scale (at the 16px root): label 16px, small 15px, caption 14px. */
+  --font-label: 1rem;
+  --font-small: 0.9375rem;
+  --font-caption: 0.875rem;
+  --font-code: 0.8125rem;
 
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
 
-  --radius-control: 6px;
-  --radius-field: 8px;
+  --radius-control: 10px;
+  --radius-field: 14px;
   --radius-pill: 999px;
+  --shadow-field: 0 1px 2px rgb(20 35 60 / 6%), 0 10px 24px -14px rgb(20 35 60 / 28%);
   --target-min: 24px; /* SC 2.5.8 */
 
   /* Motion: background/border 120ms ease-out, chevrons 150ms; all zeroed
@@ -122,6 +122,8 @@
   --color-brand: #1f6fdc;
   --color-primary: #14233c;
   --color-primary-text: #ffffff;
+  --color-done: #0f5132;
+  --color-tint-text: #14233c;
 }
 
 /* ---- Light theme (explicit user choice) ---------------------------------- */
@@ -159,6 +161,8 @@
   --color-brand: #5aabff;
   --color-primary: #5aabff;
   --color-primary-text: #06101f;
+  --color-done: #8fe0b4;
+  --color-tint-text: #ffffff;
 }
 
 /* ---- High-contrast theme (explicit user choice) -------------------------- */
@@ -194,6 +198,8 @@
   --color-brand: #ffd60a;
   --color-primary: #ffd60a;
   --color-primary-text: #000000;
+  --color-done: #ffffff;
+  --color-tint-text: #000000;
 }
 
 /* The "System" theme's dark half: applied while no explicit theme is chosen
@@ -224,6 +230,8 @@
     --color-brand: #5aabff;
     --color-primary: #5aabff;
     --color-primary-text: #06101f;
+    --color-done: #8fe0b4;
+    --color-tint-text: #ffffff;
   }
 }
 
@@ -269,11 +277,11 @@ body {
 }
 
 /* ---- Layout -------------------------------------------------------------- */
-/* Three zones, top to bottom: the equation header and field (fixed), the
-   workspace (the only part that scrolls), and the actions bar (pinned). The
-   chain from html down to .editor-mount is a column of flex boxes with
-   min-height: 0 so the workspace can shrink and scroll inside the viewport
-   instead of pushing the actions bar off the bottom. */
+/* One column at every width, top to bottom: the heading row, the equation
+   field, its actions, then the scrolling body that holds the tabs and the
+   source. The chain from html down to .editor-mount is a column of flex
+   boxes with min-height: 0 so the body can shrink and scroll inside the
+   viewport instead of pushing anything off the bottom. */
 html,
 body {
   height: 100%;
@@ -285,9 +293,8 @@ body {
   height: 100%;
 }
 
-/* Panel chrome should not outrank the user's work: the h1 stays first in the
-   accessibility tree and heading order but takes no space on screen (the
-   .visually-hidden technique, not display: none). */
+/* The h1 stays first in the accessibility tree and heading order but takes
+   no space on screen (the .visually-hidden technique, not display: none). */
 .app__header {
   position: absolute !important;
   width: 1px;
@@ -316,49 +323,33 @@ body {
   min-width: 0;
 }
 
-/* Zone A: the "Equation" heading on the left, the Style ▾ and More ▾ menus
-   on the right. The row exists for the heading anyway, so the menus consume
-   no vertical space of their own and never push the field down. */
 .editor-header {
   flex: none;
   display: flex;
-  /* At the larger font sizes the heading and both menus no longer share
-     320px; the menus drop to a second line rather than push the panel into
-     horizontal scrolling. Wider than that, the row never wraps. */
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-3) var(--space-2);
+  min-height: 36px;
+  padding: var(--space-4) var(--space-4) 0;
 }
 
-/* With the heading and both menus switched off, the row has nothing in it
-   and gives up its padding rather than leaving a band of empty space above
-   the field. */
-.editor-header--empty {
-  padding: 0;
-}
-
-.editor-header__menus {
-  display: flex;
-  gap: var(--space-2);
+/* Settings keeps the right edge whether or not the heading is shown. */
+.editor-header__settings {
   margin-left: auto;
 }
 
 .editor-title {
-  font-size: var(--font-label);
+  font-size: 1.25rem;
   font-weight: 700;
+  line-height: 1.2;
   margin: 0;
 }
 
 .editor-field {
   flex: none;
   display: block;
-  margin: 0 var(--space-3);
+  margin: 14px var(--space-4) 0;
 }
 
-/* Zone C: the workspace – one mode at a time – then a hairline and the
-   collapsed Equation source disclosure. */
 .panel-body {
   flex: 1;
   min-height: 0;
@@ -366,38 +357,99 @@ body {
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-3) var(--space-2);
+}
+
+.panel-body > .divider {
+  margin: 0 var(--space-4);
+}
+
+.panel-body > .source {
+  margin: 0 var(--space-4);
+  padding: var(--space-2) 0;
 }
 
 /* ---- Workspace and its modes ---------------------------------------------- */
-/* One mode shows at a time; the others are `hidden`, so the workspace is
-   simply as tall as whatever is showing. It never shrinks: the panel body is
-   the scroller, and a shrunk workspace would let a tall mode overflow under
-   the Equation source disclosure below it. */
+/* One tab panel or view shows at a time; the others are `hidden`, so the
+   workspace is as tall as whatever is showing. It never shrinks: the panel
+   body is the scroller, and a shrunk workspace would let a tall view
+   overflow under the source disclosure below it. */
 .workspace {
   display: flex;
   flex-direction: column;
   flex: none;
 }
 
-/* Every mode but Symbols shares one header: its name, a one-line status,
-   and Close. Close is DOM-last (so it is the mode's last Tab stop, right
-   before the actions bar) but drawn top-right, which is what the grid is
-   for – reading order and tab order stay honest either way. */
-.mode {
+/* Four equal tabs. The selected one is marked by weight and by a bar in the
+   brand colour, never by colour alone (SC 1.4.1). */
+.tabs {
   display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-areas:
-    'title close'
-    'status close'
-    'body  body';
-  align-items: start;
-  column-gap: var(--space-2);
-  row-gap: 2px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 0 var(--space-2);
+  border-bottom: 1px solid var(--color-divider);
 }
 
-/* Symbols is the default mode and carries its own layout (the palette). */
+.tabs__tab {
+  position: relative;
+  min-height: 46px;
+  padding: 0 2px;
+  font: inherit;
+  color: var(--color-text-muted);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-control) var(--radius-control) 0 0;
+  cursor: pointer;
+  transition: color var(--motion-fast), background-color var(--motion-fast);
+}
+
+.tabs__tab:hover {
+  color: var(--color-text);
+  background: var(--color-hover);
+}
+
+.tabs__tab[aria-selected='true'] {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.tabs__tab[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -1px;
+  height: 4px;
+  border-radius: 4px 4px 0 0;
+  background: var(--color-brand);
+}
+
+/* The ring would be clipped by the scrolling body at the panel's edge. */
+.tabs__tab:focus-visible {
+  outline-offset: -3px;
+}
+
+/* A view opened over a tab has a title and, where it can be dismissed, a
+   close button. Close is DOM-last (so it is the view's last Tab stop) but
+   drawn beside the title, which is what the grid is for. */
+.mode {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'title close'
+    'status status'
+    'body  body';
+  align-items: center;
+  column-gap: var(--space-2);
+  row-gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+/* Focus is moved onto a view when it opens so a screen reader lands on it;
+   a ring around the whole view would only box the content. */
+.mode:focus,
+.workspace:focus {
+  outline: none;
+}
+
 .mode--symbols {
   display: block;
 }
@@ -405,64 +457,90 @@ body {
 .mode__title {
   grid-area: title;
   margin: 0;
-  font-size: var(--font-label);
+  font-size: 1.125rem;
   font-weight: 700;
 }
 
-/* Reserves its line whether or not there is anything to say, so the body
-   never jumps up and down as a status comes and goes. */
 .mode__status {
   grid-area: status;
   margin: 0;
-  min-height: 1.3em;
   font-size: var(--font-small);
   color: var(--color-text-muted);
 }
 
+.mode__status:empty {
+  display: none;
+}
+
+/* Draw keeps the line whether or not there is anything to say: the match
+   count arrives mid-drawing, and the surface must not move under the pen. */
+.mode[data-mode='drawing'] .mode__status {
+  display: block;
+  min-height: 1.45em;
+}
+
 .mode__close {
   grid-area: close;
-  align-self: start;
 }
 
 .mode__body {
   grid-area: body;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
   min-width: 0;
-  margin-top: var(--space-2);
 }
 
-/* Zone B: the actions bar, directly under the field and outside the
-   scrolling workspace, so the actions sit next to the equation they act on.
-   A hairline below it marks where the workspace scrolls. Wraps to two rows
-   at the narrow end rather than shrinking any target. */
+/* The actions sit directly under the field and outside the scrolling body,
+   so they stay beside the equation they act on. The row wraps rather than
+   shrink a label when the interface text is set larger. */
 .actions-bar {
   flex: none;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-3);
-  border-bottom: 1px solid var(--color-divider);
-  background: var(--color-bg);
+  padding: 14px var(--space-4) 18px;
 }
 
-/* The copy caption: a full-width line under the actions naming the current
-   copy format, and, for a few seconds after a copy, its result. It is the
-   on-screen confirmation of the Copy button, so it comes and goes with that
-   button and with nothing else: while Copy is on screen the line never
-   appears or vanishes and the bar's height never shifts. */
+/* The two copy buttons lay out as members of the row, not as a group. */
+.copy-pair {
+  display: contents;
+}
+
+.actions-bar .btn {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-left: 6px;
+  padding-right: 6px;
+  white-space: nowrap;
+}
+
+.actions-bar .copy-pair__main {
+  flex-grow: 2;
+}
+
+/* The result of a copy, a save or an import, on a line of its own under
+   the actions. It is out of the layout while there is nothing to say. */
 .actions-bar__status {
   flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   margin: 0;
-  font-size: var(--font-caption);
-  color: var(--color-text-muted);
+  font-size: var(--font-small);
 }
 
-.actions-bar__status--done {
-  color: var(--color-text);
-  font-weight: 600;
+.actions-bar__status--done::before {
+  content: '';
+  flex: none;
+  width: 18px;
+  height: 18px;
+  background: var(--color-done);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4 10.5l4 4 8-9' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4 10.5l4 4 8-9' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
 }
 
 .actions-bar__status--error {
@@ -470,26 +548,8 @@ body {
   font-weight: 600;
 }
 
-/* A docked side panel is around 400px, and at the panel's larger base type
-   the three actions need every pixel of it: below 420px the bar trims its
-   own padding and the buttons' side padding so Copy, Speak and Save to
-   library hold one row. Labels and the 36px targets are untouched, and the
-   bar still wraps at the narrow end. */
-@media (max-width: 419px) {
-  .actions-bar {
-    gap: var(--space-1);
-    padding: var(--space-3) var(--space-2);
-  }
-  .actions-bar .btn {
-    padding-left: 6px;
-    padding-right: 6px;
-  }
-}
-
-/* In a very short viewport a fixed top zone would leave the workspace no
-   room at all, so fall back to ordinary document flow and let the page
-   scroll; the actions still follow the field, so they are on screen
-   whenever the equation is. */
+/* In a very short viewport a fixed top zone would leave the tabs no room at
+   all, so fall back to ordinary document flow and let the page scroll. */
 @media (max-height: 419px) {
   html,
   body,
@@ -502,49 +562,98 @@ body {
 }
 
 /* ---- Equation field ------------------------------------------------------- */
-/* The one strong frame in the panel. The border is neutral at rest; the
-   accent appears only as focus ring, caret and selection, so accent always
-   means "active". */
+/* The field sits under a radical sign: a tick and rising stroke in the left
+   gutter and a bar across the top, all in the brand colour. The sign is
+   decoration on the frame, so the field itself keeps a plain 1px edge and
+   the focus ring. */
+.radical {
+  position: relative;
+  /* The equation sits in the middle of the frame however short it is. */
+  display: flex;
+  align-items: center;
+  min-height: 132px;
+  margin: 3px 0 0 30px;
+  background: var(--color-field);
+  border-radius: 0 var(--radius-field) var(--radius-field) var(--radius-field);
+  box-shadow: 0 0 0 1px var(--color-border), var(--shadow-field);
+}
+
+.radical::after {
+  content: '';
+  position: absolute;
+  left: -3px;
+  right: 0;
+  top: -3px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--color-brand);
+  pointer-events: none;
+}
+
+/* The tick keeps its size and the rising stroke stretches, so the sign
+   stays in proportion as the field grows with a tall equation. */
+.radical::before {
+  content: '';
+  position: absolute;
+  left: -30px;
+  top: -0.5px;
+  width: 32px;
+  height: 100%;
+  background: var(--color-brand);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 40'%3E%3Cpath d='M2.5 13 L7 10.5 L15.5 37.5' fill='none' stroke='%23000' stroke-width='5' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 0 100% / 18px 40px,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 100' preserveAspectRatio='none'%3E%3Cpath d='M15.5 100 L29.5 0' fill='none' stroke='%23000' stroke-width='5' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat 0 0 / 100% calc(100% - 2.5px);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 40'%3E%3Cpath d='M2.5 13 L7 10.5 L15.5 37.5' fill='none' stroke='%23000' stroke-width='5' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 0 100% / 18px 40px,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 100' preserveAspectRatio='none'%3E%3Cpath d='M15.5 100 L29.5 0' fill='none' stroke='%23000' stroke-width='5' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat 0 0 / 100% calc(100% - 2.5px);
+  pointer-events: none;
+}
+
+/* The field holds focus most of the time, so its ring is the frame's own
+   edge drawn heavier in the focus colour, not a second box around the sign. */
+.radical:focus-within {
+  box-shadow: 0 0 0 3px var(--color-accent), var(--shadow-field);
+}
+
 .math-field {
+  /* A block, not a flex box: MathLive's content box must keep the field's
+     width for a wide equation to overflow it, which auto-fit measures. */
   display: block;
   position: relative;
-  width: 100%;
-  min-height: 88px;
-  padding: 14px;
+  flex: 1;
+  min-width: 0;
+  padding: 14px 20px;
   /* Long equations scroll horizontally within the field rather than
      overflowing into (and being clipped by) the panel. With MathLive's
      `scrollIntoView`, the caret / newly inserted structure stays visible
      even near the right edge. */
   overflow-x: auto;
-  background: var(--color-bg);
+  background: transparent;
   color: var(--color-text);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-field);
+  border: 0;
+  border-radius: inherit;
   /* Frame-level maths typeface (see the @font-face above); MathLive's
      internal typesetting fonts are its own concern. */
   font-family: var(--font-math);
-  /* The rendered maths size: 2.5rem × the "Equation size" percentage
+  /* The rendered maths size: 2.125rem × the "Equation size" percentage
      (--equation-scale, set by settings-view.ts), further multiplied by
      --equation-fit – a shrink-only factor the "autoFit" setting applies
      (via main.ts) when content would otherwise overflow the field's width.
      Neither var is set here: both default to 1 (unchanged). */
-  font-size: calc(2.5rem * var(--equation-scale, 1) * var(--equation-fit, 1));
+  font-size: calc(2.125rem * var(--equation-scale, 1) * var(--equation-fit, 1));
   /* Theme MathLive's caret / selection / placeholder colours: caret and
      selection take the accent (selection fill is the accent tint). */
   --caret-color: var(--color-accent);
   --selection-background-color: var(--color-accent-tint);
-  --selection-color: var(--color-text);
+  --selection-color: var(--color-tint-text);
   /* Don't fill the whole containing group with a dark block – keep it subtle. */
   --contains-highlight-background-color: transparent;
   /* The empty placeholder box should be clearly visible but not black. */
   --placeholder-color: var(--color-accent);
   --placeholder-opacity: 1;
-  transition: border-color var(--motion-fast);
 }
 
+/* The ring is drawn on the frame, which has the rounded corners. */
 .math-field:focus-within {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 2px;
+  outline: none;
 }
 
 /* MathLive's in-field controls (virtual-keyboard toggle and menu toggle) are
@@ -554,203 +663,6 @@ body {
 .math-field::part(virtual-keyboard-toggle),
 .math-field::part(menu-toggle) {
   display: none;
-}
-
-/* ---- Menus (Style ▾, More ▾, Copy format ▾) ------------------------------ */
-/* The WAI-ARIA menu-button pattern (menu.ts). The list floats over the
-   workspace from its trigger; `.menu--end` aligns it to the trigger's right
-   edge and `.menu--up` opens it above (for the bottom-pinned actions bar).
-   menu.ts shifts the list sideways on open when that edge would put it
-   outside the panel; the max-width below is what makes that shift always
-   find room. */
-.menu {
-  position: relative;
-  display: inline-flex;
-}
-
-.menu__trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.menu__chevron {
-  font-size: 0.8em;
-  line-height: 1;
-}
-
-.menu__list {
-  position: absolute;
-  top: calc(100% + var(--space-1));
-  left: 0;
-  z-index: 30;
-  min-width: 200px;
-  max-width: calc(100vw - 2 * var(--space-3));
-  padding: var(--space-1);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
-}
-
-.menu--end .menu__list {
-  left: auto;
-  right: 0;
-}
-
-.menu--up .menu__list {
-  top: auto;
-  bottom: calc(100% + var(--space-1));
-}
-
-.menu__item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 36px;
-  padding: 0 10px;
-  font: inherit;
-  font-size: var(--font-label);
-  text-align: left;
-  color: var(--color-text);
-  background: transparent;
-  border: 2px solid transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.menu__item:hover {
-  background: var(--color-hover);
-}
-
-/* The focused item is the menu's highlight: surface fill plus the accent
-   ring, drawn inside the item so the list's own edge never clips it. */
-.menu__item:focus-visible {
-  outline: none;
-  background: var(--color-surface);
-  border-color: var(--color-accent);
-}
-
-.menu__check {
-  flex: none;
-  width: 16px;
-  text-align: center;
-  font-weight: 700;
-}
-
-.menu__item[aria-checked='true'] .menu__check::before {
-  content: '✓';
-}
-
-/* Part of the selection carries the style: an honest half state. */
-.menu__item[aria-checked='mixed'] .menu__check::before {
-  content: '–';
-}
-
-.menu__glyph {
-  flex: none;
-  width: 24px;
-  text-align: center;
-  font-family: var(--font-math);
-  font-size: 1rem;
-}
-
-.menu__text {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.menu__detail {
-  font-size: var(--font-small);
-  color: var(--color-text-muted);
-}
-
-.menu__shortcut {
-  margin-left: var(--space-3);
-  font-family: var(--font-mono);
-  font-size: var(--font-code);
-  color: var(--color-text-muted);
-}
-
-.menu__separator {
-  height: 1px;
-  margin: var(--space-1) 0;
-  background: var(--color-divider);
-}
-
-@media (forced-colors: active) {
-  .menu__list {
-    border-color: CanvasText;
-  }
-  .menu__item:focus-visible {
-    border-color: Highlight;
-  }
-  .menu__separator {
-    background: CanvasText;
-  }
-}
-
-/* The split Copy button: the primary "Copy" half and the narrow format
-   half share one rounded outline, divided by a translucent hairline. */
-.copy-split {
-  display: inline-flex;
-}
-
-.copy-split__main {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-/* Copy is the panel's main action, so it is the largest target in the bar:
-   a 44px height and a step up in type over its neighbours. */
-.actions-bar .copy-split__main {
-  min-height: 44px;
-  padding-left: 20px;
-  padding-right: 20px;
-  font-size: 1rem;
-}
-
-.actions-bar .copy-split__more {
-  min-height: 44px;
-}
-
-/* Below 420px the bar trims its side padding to hold one row (see the
-   actions bar); Copy keeps a little more than its neighbours. */
-@media (max-width: 419px) {
-  .actions-bar .copy-split__main {
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-}
-
-.copy-split__more {
-  min-width: 32px;
-  padding: var(--space-1) var(--space-2);
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  border-left: 1px solid rgba(255, 255, 255, 0.45);
-}
-
-.copy-split__more .menu__chevron {
-  font-size: 1em;
-}
-
-/* Two abutting focus rings would merge; lift the focused half above its
-   neighbour so its ring is drawn whole. */
-.copy-split__main:focus-visible,
-.copy-split__more:focus-visible {
-  position: relative;
-  z-index: 1;
-}
-
-@media (forced-colors: active) {
-  .copy-split__more {
-    border-left-color: ButtonText;
-  }
 }
 
 /* ---- First-use slash-fraction hint ---------------------------------------- */
@@ -795,7 +707,7 @@ body {
   background: var(--color-hover);
 }
 
-/* ---- Disclosure summaries (Symbols / Equation source / Settings) ---------- */
+/* ---- Disclosure summaries (the source, the common shortcut set) ---------- */
 /* 36px rows with a chevron that rotates 90° when open; each section's open
    state persists per user (wired in the views). */
 .disclosure__summary {
@@ -841,41 +753,16 @@ details[open] > .disclosure__summary::before {
 }
 
 /* ---- Symbol search -------------------------------------------------------- */
-/* The combobox row: visible label beside the input, results inline below
-   (in document flow, like the matrix picker – nothing overlays the tabs). */
+/* The label sits above the box; results open inline below it, in document
+   flow, so nothing overlays the keys. */
 .symbol-search {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1) var(--space-2);
-  margin-top: var(--space-1);
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
-.symbol-search__input {
-  flex: 1;
-  /* Leaves room for the Insert… control on the same row at 320px. */
-  min-width: 120px;
-}
-
-/* The result count sits between the box and the list, on its own line so
-   neither the input nor the Insert… control is squeezed by it. */
 .symbol-search__count {
-  flex-basis: 100%;
   margin: 0;
-  font-size: var(--font-small);
-  color: var(--color-text-muted);
-}
-
-/* The other two ways in, on the search row: a compact Insert… ▾ menu on a
-   narrow panel, plain buttons where there is room (swapped at 700px, near
-   the bottom of this file). */
-.from-buttons {
-  display: none;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.from-buttons__label {
   font-size: var(--font-small);
   color: var(--color-text-muted);
 }
@@ -1003,7 +890,6 @@ details[open] > .disclosure__summary::before {
   border-radius: var(--radius-control);
 }
 
-.quick-search__hint,
 .quick-search__count,
 .quick-search__empty {
   margin: 0;
@@ -1194,16 +1080,21 @@ details[open] > .disclosure__summary::before {
 }
 
 /* ---- Symbol palette ------------------------------------------------------- */
+.palette__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 .palette__tabs {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: var(--space-4);
+  gap: var(--space-3);
 }
 
 /* The category strip scrolls sideways rather than wrapping into rows that
-   push the symbol well off screen; a fade and a chevron at the right edge
-   say there is more, and appear only when there is. */
+   push the keys off screen; a fade and a chevron at the right edge say
+   there is more, and appear only when there is. */
 .palette__strip {
   position: relative;
   min-width: 0;
@@ -1211,12 +1102,12 @@ details[open] > .disclosure__summary::before {
 
 .palette__tablist {
   display: flex;
-  gap: 6px;
-  /* A scroller clips what is drawn outside it: the padding holds a chip's
-     3px focus ring and its 2px offset, the negative margin keeps the chips
+  gap: 2px;
+  /* A scroller clips what is drawn outside it: the padding holds a pill's
+     3px focus ring and its 2px offset, the negative margin keeps the pills
      where they were. */
   padding: 5px;
-  margin: -5px;
+  margin: -5px -9px;
   overflow-x: auto;
   scrollbar-width: none;
   scroll-padding-inline: var(--space-3);
@@ -1229,9 +1120,7 @@ details[open] > .disclosure__summary::before {
 .palette__strip-more {
   position: absolute;
   top: 0;
-  /* Flush with the tablist's right edge, which its focus-ring padding
-     pushes 5px past the strip. */
-  right: -5px;
+  right: -9px;
   display: none;
   align-items: center;
   height: 100%;
@@ -1245,57 +1134,44 @@ details[open] > .disclosure__summary::before {
   display: flex;
 }
 
-/* Category chips: pill-shaped tabs, distinguished from action buttons by
-   shape rather than colour alone (SC 1.4.1). One Tab stop, roving tabindex. */
+/* Category pills: quiet text until selected, then a tinted pill in bold –
+   shape and weight carry the state, not colour alone (SC 1.4.1). One Tab
+   stop, roving tabindex. */
 .palette__tab {
   flex: none;
-  min-height: 30px;
-  padding: 2px 12px;
+  min-height: 36px;
+  padding: 0 10px;
   font: inherit;
   font-size: var(--font-small);
-  font-weight: 600;
-  color: var(--color-text);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  background: none;
+  border: 0;
   border-radius: var(--radius-pill);
   cursor: pointer;
-  transition: background-color var(--motion-fast), border-color var(--motion-fast);
+  transition: background-color var(--motion-fast), color var(--motion-fast);
 }
 
 .palette__tab:hover {
+  color: var(--color-text);
   background: var(--color-hover);
 }
 
 .palette__tab[aria-selected='true'] {
-  background: var(--color-accent);
-  color: var(--color-accent-text);
-  border-color: var(--color-accent);
+  font-weight: 700;
+  color: var(--color-tint-text);
+  background: var(--color-accent-tint);
 }
 
-.palette__tab[aria-selected='true']:hover {
-  background: var(--color-accent-hover);
-  border-color: var(--color-accent-hover);
-}
-
-/* The palette well: a quiet fill that groups the selected category's keys –
-   the only surface besides the equation field's frame. */
-.palette__panel {
-  background: var(--color-surface);
-  border-radius: var(--radius-field);
-  padding: var(--space-2);
-}
-
-/* Symbol keys flow in a grid that fits as many 44px-plus columns as the
-   panel allows: six at 360px, dropping to five at 320px (SC 1.4.10). */
+/* Keys flow in a grid that fits as many 44px columns as the panel allows:
+   seven at 400px, five at 320px (SC 1.4.10). */
 .palette__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .palette__empty {
   margin: 0;
-  padding: var(--space-1);
   color: var(--color-text-muted);
   font-size: var(--font-small);
 }
@@ -1304,8 +1180,8 @@ details[open] > .disclosure__summary::before {
   min-width: 44px;
   min-height: 44px;
   padding: var(--space-1);
-  font: inherit;
-  font-size: 1.056rem;
+  font-family: var(--font-math);
+  font-size: 1.3125rem;
   line-height: 1;
   color: var(--color-text);
   background: var(--color-key-bg);
@@ -1321,6 +1197,21 @@ details[open] > .disclosure__summary::before {
 
 .palette__btn:active {
   background: var(--color-active);
+}
+
+/* A text style that is on for the selection: tinted, with a heavier edge so
+   the state does not rest on the fill alone. */
+.style-keys__key[aria-pressed='true'] {
+  background: var(--color-accent-tint);
+  color: var(--color-tint-text);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+/* On for part of the selection only. */
+.style-keys__key[aria-pressed='mixed'] {
+  border-style: dashed;
+  border-color: var(--color-accent);
 }
 
 /* ---- Matrix panel --------------------------------------------------------- */
@@ -1557,31 +1448,29 @@ details[open] > .disclosure__summary::before {
 
 /* ---- Buttons (shared) ----------------------------------------------------- */
 .btn {
-  min-height: 36px;
+  min-height: 44px;
   padding: var(--space-1) 14px;
   font: inherit;
   font-size: var(--font-label);
-  font-weight: 600;
+  font-weight: 500;
   border-radius: var(--radius-control);
   border: 1px solid var(--color-border);
   cursor: pointer;
   transition: background-color var(--motion-fast), border-color var(--motion-fast);
 }
 
-/* The accent fill is reserved for the single primary action per view (Copy;
-   Insert in the matrix picker) – one visual default per view. */
+/* The filled button is reserved for the single primary action per view
+   (the main copy button; Insert in the matrix picker). */
 .btn--primary {
-  color: var(--color-accent-text);
-  background: var(--color-accent);
-  border-color: var(--color-accent);
+  font-weight: 700;
+  color: var(--color-primary-text);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
 }
-.btn--primary:hover {
-  background: var(--color-accent-hover);
-  border-color: var(--color-accent-hover);
-}
+.btn--primary:hover,
 .btn--primary:active {
-  background: var(--color-accent-active);
-  border-color: var(--color-accent-active);
+  background: color-mix(in srgb, var(--color-primary) 86%, var(--color-bg));
+  border-color: color-mix(in srgb, var(--color-primary) 86%, var(--color-bg));
 }
 
 .btn--secondary {
@@ -1595,14 +1484,13 @@ details[open] > .disclosure__summary::before {
   background: var(--color-active);
 }
 
-/* A slimmer button for controls sharing a line with a heading or a list
-   row: still comfortably above the 24px target floor (SC 2.5.8) without
-   growing the row it sits in. */
+/* A shorter button for controls sharing a line with a heading or a list
+   row, so the row does not grow to the full 44px. */
 .btn--slim {
-  min-height: 28px;
+  min-height: 36px;
   min-width: var(--target-min);
-  padding: 2px 10px;
-  font-size: var(--font-caption);
+  padding: 2px 12px;
+  font-size: var(--font-small);
 }
 
 /* ---- Format select (the source view's "Show as") ------------------------- */
@@ -1660,8 +1548,8 @@ details[open] > .disclosure__summary::before {
 .settings__form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-1) 0 var(--space-2) 2px;
+  gap: 24px;
+  padding: 0;
 }
 
 /* Grouped fieldsets: chunking the form cuts scan time; labels sit above
@@ -1676,18 +1564,12 @@ details[open] > .disclosure__summary::before {
   min-width: 0;
 }
 
-/* A group heading has to outrank the field labels beneath it, and it cannot
-   do that on size – it is the smaller text of the two. It reads as a heading
-   instead: upper case and tracked out, with the group's own gap keeping it
-   clear of the first field. */
+/* A group heading outranks the field labels beneath it by size and weight. */
 .settings__legend {
   padding: 0;
   margin-bottom: var(--space-1);
-  font-size: var(--font-caption);
+  font-size: 1.0625rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-text-muted);
 }
 
 .field {
@@ -1697,17 +1579,17 @@ details[open] > .disclosure__summary::before {
 }
 
 .field__label {
-  font-weight: 600;
+  font-weight: 700;
   font-size: var(--font-small);
 }
 
 .field__control {
-  min-height: 36px;
-  padding: var(--space-1) 10px;
+  min-height: 44px;
+  padding: var(--space-1) 12px;
   font: inherit;
   font-size: var(--font-label);
   color: var(--color-text);
-  background: var(--color-bg);
+  background: var(--color-field);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
 }
@@ -1773,8 +1655,38 @@ details[open] > .disclosure__summary::before {
     center / contain no-repeat;
 }
 
+/* Radios share the checkbox paint, round, with a dot for the chosen one. */
+.field__checkbox[type='radio'] {
+  border-radius: 50%;
+}
+
+.field__checkbox[type='radio']:checked::before {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  -webkit-mask: none;
+  mask: none;
+}
+
+.field--radios {
+  gap: var(--space-2);
+}
+
+.field--radios .field__row {
+  gap: 10px;
+}
+
+/* Buttons that act at once sit side by side at their natural width. */
+.field--buttons {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 .field__label--checkbox {
   display: block;
+  font-size: var(--font-label);
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -1810,7 +1722,7 @@ input:user-invalid,
 }
 
 /* ---- Expression library ---------------------------------------------------- */
-/* The Save to library form and My library: a form and a list of
+/* The Save to library form and the Library tab: a form and a list of
    [Insert][Edit] rows – one roving Tab stop, like every grid in the
    panel. */
 .btn--danger {
@@ -1894,30 +1806,34 @@ input:user-invalid,
   padding-top: var(--space-2);
 }
 
+/* The filter's label sits above it; the sort order shares its line. */
 .library-panel__controls {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-2);
-  margin-bottom: var(--space-2);
 }
 
-.library-panel__filter {
-  flex: 1;
-  min-width: 100px;
-  min-height: 36px;
-  padding: var(--space-1) 10px;
+.library-panel__label {
+  grid-column: 1 / -1;
+}
+
+.library-panel__filter,
+.library-panel__sort,
+.library-panel__category {
+  min-width: 0;
+  min-height: 44px;
+  padding: var(--space-1) 12px;
   font: inherit;
   font-size: var(--font-label);
   color: var(--color-text);
-  background: var(--color-bg);
+  background: var(--color-field);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
 }
 
 .library-panel__sort,
 .library-panel__category {
-  min-width: 0;
-  max-width: 40%;
-  min-height: 36px;
+  max-width: 11rem;
 }
 
 /* A plain list between two hairlines: each row is the name over a
@@ -2022,8 +1938,8 @@ input:user-invalid,
   font-size: var(--font-small);
 }
 
-/* ---- Custom shortcuts ------------------------------------------------------ */
-/* The My library list with the trigger leading each row: a fixed monospace
+/* ---- Shortcuts tab --------------------------------------------------------- */
+/* The library list with the trigger leading each row: a fixed monospace
    column, so the triggers line up down the list and read as what to type. */
 .shortcut-row__trigger {
   flex: none;
@@ -2112,9 +2028,9 @@ input:user-invalid,
   font-size: var(--font-small);
 }
 
-.shortcut-list__custom {
+.shortcut-list__open,
+.library-save {
   align-self: flex-start;
-  margin-top: var(--space-3);
 }
 
 /* ---- Keyboard shortcuts list ---------------------------------------------- */
@@ -2182,26 +2098,45 @@ a:not(.skip-link):hover {
   color: color-mix(in srgb, var(--color-accent) 80%, var(--color-text));
 }
 
-/* ---- Skip link ------------------------------------------------------------ */
-/* First focusable control; the palette sits after the field now, so it skips
-   forward to the symbols section (SC 2.4.1). */
+/* ---- Skip links ----------------------------------------------------------- */
+/* "Skip symbols" before the tabs and "Back to equation" at the end of the
+   panel (SC 2.4.1). Each takes no room until it has focus, then shows in
+   place as a tinted pill. */
 .skip-link {
   position: absolute;
-  left: var(--space-2);
-  top: var(--space-2);
-  z-index: 100;
-  padding: var(--space-2) var(--space-3);
-  background: var(--color-accent);
-  color: var(--color-accent-text);
-  border-radius: var(--radius-control);
-  font-size: var(--font-label);
-  font-weight: 600;
-  /* Visible only when focused. */
-  transform: translateY(-150%);
-  transition: transform var(--motion-fast);
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
+
 .skip-link:focus {
-  transform: translateY(0);
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  flex: none;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  margin: 0 var(--space-4) var(--space-3);
+  padding: 0 14px;
+  font-size: var(--font-small);
+  font-weight: 700;
+  color: var(--color-tint-text);
+  text-decoration: none;
+  background: var(--color-accent-tint);
+  border-radius: var(--radius-pill);
+  outline: 2px solid var(--color-brand);
+  outline-offset: 0;
+}
+
+.skip-link--back:focus {
+  margin-top: var(--space-2);
 }
 
 /* ---- Visually-hidden (kept in the a11y tree) ------------------------------ */
@@ -2219,17 +2154,39 @@ a:not(.skip-link):hover {
 
 /* ---- Reduced motion ------------------------------------------------------- */
 /* ---- Wider surfaces ------------------------------------------------------- */
-/* The docked panel is narrow; a detached window or tab is not. Given the
-   room, the Insert… menu gives way to the two plain buttons it holds (one
-   press instead of two) and the category strip wraps instead of scrolling,
-   so every chip is visible at once. */
+/* A detached window or tab keeps the one column: the width goes to more
+   keys per row and to buttons at their natural size, so nothing is
+   stretched across the window. */
 @media (min-width: 700px) {
-  .symbol-search .from-menu {
-    display: none;
+  .actions-bar .btn {
+    flex: none;
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
   }
 
-  .from-buttons {
-    display: flex;
+  .actions-bar .copy-pair__main {
+    min-width: 180px;
+  }
+
+  .tabs {
+    grid-template-columns: repeat(4, 128px);
+  }
+
+  /* The search box and the categories share a line; the keys run the full
+     width beneath them. */
+  .palette__content {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    align-items: end;
+    gap: var(--space-3) var(--space-4);
+  }
+
+  .palette__tabs {
+    display: contents;
+  }
+
+  .palette__panel {
+    grid-column: 1 / -1;
   }
 
   .palette__tablist {
@@ -2241,16 +2198,9 @@ a:not(.skip-link):hover {
   .palette__strip--more .palette__strip-more {
     display: none;
   }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
+  .palette__grid {
+    grid-template-columns: repeat(auto-fill, 44px);
   }
 }
 
@@ -2287,10 +2237,19 @@ a:not(.skip-link):hover {
   .math-field:focus-within {
     outline-color: Highlight;
   }
-  .palette__tab[aria-selected='true'] {
+  .palette__tab[aria-selected='true'],
+  .style-keys__key[aria-pressed='true'] {
     background: Highlight;
     color: HighlightText;
-    border-color: Highlight;
+    forced-color-adjust: none;
+  }
+  .tabs__tab[aria-selected='true']::after,
+  .radical::before,
+  .radical::after {
+    background: Highlight;
+  }
+  .actions-bar__status--done::before {
+    background: CanvasText;
   }
   .matrix-picker__cell--in-range {
     background: Highlight;
@@ -2300,10 +2259,10 @@ a:not(.skip-link):hover {
     appearance: auto;
     -webkit-appearance: auto;
   }
-  .skip-link {
+  .skip-link:focus {
     background: Canvas;
     color: CanvasText;
-    border: 1px solid CanvasText;
+    outline-color: Highlight;
   }
   a:not(.skip-link) {
     color: LinkText;

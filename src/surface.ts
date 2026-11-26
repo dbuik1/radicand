@@ -1,7 +1,7 @@
 /**
  * The surfaces the editor opens in, and the one the toolbar icon uses.
  *
- * Shared by the panel (More ▾ menu, Settings) and the service worker (toolbar
+ * Shared by the panel (Settings) and the service worker (toolbar
  * icon and keyboard shortcut), which are bundled separately. The choice lives
  * in the ordinary settings record, so the worker reads it from the same
  * storage area the panel writes it to.

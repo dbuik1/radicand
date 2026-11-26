@@ -1,6 +1,6 @@
 /**
  * The one `\`-trigger namespace the field sees, composed from the two
- * stores that own triggers: Custom shortcuts and My library. A shortcut is
+ * stores that own triggers: the user's shortcuts and the library. A shortcut is
  * asked first – it exists for nothing else – then a library entry with the
  * same trigger. The authoring forms validate against the whole namespace
  * (triggerProblem), so a clash can only arrive by import, and then the

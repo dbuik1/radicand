@@ -294,7 +294,7 @@ const seenCommands = new Set();
 
 /**
  * Styled-alphabet letters (bold, italic, sans-serif, monospace and their
- * combinations) are the Style menu's job, and one entry per letter would
+ * combinations) are the text style keys' job, and one entry per letter would
  * bury real symbols in every search. Blackboard, calligraphic/script and
  * fraktur letters stay: those are searched as symbols in their own right
  * ("reals", "power set", "fraktur R").

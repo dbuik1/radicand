@@ -151,7 +151,7 @@ describe('symbol search combobox', () => {
     expect(input.getAttribute('aria-autocomplete')).toBe('list');
     expect(input.getAttribute('aria-controls')).toBe('symbol-search-listbox');
     const label = document.querySelector('label[for="symbol-search-input"]');
-    expect(label?.textContent).toBe('Search symbols');
+    expect(label?.textContent).toBe('Find a symbol');
     expect(document.getElementById('symbol-search-listbox')?.getAttribute('role')).toBe(
       'listbox',
     );
@@ -315,7 +315,7 @@ describe('the quick search and its Ctrl+/ shortcut', () => {
     expect(input.getAttribute('role')).toBe('combobox');
     expect(input.getAttribute('aria-keyshortcuts')).toMatch(/\+\/$/);
     expect(document.querySelector('label[for="quick-search-input"]')?.textContent).toBe(
-      'Search symbols',
+      'Find a symbol',
     );
   });
 

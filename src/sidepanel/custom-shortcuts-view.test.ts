@@ -6,7 +6,7 @@ import type { EditorController } from './editor';
  * Custom shortcuts against the real (in-memory) stores and a stub editor:
  * a keyboard-only user can add, find, insert, edit, delete and undo, take
  * the common set on and off, and import a file – and no route lets a
- * shortcut shadow a LaTeX command or a My library trigger.
+ * shortcut shadow a LaTeX command or a library trigger.
  */
 function stubEditor() {
   const insert = vi.fn();
@@ -250,7 +250,7 @@ describe('custom shortcuts view', () => {
         'shortcuts.json holds 4 shortcuts. 1 uses a trigger you already have.',
       );
       expect(root.querySelector('form .field__hint')!.textContent).toBe(
-        'dx is also a trigger in My library, so it will be skipped. Change it there to import it. ' +
+        'dx is also a trigger in the library, so it will be skipped. Change it there to import it. ' +
           '\\int is a LaTeX command, so it will be skipped.',
       );
       expect(document.activeElement).toBe(root.querySelector('input[value="skip"]'));

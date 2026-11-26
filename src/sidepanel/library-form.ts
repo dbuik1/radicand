@@ -1,6 +1,6 @@
 /**
  * The shared inline form for authoring a library entry – used by the
- * capture flow ("Save to library" / Alt+S) and by My library's Edit.
+ * capture flow ("Save to library" / Alt+S) and by Edit in the Library tab.
  * An inline disclosure, not a modal: the panel's established pattern – it
  * traps no focus and dims nothing.
  *

@@ -1,11 +1,10 @@
 /**
- * Curated symbol palette – the Symbols mode of the workspace.
+ * Curated symbol palette – the Symbols tab of the workspace.
  *
- * Search first (find anything by describing it), then the Insert… controls
- * (Drawing, My library – opened as workspace modes), then the category
- * strip and the symbol well. The keyboard path is the design: from the
- * field, Tab lands on the search box; Tab again reaches the Insert… control,
- * then the category tabs, then the symbol grid (one stop each). Enter/Space
+ * Search first (find anything by describing it), then the category strip
+ * and the keys. The keyboard path is the design: from the tab bar, Tab
+ * lands on the search box, then the category tabs, then the key grid (one
+ * stop each). Enter/Space
  * inserts at the caret WITHOUT moving focus, so consecutive inserts cost
  * one keypress each; Escape from the tabs or the grid returns focus to the
  * field (the Pearson Accessible Equation Editor / MathType convention). It
@@ -36,8 +35,8 @@ import { getSettings, onSettingsChange, updateSettings } from './settings';
 import { announce } from './a11y';
 import { createSymbolSearch } from './symbol-search';
 import { wireRovingTabindex } from './roving';
-import { createMenu } from './menu';
-import { bindPart, bindToSettings, isPartShown } from './part-visibility';
+import { buildStyleKeys } from './style-keys';
+import { bindToSettings, isPartShown } from './part-visibility';
 
 interface PaletteItem {
   /** Visible glyph shown on the button. */
@@ -127,6 +126,9 @@ const CATEGORIES: PaletteCategory[] = [
       { glyph: 'Ω', label: 'Greek capital letter omega', latex: '\\Omega' },
     ],
   },
+  // The Styles category renders toggle keys for the text styles rather than
+  // symbols to insert – see style-keys.ts.
+  { name: 'Styles', items: [] },
   {
     name: 'Sets',
     items: [
@@ -530,29 +532,22 @@ function createMatrixSizePicker(editor: EditorController): HTMLElement {
 }
 
 /** Hooks the palette needs from the workspace it lives in. */
-export interface PaletteHooks {
-  /** Open a workspace mode; `opener` is where Close returns focus to. */
-  openMode?: (mode: 'drawing' | 'library', opener: HTMLElement) => void;
-}
-
 /** The built palette: its element and the collapse the workspace drives. */
 export interface PaletteView {
   root: HTMLElement;
 }
 
 /**
- * Build the palette: the search row (with the Insert… controls), the category
- * strip and the symbol well.
+ * Build the palette: the search box, the category strip and the symbol well.
  *
- * The palette is four pieces of interface, each of which the user can switch
- * off on its own (Settings › Interface): the whole area, the search box, the
- * categories and keys, and the Insert… controls. Each is answered here, where
- * it is built, so nothing else in the panel decides what the palette shows –
- * and each of the three inner pieces has exactly one function deciding
- * whether it is on screen, so two rules can never fight over the same
- * element.
+ * The palette is three pieces of interface, each of which the user can switch
+ * off on its own (Settings › Interface): the whole area, the search box, and
+ * the categories and keys. Each is answered here, where it is built, so
+ * nothing else in the panel decides what the palette shows, and each inner
+ * piece has exactly one function deciding whether it is on screen, so two
+ * rules can never fight over the same element.
  */
-export function createPalette(editor: EditorController, hooks: PaletteHooks = {}): PaletteView {
+export function createPalette(editor: EditorController): PaletteView {
   const root = document.createElement('div');
   root.className = 'palette';
   root.id = 'symbols';
@@ -573,12 +568,8 @@ export function createPalette(editor: EditorController, hooks: PaletteHooks = {}
   };
   bindToSettings(syncTabs);
 
-  const from = buildFromControls(hooks);
-  for (const control of from) bindPart('symbolSources', control);
-
   content.append(
     createSymbolSearch(editor, {
-      trailing: from,
       onListToggle: (open) => {
         listOpen = open;
         syncTabs();
@@ -593,74 +584,11 @@ export function createPalette(editor: EditorController, hooks: PaletteHooks = {}
   // empty bordered box below the field is exactly the clutter the toggles
   // exist to remove.
   bindToSettings((settings) => {
-    const { symbols, symbolSearch, symbolCategories, symbolSources } = settings.parts;
-    root.hidden = !symbols || !(symbolSearch || symbolCategories || symbolSources);
+    const { symbols, symbolSearch, symbolCategories } = settings.parts;
+    root.hidden = !symbols || !(symbolSearch || symbolCategories);
   });
 
   return { root };
-}
-
-/**
- * The Insert… controls on the search row: the two other things that can go
- * into the field from here – a symbol drawn by hand (Drawing) and a whole
- * saved equation (My library) – opened as workspace modes. Two renderings
- * of the same pair, swapped by a width media query in styles.css: a compact
- * Insert… ▾ menu for narrow panels and plain buttons where there is room.
- * Both hand the mode the control that opened it, so Close comes back here.
- * The same two modes are offered from the More ▾ menu beside the field, so
- * they stay reachable with this row switched off.
- */
-function buildFromControls(hooks: PaletteHooks): HTMLElement[] {
-  const openMode = (mode: 'drawing' | 'library', opener: HTMLElement): void => {
-    hooks.openMode?.(mode, opener);
-  };
-
-  const menu = createMenu({
-    id: 'from',
-    label: 'Insert…',
-    triggerAriaLabel: 'Insert a drawn symbol or a saved equation',
-    triggerClass: 'btn btn--secondary btn--slim',
-    align: 'end',
-    entries: [
-      {
-        label: 'Drawing',
-        detail: 'Sketch a symbol',
-        onSelect: () => openMode('drawing', menu.trigger),
-        focusAfter: 'none',
-      },
-      {
-        label: 'My library',
-        detail: 'Whole saved equations',
-        onSelect: () => openMode('library', menu.trigger),
-        focusAfter: 'none',
-      },
-    ],
-  });
-  menu.root.classList.add('from-menu');
-
-  const group = document.createElement('div');
-  group.className = 'from-buttons';
-  group.setAttribute('role', 'group');
-  group.setAttribute('aria-label', 'Insert from');
-  const groupLabel = document.createElement('span');
-  groupLabel.className = 'from-buttons__label';
-  groupLabel.setAttribute('aria-hidden', 'true');
-  groupLabel.textContent = 'Insert from';
-  group.appendChild(groupLabel);
-  for (const [mode, label, title] of [
-    ['drawing', 'Drawing', 'Sketch a symbol and insert it'],
-    ['library', 'My library', 'Insert a whole saved equation'],
-  ] as const) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'btn btn--secondary btn--slim';
-    btn.textContent = label;
-    btn.title = title;
-    btn.addEventListener('click', () => openMode(mode, btn));
-    group.appendChild(btn);
-  }
-
-  return [menu.root, group];
 }
 
 /**
@@ -835,6 +763,8 @@ function buildCategoryTabs(editor: EditorController): HTMLElement {
 
     if (name === 'Matrix') {
       panel.appendChild(buildMatrixPanel(editor));
+    } else if (name === 'Styles') {
+      panel.appendChild(buildStyleKeys(editor));
     } else {
       const items = index === 0 ? getRecent() : CATEGORIES[index - 1]!.items;
       panel.appendChild(buildGrid(editor, items, `${name} symbols`));

@@ -125,38 +125,16 @@ try {
     }
   });
 
-  // The workspace shows one mode at a time. This window is wide, so the
-  // From controls on the search row render as plain buttons (the compact
-  // Insert… ▾ menu is for a docked panel); Settings and Keyboard shortcuts
-  // come from More ▾, and every mode hands back with its Close button.
-  const openMode = (label) => page.locator('.from-buttons button', { hasText: label }).click();
-  // Each step has its own short timeout and names itself when it stalls, so
-  // a failure says which of the three went wrong instead of timing out once.
-  const openFromMore = async (label) => {
-    const step = async (name, action) => {
-      try {
-        await action();
-      } catch (error) {
-        throw new Error(`opening ${label} from More ▾: ${name} – ${String(error?.message ?? error).split('\n')[0]}`);
-      }
-    };
-    const item = page.locator('#more-menu [role="menuitem"]', { hasText: label });
-    for (let attempt = 1; ; attempt += 1) {
-      await step('the More ▾ button', () => page.locator('#more-trigger').click({ timeout: 5000 }));
-      await step('the menu', () => page.locator('#more-menu').waitFor({ state: 'visible', timeout: 5000 }));
-      const clicked = await item.click({ timeout: 5000 }).then(() => null, (error) => error);
-      if (clicked === null) return;
-      // The menu closes when focus leaves it. Name where focus went, then
-      // open it once more: a second close is a real fault, not a stray one.
-      const focus = await page.evaluate(() => {
-        const el = document.activeElement;
-        return el ? `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}` : 'nothing';
-      });
-      const open = await page.locator('#more-menu').isVisible();
-      const detail = `menu ${open ? 'still open' : 'closed'}, focus on ${focus}`;
-      if (attempt === 2) await step(`the ${label} item (${detail})`, () => Promise.reject(clicked));
-      console.log(`  note  opening ${label} from More ▾: the item was not clickable (${detail}); retrying`);
-    }
+  // The workspace shows one tab at a time. Settings opens from its button
+  // in the header and the keyboard shortcut list from the Shortcuts tab;
+  // each of those two has its own close button.
+  const openTab = async (mode) => {
+    await page.locator(`#tab-${mode}`).click();
+    await page.locator(`#panel-${mode}`).waitFor({ state: 'visible', timeout: 5000 });
+  };
+  const openSettings = async () => {
+    await page.locator('#settings-trigger').click();
+    await page.locator('.mode--settings').waitFor({ state: 'visible', timeout: 5000 });
   };
   // A reload is complete once the panel has started up, which ends with
   // focus in the equation field; anything opened before then can have focus
@@ -174,7 +152,7 @@ try {
       timeout: 15000,
     });
   };
-  const closeMode = () => page.locator('.mode:not([hidden]) .mode__close').click();
+  const closeView = () => page.locator('.mode:not([hidden]) .mode__close').click();
 
   // Write one interface-part flag straight into storage, the way the
   // Ctrl+Shift+Y command's service worker does (the command itself cannot be
@@ -396,11 +374,11 @@ try {
     );
     await page.keyboard.press('Escape');
 
-    await openMode('Drawing');
+    await openTab('drawing');
     await page.keyboard.press('ControlOrMeta+Slash');
     const fromMode = await quickState();
     check(
-      'Ctrl+/ opens the quick search over an open mode',
+      'Ctrl+/ opens the quick search over another tab',
       fromMode.focused === 'quick-search-input' && fromMode.shown && fromMode.drawing,
       `focus ${JSON.stringify(fromMode.focused)}, drawing shown: ${fromMode.drawing}`,
     );
@@ -425,7 +403,7 @@ try {
       inserted !== before && !afterEnter.shown && afterEnter.tag === 'MATH-FIELD',
       `source ${JSON.stringify(inserted)}, shown: ${afterEnter.shown}, focus on ${JSON.stringify(afterEnter.tag)}`,
     );
-    await closeMode();
+    await openTab('symbols');
 
     // MathLive's deferred field focus lands inside the grace window after the
     // Symbols box gains focus: the field's focus is forced here the way that
@@ -505,7 +483,7 @@ try {
       'equation cleared before the draw test',
       (await page.locator('#source-input').inputValue()).trim() === '',
     );
-    await openMode('Drawing');
+    await openTab('drawing');
     const surfaceBox = await page.locator('.draw-find__surface').boundingBox();
     if (!surfaceBox) throw new Error('the drawing surface has no bounding box');
     // Draw at twice the symbol's natural width – the measured tolerance for
@@ -554,16 +532,16 @@ try {
       drawnSource.includes('\\forall'),
       `source shows ${JSON.stringify(drawnSource)}`,
     );
-    await closeMode();
+    await openTab('symbols');
     const symbolsBack = await page
       .locator('#symbol-search-input')
       .waitFor({ state: 'visible', timeout: 5000 })
       .then(() => true, () => false);
-    check('closing Drawing hands the workspace back to the symbols', symbolsBack, 'the search box did not reappear');
+    check('the Symbols tab hands the workspace back to the symbols', symbolsBack, 'the search box did not reappear');
   });
 
-  await section('the Style menu and the symbols flag', async () => {
-    // 5. The Style menu styles the selection through a real MathLive field, and
+  await section('the text style keys and the symbols flag', async () => {
+    // 5. A text style key styles the selection through a real MathLive field, and
     //    the symbols workspace follows the persisted flag the Ctrl+Shift+Y
     //    command flips in storage.
     await focusField();
@@ -571,17 +549,17 @@ try {
     await page.keyboard.press('Delete');
     await page.keyboard.type('x');
     await page.keyboard.press('Control+a');
-    await page.locator('#style-trigger').click();
-    await page.getByRole('menuitemcheckbox', { name: 'Bold', exact: true }).click();
+    await page.getByRole('tab', { name: 'Styles', exact: true }).click();
+    await page.getByRole('button', { name: 'Bold', exact: true }).click();
     await page.waitForFunction(
       () => document.querySelector('#source-input')?.value.includes('\\mathbf'),
       undefined,
       { timeout: 5000 },
     ).catch(() => {});
     const styledSource = await page.locator('#source-input').inputValue();
-    check('the Style menu applies bold to the selection', styledSource.includes('\\mathbf'), `source shows ${JSON.stringify(styledSource)}`);
+    check('the Bold key applies bold to the selection', styledSource.includes('\\mathbf'), `source shows ${JSON.stringify(styledSource)}`);
     const focusInField = await fieldHasFocus().then(() => true, () => false);
-    check('the Style menu returns focus to the field', focusInField);
+    check('the Bold key returns focus to the field', focusInField);
 
     await setSymbolsShown(false);
     const collapsed = await page
@@ -599,32 +577,25 @@ try {
     check('showing the symbols from storage reopens the workspace', reopened, 'the palette tabs stayed hidden');
   });
 
-  await section('menus stay inside a docked panel', async () => {
-    // 5a. At a docked panel's width every menu list must land inside the
-    //     viewport: the Copy format half sits at the left edge of its bar
-    //     and Style ▾ near the middle of the header, so each opens to
-    //     whichever side has the room.
+  await section('a docked panel never scrolls sideways', async () => {
+    // 5a. At a docked panel's width every tab, the copy buttons and the
+    //     keys fit the viewport: nothing is clipped and nothing scrolls
+    //     sideways.
     const wideWindow = page.viewportSize();
     try {
       await page.setViewportSize({ width: 400, height: 900 });
-      for (const [menu, name] of [
-        ['copy-format', 'the Copy format menu'],
-        ['style', 'the Style menu'],
-        ['more', 'the More menu'],
-        ['from', 'the Insert… menu'],
-      ]) {
-        await page.locator(`#${menu}-trigger`).click();
-        const box = await page.evaluate((id) => {
-          const rect = document.getElementById(`${id}-menu`)?.getBoundingClientRect();
-          return rect ? { left: Math.round(rect.left), right: Math.round(rect.right) } : null;
-        }, menu);
-        check(
-          `${name} opens inside a 400px panel`,
-          box !== null && box.left >= 0 && box.right <= 400,
-          box ? `list spans ${box.left}–${box.right}px` : 'no list',
-        );
-        await page.keyboard.press('Escape');
-      }
+      const fit = await page.evaluate(() => {
+        const outside = [...document.querySelectorAll('.tabs__tab, .actions-bar button, .palette__btn')]
+          .filter((el) => el.checkVisibility())
+          .filter((el) => {
+            const rect = el.getBoundingClientRect();
+            return rect.left < 0 || rect.right > window.innerWidth;
+          })
+          .map((el) => el.textContent.trim());
+        return { outside, scrolls: document.documentElement.scrollWidth > window.innerWidth };
+      });
+      check('every tab, action and key is inside a 400px panel', fit.outside.length === 0, fit.outside.join(', '));
+      check('a 400px panel does not scroll sideways', !fit.scrolls);
     } finally {
       if (wideWindow) await page.setViewportSize(wideWindow);
     }
@@ -653,13 +624,12 @@ try {
   await section('the interface toggles', async () => {
     // 5c. Every piece of interface except the equation field can be switched
     //     off from Settings and switched back on, by keyboard alone, and the
-    //     choice survives a reload through real chrome.storage. Alt+, is the
-    //     route back into Settings once the More ▾ menu is one of the pieces
-    //     that went.
-    await openFromMore('Settings');
+    //     choice survives a reload through real chrome.storage. Settings
+    //     itself stays reachable throughout, from its button and from Alt+,.
+    await openSettings();
     const boxes = page.locator('input[id^="set-part-"]');
     const partCount = await boxes.count();
-    check('Settings offers a checkbox for every piece of interface', partCount >= 11, `${partCount} checkboxes`);
+    check('Settings offers a checkbox for every piece of interface', partCount >= 8, `${partCount} checkboxes`);
 
     for (let index = 0; index < partCount; index += 1) {
       const box = boxes.nth(index);
@@ -673,48 +643,45 @@ try {
       };
       return {
         field: Boolean(document.querySelector('math-field')),
-        more: off('#more-trigger'),
-        style: off('#style-trigger'),
+        heading: off('#editor-label') || document.querySelector('#editor-label').classList.contains('visually-hidden'),
         source: off('details.source'),
         actions: off('.actions-bar'),
       };
     });
     check('switching every piece off leaves the equation field', bare.field);
-    check('the menus, the source and the actions bar all go', bare.more && bare.style && bare.source && bare.actions);
+    check('the heading, the source and the actions bar all go', bare.heading && bare.source && bare.actions);
 
     // Wait for the debounced write of the last toggle before reloading.
     await untilStored(
       () =>
         (chrome.storage.sync ?? chrome.storage.local)
           .get('settings')
-          .then((r) => r.settings?.parts?.moreMenu === false),
+          .then((r) => r.settings?.parts?.source === false),
       undefined,
       { timeout: 5000 },
     );
     await reloadPanel();
-    const afterReload = await page.evaluate(() => {
-      const el = document.querySelector('#more-trigger');
-      return {
-        more: !el || el.hidden || el.closest('[hidden]') !== null,
-        field: Boolean(document.querySelector('math-field')),
-      };
-    });
-    check('the choice survives a reload', afterReload.more && afterReload.field);
+    // The stored settings arrive just after the first paint.
+    const sourceGone = await page
+      .waitForFunction(() => document.querySelector('details.source')?.hidden === true, undefined, { timeout: 5000 })
+      .then(() => true, () => false);
+    const fieldThere = await page.evaluate(() => Boolean(document.querySelector('math-field')));
+    check('the choice survives a reload', sourceGone && fieldThere);
 
-    // With More ▾ gone, Alt+, is the only route into Settings – and therefore
-    // the route back to every other toggle.
+    // Alt+, opens Settings from the field, which is all that is left on
+    // screen besides the Settings button.
     await page.locator('math-field').click();
     await page.keyboard.press('Alt+Comma');
     const settingsOpen = await page
       .locator('.mode--settings')
       .waitFor({ state: 'visible', timeout: 5000 })
       .then(() => true, () => false);
-    check('Alt+, opens Settings with the More menu switched off', settingsOpen);
+    check('Alt+, opens Settings with every piece switched off', settingsOpen);
 
     await page.locator('#set-parts-restore').focus();
     await page.keyboard.press('Enter');
     const restored = await page
-      .locator('#more-trigger')
+      .locator('details.source')
       .waitFor({ state: 'visible', timeout: 5000 })
       .then(() => true, () => false);
     check('"Show every piece" brings the whole interface back', restored);
@@ -725,26 +692,26 @@ try {
       () =>
         (chrome.storage.sync ?? chrome.storage.local)
           .get('settings')
-          .then((r) => r.settings?.parts?.moreMenu !== false),
+          .then((r) => r.settings?.parts?.source !== false),
       undefined,
       { timeout: 5000 },
     );
-    await closeMode();
+    await closeView();
   });
 
   await section('settings persistence', async () => {
     // 6. A settings change persists across a reload through real chrome.storage.
     //    Wait for the debounced write to land before reloading so the test
     //    exercises the normal write path, not the pagehide flush.
-    await openFromMore('Settings');
+    await openSettings();
     await page.locator('#eq-size-number').fill('150');
     await page.locator('#eq-size-number').dispatchEvent('change');
     await storedSettingsHave({ equationScale: 1.5 });
     await reloadPanel();
-    await openFromMore('Settings');
+    await openSettings();
     const persisted = await page.locator('#eq-size-number').inputValue();
     check('equation size persists across a reload', persisted === '150', `after reload: ${persisted}%`);
-    await closeMode();
+    await closeView();
   });
 
   await section('the toolbar icon follows the chosen surface', async () => {
@@ -761,19 +728,15 @@ try {
       return false;
     };
     check('the toolbar icon opens the side panel by default', await waitFor(true));
-    await openFromMore('Settings');
+    await openSettings();
     const select = page.locator('#set-surface');
-    check(
-      'Settings says when the toolbar choice applies',
-      (await page.locator('#set-surface-hint').textContent()).includes('Applies next time'),
-    );
     await select.selectOption('tab');
     await storedSettingsHave({ defaultSurface: 'tab' });
     check('choosing a tab hands the toolbar click to the worker', await waitFor(false));
     await select.selectOption('panel');
     await storedSettingsHave({ defaultSurface: 'panel' });
     check('choosing the side panel gives the click back to Chrome', await waitFor(true));
-    await closeMode();
+    await closeView();
   });
 
   await section('the pop-out window remembers its bounds', async () => {
@@ -792,7 +755,8 @@ try {
       };
     });
     const popupPromise = context.waitForEvent('page', { timeout: 10000 });
-    await openFromMore('Open in a new window');
+    await openSettings();
+    await page.locator('#set-open-window').click();
     const popup = await popupPromise;
     await popup.locator('math-field').waitFor({ timeout: 15000 });
     const request = await page.evaluate(() => window.__popupRequests[0] ?? null);
@@ -819,7 +783,7 @@ try {
 
   await section('the expression library', async () => {
     // 6b. The expression library round-trips through real chrome.storage.local:
-    //     Alt+S captures the equation, My library lists it, Insert puts it
+    //     Alt+S captures the equation, the Library tab lists it, Insert puts it
     //     back, and it survives a reload.
     await focusField();
     await page.keyboard.type('a+b');
@@ -845,7 +809,7 @@ try {
       'the save is confirmed on screen',
       (await page.locator('.actions-bar__status').textContent()).includes('Saved "Smoke expression"'),
     );
-    await openMode('My library');
+    await openTab('library');
     const row = page.locator('.library-row__insert[aria-label="Smoke expression"]');
     await row.waitFor({ timeout: 5000 });
     await page.evaluate(() => { window.__cleared = document.querySelector('math-field').setValue(''); });
@@ -856,14 +820,14 @@ try {
       { timeout: 5000 },
     ).catch(() => {});
     check(
-      'a library entry inserts from My library',
+      'a library entry inserts from the Library tab',
       (await page.locator('#source-input').inputValue()).replace(/\s/g, '').includes('a+b'),
     );
     // The insert bumps the entry's use count; that debounced write landing
     // means the whole entry is in storage.
     await storedLibraryEntryHas({ name: 'Smoke expression', uses: 1 });
     await reloadPanel();
-    await openMode('My library');
+    await openTab('library');
     const survived = await page
       .locator('.library-row__insert[aria-label="Smoke expression"]')
       .waitFor({ timeout: 5000 })
@@ -872,7 +836,7 @@ try {
   });
 
   await section('the equation actions', async () => {
-    // 6c. Copy, Speak and Save to library sit directly under the field, out
+    // 6c. The two copy buttons and Read aloud sit directly under the field, out
     //     of the scrolling workspace, as one Tab stop, and stay on screen in
     //     a short, narrow panel.
     await reloadPanel();
@@ -892,27 +856,44 @@ try {
 
     await focusField();
     await page.keyboard.press('Tab');
-    const onCopy = await page.evaluate(() => document.activeElement?.classList.contains('copy-split__main'));
-    check('Tab from the field lands on Copy', onCopy);
+    const onCopy = await page.evaluate(() => document.activeElement?.id === 'copy-button');
+    check('Tab from the field lands on the main copy button', onCopy);
     const walk = [];
-    for (let step = 0; step < 3; step += 1) {
+    for (let step = 0; step < 2; step += 1) {
       await page.keyboard.press('ArrowRight');
       walk.push(await page.evaluate(() => document.activeElement?.textContent.trim()));
     }
-    check('arrow keys walk the actions', walk[1] === 'Speak' && walk[2] === 'Save to library', walk.join(' | '));
+    check('arrow keys walk the actions', walk[0] === 'Copy LaTeX' && walk[1] === 'Read aloud', walk.join(' | '));
     await page.keyboard.press('Tab');
-    const intoWorkspace = await page.evaluate(() => Boolean(document.activeElement?.closest('.panel-body')));
-    check('the next Tab goes on into the workspace', intoWorkspace);
+    const skip = await page.evaluate(() => {
+      const link = document.activeElement;
+      const box = link?.getBoundingClientRect();
+      return { text: link?.textContent.trim(), shown: Boolean(box && box.width > 40 && box.height > 20) };
+    });
+    check('the next Tab shows "Skip symbols"', skip.text === 'Skip symbols' && skip.shown, JSON.stringify(skip));
+    await page.keyboard.press('Enter');
+    const onSource = await page.evaluate(() => document.activeElement?.matches('details.source > summary'));
+    check('"Skip symbols" moves focus past the tabs to the source', onSource);
+    await page.keyboard.press('Tab');
+    const backLink = await page.evaluate(() => document.activeElement?.textContent.trim());
+    check('"Back to equation" is the last stop in the panel', backLink === 'Back to equation', backLink);
+    await page.keyboard.press('Enter');
+    check('"Back to equation" returns focus to the field', await fieldHasFocus().then(() => true, () => false));
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    const intoWorkspace = await page.evaluate(() => document.activeElement?.id === 'tab-symbols');
+    check('Tab after the skip link goes on into the tabs', intoWorkspace);
+    await page.keyboard.press('Shift+Tab');
     await page.keyboard.press('Shift+Tab');
     const back = await page.evaluate(() => document.activeElement?.textContent.trim());
-    check('Shift+Tab returns to the last action used', back === 'Save to library', back);
+    check('Shift+Tab returns to the last action used', back === 'Read aloud', back);
 
     const viewport = page.viewportSize();
     await page.setViewportSize({ width: 360, height: 400 });
     await page.waitForTimeout(200);
     const onScreen = await page.evaluate(() =>
-      [...document.querySelectorAll('.actions-bar button:not(.menu__item)')]
-        .filter((b) => !b.closest('[role="menu"]'))
+      [...document.querySelectorAll('.actions-bar button')]
         .every((b) => {
           const r = b.getBoundingClientRect();
           return r.width > 0 && r.top >= 0 && r.bottom <= window.innerHeight && r.right <= window.innerWidth;
@@ -942,10 +923,10 @@ try {
       .then(() => true, () => false);
     check('a name with maths shows it rendered under the Name field', namePreview);
     await nameField.press('Enter');
-    await openMode('My library');
+    await openTab('library');
     const row = page.locator('.library-row__insert', { has: page.locator('.name-maths') }).first();
     const listed = await row.waitFor({ timeout: 5000 }).then(() => true, () => false);
-    check('the name renders its maths in My library', listed);
+    check('the name renders its maths in the Library tab', listed);
     const label = listed ? await row.getAttribute('aria-label') : '';
     check('the name is spoken as words', /^Area /.test(label ?? '') && !(label ?? '').includes('$'), label ?? '');
     const laidOut = await page.evaluate(() => {
@@ -956,10 +937,10 @@ try {
   });
 
   await section('custom shortcuts', async () => {
-    // 6b'. Custom shortcuts opens from More ▾, the common set lands in real
+    // 6b'. In the Shortcuts tab the common set lands in real
     //      chrome.storage.local, a trigger from it confirms in the field, and
     //      at 320px every control of the mode is on screen.
-    await openFromMore('Custom shortcuts');
+    await openTab('customShortcuts');
     await page.locator('.mode--customShortcuts button', { hasText: /^Add \d+ common shortcuts$/ }).click();
     await page.locator('.mode--customShortcuts .library-row__insert').first().waitFor({ timeout: 5000 });
     const stored = await untilStored(
@@ -981,12 +962,12 @@ try {
         .map(({ el }) => el.textContent.trim() || el.id || el.className),
     );
     check(
-      'every Custom shortcuts control is on screen at 320px',
+      'every control in the Shortcuts tab is on screen at 320px',
       offscreen.length === 0,
       `outside the viewport: ${offscreen.slice(0, 4).join(', ')}`,
     );
     if (wideWindow) await page.setViewportSize(wideWindow);
-    await closeMode();
+    await openTab('symbols');
 
     await page.evaluate(() => document.querySelector('math-field').setValue(''));
     await focusField();
@@ -1025,7 +1006,7 @@ try {
     });
     await reloadPanel();
     const tabOpenStart = Date.now();
-    await openMode('My library');
+    await openTab('library');
     await page.locator('.library-row').first().waitFor({ timeout: 10000 });
     const tabOpenMs = Date.now() - tabOpenStart;
     check(`a 2,000-entry library opens responsively (${tabOpenMs} ms, smoke budget 10 s)`, tabOpenMs < 10000);
@@ -1097,7 +1078,7 @@ try {
       }),
     );
     await reloadPanel();
-    await openMode('My library');
+    await openTab('library');
     await page.locator('.library-row').first().waitFor({ timeout: 5000 });
     check('the category filter is hidden while no entry has a category', !(await page.locator('#library-category').isVisible()));
     await page.locator('.library-row__edit').first().click();
@@ -1126,7 +1107,7 @@ try {
       });
     });
     await reloadPanel();
-    await openMode('My library');
+    await openTab('library');
     const select = page.getByLabel('Category', { exact: true });
     await select.waitFor({ timeout: 5000 });
     const rows = page.locator('.library-row');

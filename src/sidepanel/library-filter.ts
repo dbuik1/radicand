@@ -1,5 +1,5 @@
 /**
- * The pure half of the My library filter: which categories exist and which
+ * The pure half of the library filter: which categories exist and which
  * entry belongs to which. A category is free text, so two spellings that
  * differ only in case or surrounding space are one category, shown under
  * the first spelling met.

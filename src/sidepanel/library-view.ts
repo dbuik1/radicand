@@ -1,5 +1,5 @@
 /**
- * The My library workspace mode: the user's saved expressions as a list – not a
+ * The Library tab: the user's saved expressions as a list – not a
  * glyph grid – of [Insert][Edit] rows, one roving-tabindex Tab stop with
  * Left/Right inside a row and Up/Down between rows. Enter/Space on Insert
  * inserts at the caret without moving focus (consecutive inserts cost one
@@ -45,7 +45,6 @@ import {
 import type { LibraryEntry, ImportStrategy } from './library';
 import { STARTER_PACK } from './library-starter';
 import { hasNameMaths, renderName, spokenName } from './name-maths';
-import { SAVE_SHORTCUT_LABEL } from './shortcut-labels';
 import { triggerProblem } from './triggers';
 import { categoriesOf, categoryKey } from './library-filter';
 import type { CategoryOption } from './library-filter';
@@ -69,7 +68,7 @@ function formulae(count: number): string {
   return `${count} formula${count === 1 ? '' : 'e'}`;
 }
 
-/** Session cache of rendered previews, keyed by body; shared with Custom shortcuts. */
+/** Session cache of rendered previews, keyed by body; shared with the Shortcuts tab. */
 const previewCache = new Map<string, string>();
 
 export function renderPreview(target: HTMLElement, body: string): void {
@@ -127,14 +126,13 @@ export function buildLibraryPanel(
   controls.className = 'library-panel__controls';
 
   const filterLabel = document.createElement('label');
-  filterLabel.className = 'visually-hidden';
-  filterLabel.textContent = 'Filter library';
+  filterLabel.className = 'field__label library-panel__label';
+  filterLabel.textContent = 'Filter formulae';
   filterLabel.htmlFor = 'library-filter';
   const filter = document.createElement('input');
   filter.type = 'search';
   filter.id = 'library-filter';
   filter.className = 'library-panel__filter';
-  filter.placeholder = 'Filter…';
   filter.autocomplete = 'off';
 
   const sortLabel = document.createElement('label');
@@ -482,13 +480,10 @@ export function buildLibraryPanel(
     roving.reset();
 
     if (shownRows.length === 0) {
-      empty.textContent =
-        all.length === 0
-          ? 'Nothing in your library yet. Save the current equation with the ' +
-            `"Save to library" button or ${SAVE_SHORTCUT_LABEL}, then insert the whole ` +
-            'equation from here in one step.'
-          : noMatchText(all.length, currentCategory !== null);
-      empty.hidden = false;
+      // An empty library is already stated by the tab's status line, with
+      // Save to library beside it; only a filter with no hits needs words.
+      empty.textContent = all.length === 0 ? '' : noMatchText(all.length, currentCategory !== null);
+      empty.hidden = all.length === 0;
     } else {
       empty.hidden = true;
     }

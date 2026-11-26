@@ -1,6 +1,6 @@
 /**
  * Keyboard shortcuts reference: the read-only list that is the body of the
- * workspace's Keyboard shortcuts mode (More ▾ › Keyboard shortcuts). The
+ * workspace's Keyboard shortcuts mode (opened from the Shortcuts tab). The
  * browser-registered bindings are read live where `chrome.commands` exists,
  * because the user can rebind them at chrome://extensions/shortcuts; the
  * panel-local shortcuts are always listed.

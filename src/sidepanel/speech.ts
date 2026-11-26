@@ -7,7 +7,7 @@
  * or errors – so the editor is fully usable before SRE finishes.
  *
  * The string produced here is the **single source of truth** for spoken
- * output, driving the "Speak" affordance.
+ * output, driving the Read aloud button.
  *
  * Performance: SRE is heavy, so it is loaded via a dynamic `import()` and only
  * the first time speech is actually requested. SRE's English locale maps are
@@ -172,7 +172,7 @@ async function generateSpeech(
 
 /**
  * Whether an utterance started here is currently playing, and its change
- * subscribers – drives the single Speak/Stop-speaking toggle in the panel.
+ * subscribers – drives the single Read aloud / Stop reading toggle in the panel.
  */
 let speakingNow = false;
 /** The utterance whose lifecycle currently drives the speaking state – a
@@ -240,7 +240,7 @@ export async function speakAloud(
   // fall back to a non-English default that mis-says lone letters (e.g. "a").
   const voice = preferredEnglishVoice();
   if (voice) utterance.voice = voice;
-  // Track playback for the Speak toggle. `end` fires on natural completion
+  // Track playback for the Read aloud toggle. `end` fires on natural completion
   // AND after cancel(); `error` covers engines that reject instead. Only the
   // current utterance may flip the state back off or report its lifecycle:
   // a cancelled predecessor's late events are dropped here.

@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { EditorController } from './editor';
 
 /**
- * My library and the capture flow against the real (in-memory) store and
+ * The Library tab and the capture flow against the real (in-memory) store and
  * a stub editor: the contract is that a keyboard-only user can save,
  * find, insert, rename and delete without a pointer. Previews render
  * eagerly here (happy-dom has no IntersectionObserver) through the real
@@ -419,177 +419,13 @@ describe('library view', () => {
     expectApproved(); // the no-match state
   });
 
-  // The empty-state hint names the save shortcut with the modifier printed on
-  // the user's keyboard: Option on a Mac, Alt elsewhere. The platform is
-  // stubbed before the modules load, since the label is read once at import.
-  it('names the save shortcut Option+S on a Mac in the empty-state hint', async () => {
-    vi.stubGlobal('navigator', { platform: 'MacIntel' });
+  // An empty library is stated once, by the tab's status line beside Save
+  // to library; the list adds no paragraph of its own.
+  it('says nothing in the list while the library is empty', async () => {
     const { view } = await freshModules();
     const { editor } = stubEditor();
     const panel = view.buildLibraryPanel(editor).element;
     document.body.appendChild(panel);
-    const hint = panel.querySelector('.palette__empty')!.textContent;
-    expect(hint).toContain('Option+S');
-    expect(hint).not.toContain('Alt+S');
-  });
-
-  it('names the save shortcut Alt+S elsewhere in the empty-state hint', async () => {
-    vi.stubGlobal('navigator', { platform: 'Win32' });
-    const { view } = await freshModules();
-    const { editor } = stubEditor();
-    const panel = view.buildLibraryPanel(editor).element;
-    document.body.appendChild(panel);
-    const hint = panel.querySelector('.palette__empty')!.textContent;
-    expect(hint).toContain('Alt+S');
-    expect(hint).not.toContain('Option+S');
-  });
-});
-
-describe('library capture', () => {
-  beforeEach(() => {
-    vi.unstubAllGlobals();
-    document.body.innerHTML = '';
-  });
-
-  /** A stand-in for the workspace's Save to library mode. */
-  function stubHost() {
-    const region = document.createElement('div');
-    const titles: string[] = [];
-    return {
-      region,
-      titles,
-      host: {
-        show: (title: string): HTMLElement => {
-          titles.push(title);
-          return region;
-        },
-        hide: (): void => region.replaceChildren(),
-      },
-    };
-  }
-
-  it('captures the whole equation and saves it under the typed name', async () => {
-    const { library, capture } = await freshModules();
-    const { editor } = stubEditor();
-    const { host, region, titles } = stubHost();
-    const { button } = capture.createLibraryCapture(editor, host);
-    document.body.append(button, region);
-
-    button.click();
-    expect(titles).toEqual(['Save to library']);
-    const form = region.querySelector<HTMLFormElement>('.library-form')!;
-    expect(form.querySelector('.library-form__title')).toBeNull(); // the mode shows the title
-    const name = form.querySelector<HTMLInputElement>('input')!;
-    expect(name.value).toBe('$x+1$'); // pre-filled as the equation's maths
-    // The quick path is Name then Enter: the rest waits behind More options.
-    const more = form.querySelector<HTMLDetailsElement>('details.library-form__more')!;
-    expect(more.open).toBe(false);
-    expect(more.contains(form.querySelector('textarea'))).toBe(true);
-    const body = form.querySelector<HTMLTextAreaElement>('textarea')!;
-    expect(body.value).toBe('x+1');
-    name.value = 'My expression';
-    name.dispatchEvent(new Event('input', { bubbles: true }));
-    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    await flush();
-
-    expect(library.getLibraryEntries()).toHaveLength(1);
-    expect(library.getLibraryEntries()[0]).toMatchObject({
-      name: 'My expression',
-      body: 'x+1',
-    });
-    expect(region.querySelector('.library-form')).toBeNull(); // closed
-  });
-
-  it('normalises #? in the body to \\placeholder{} on save', async () => {
-    const { library, capture } = await freshModules();
-    const { editor } = stubEditor();
-    const { host, region } = stubHost();
-    const { button } = capture.createLibraryCapture(editor, host);
-    document.body.append(button, region);
-    button.click();
-    const form = region.querySelector<HTMLFormElement>('.library-form')!;
-    const body = form.querySelector<HTMLTextAreaElement>('textarea')!;
-    body.value = '\\frac{#?}{#?}';
-    body.dispatchEvent(new Event('input', { bubbles: true }));
-    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    await flush();
-    expect(library.getLibraryEntries()[0]!.body).toBe(
-      '\\frac{\\placeholder{}}{\\placeholder{}}',
-    );
-  });
-
-  it('refuses a trigger that names a real command, and says which', async () => {
-    const { capture, library } = await freshModules();
-    const { editor } = stubEditor();
-    const { host, region } = stubHost();
-    const { button } = capture.createLibraryCapture(editor, host);
-    document.body.append(button, region);
-    button.click();
-    const form = region.querySelector<HTMLFormElement>('.library-form')!;
-    const trigger = form.querySelectorAll<HTMLInputElement>('input')[1]!;
-    trigger.value = 'sum';
-    trigger.dispatchEvent(new Event('input', { bubbles: true }));
-    const error = [...form.querySelectorAll('.field__error')].find(
-      (node) => node.textContent !== '',
-    );
-    expect(error?.textContent).toContain('\\sum is already a LaTeX command');
-    // The problem sits behind More options, so the disclosure opens itself.
-    expect(form.querySelector<HTMLDetailsElement>('details.library-form__more')!.open).toBe(true);
-    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    await flush();
-    expect(library.getLibraryEntries()).toHaveLength(0);
-  });
-
-  it('describes a problem to its field and, on Enter, announces it and focuses the field', async () => {
-    const { capture, library } = await freshModules();
-    const alert = document.createElement('div');
-    alert.id = 'sr-alert';
-    document.body.appendChild(alert);
-    const { editor } = stubEditor();
-    const { host, region } = stubHost();
-    const { button } = capture.createLibraryCapture(editor, host);
-    document.body.append(button, region);
-    button.click();
-    const form = region.querySelector<HTMLFormElement>('.library-form')!;
-    const [name, trigger] = form.querySelectorAll<HTMLInputElement>('input');
-    const body = form.querySelector<HTMLTextAreaElement>('textarea')!;
-
-    // Every hint or error is the description of its field.
-    for (const control of [name!, trigger!, body]) {
-      const describedBy = control.getAttribute('aria-describedby')!;
-      expect(document.getElementById(describedBy)).not.toBeNull();
-    }
-    expect(trigger!.getAttribute('aria-invalid')).toBe('false');
-    trigger!.value = 'sum';
-    trigger!.dispatchEvent(new Event('input', { bubbles: true }));
-    expect(trigger!.getAttribute('aria-invalid')).toBe('true');
-    expect(document.getElementById(trigger!.getAttribute('aria-describedby')!)!.textContent).toBe(
-      '\\sum is already a LaTeX command.',
-    );
-
-    // Enter from the Name field: nothing is saved, the problem is spoken
-    // and focus lands on the Trigger field.
-    name!.focus();
-    const save = form.querySelector<HTMLButtonElement>('[type="submit"]')!;
-    expect(save.disabled).toBe(false);
-    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    expect(library.getLibraryEntries()).toHaveLength(0);
-    expect(document.activeElement).toBe(trigger);
-    await vi.waitFor(() =>
-      expect(alert.textContent).toBe('\\sum is already a LaTeX command.'),
-    );
-  });
-
-  it('announces instead of opening when the equation is empty', async () => {
-    const { capture, library } = await freshModules();
-    const { editor } = stubEditor();
-    (editor as { isEmpty: () => boolean }).isEmpty = () => true;
-    const { host, region, titles } = stubHost();
-    const { button } = capture.createLibraryCapture(editor, host);
-    document.body.append(button, region);
-    button.click();
-    expect(titles).toEqual([]);
-    expect(region.children).toHaveLength(0);
-    expect(library.getLibraryEntries()).toHaveLength(0);
+    expect(panel.querySelector<HTMLElement>('.palette__empty')!.hidden).toBe(true);
   });
 });

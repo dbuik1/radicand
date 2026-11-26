@@ -193,7 +193,7 @@ describe('draw-to-find', () => {
     expect(onSearchInstead).toHaveBeenCalledTimes(1);
   });
 
-  it('offers the text search before any ink, and names the shortcut on the surface', () => {
+  it('offers the text search before any ink, and describes the surface with its shortcut', () => {
     // Regression: the only route to the search appeared after a pointer
     // stroke, so a keyboard user landed on a surface they could not draw
     // on and nothing in the mode said how to get out of it.
@@ -206,8 +206,13 @@ describe('draw-to-find', () => {
     expect(searchInstead.textContent).toMatch(/^Search instead/);
     expect(searchInstead.title).toMatch(/Ctrl\+\/|Cmd\+\//);
     expect(surface.getAttribute('aria-label')).toBe('Drawing area');
-    const description = document.getElementById(surface.getAttribute('aria-describedby')!)!;
-    expect(description.textContent).toMatch(/Ctrl\+\/|Cmd\+\//);
+    const description = surface
+      .getAttribute('aria-describedby')!
+      .split(' ')
+      .map((id) => document.getElementById(id)!.textContent)
+      .join(' ');
+    expect(description).toContain('Draw a symbol');
+    expect(description).toMatch(/Search instead ?(Ctrl\+\/|Cmd\+\/)/);
   });
 
   it('Undo stroke steps back; Clear returns to the empty state', async () => {

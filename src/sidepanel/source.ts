@@ -49,7 +49,10 @@ export function createSourceView(editor: EditorController): HTMLElement {
 
   const summary = document.createElement('summary');
   summary.className = 'disclosure__summary';
-  summary.textContent = 'Equation source';
+  const nameSummary = (shown: OutputFormat): void => {
+    summary.textContent = `${FORMAT_NAME[shown]} source`;
+  };
+  nameSummary(getSettings().displayFormat);
   details.appendChild(summary);
 
   const body = document.createElement('div');
@@ -95,7 +98,7 @@ export function createSourceView(editor: EditorController): HTMLElement {
     textarea.setAttribute(
       'aria-label',
       editable
-        ? `Equation source in ${FORMAT_NAME[format]}`
+        ? `${FORMAT_NAME[format]} source`
         : `Equation in ${FORMAT_NAME[format]} (read-only – switch "Show as" to LaTeX to edit)`,
     );
     if (document.activeElement !== textarea) {
@@ -116,6 +119,7 @@ export function createSourceView(editor: EditorController): HTMLElement {
   onSettingsChange((settings) => {
     if (settings.displayFormat === format) return;
     format = settings.displayFormat;
+    nameSummary(format);
     applyFormat();
   });
 

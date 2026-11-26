@@ -57,42 +57,18 @@ try {
 
   const setEquation = (latex) =>
     panel.evaluate((value) => document.querySelector('math-field').setValue(value), latex);
-  const openMode = async (menu, label) => {
-    await panel.evaluate(
-      ({ menu, label }) => {
-        document.getElementById(`${menu}-trigger`)?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        const item = [...document.querySelectorAll(`#${menu}-menu [role="menuitem"]`)].find(
-          (el) => (el.querySelector('.menu__label') ?? el).textContent.trim() === label,
-        );
-        if (!item) throw new Error(`no "${label}" item in #${menu}-menu`);
-        item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      },
-      { menu, label },
-    );
-    await panel.waitForFunction(
-      (l) => document.querySelector('.mode:not([hidden]) .mode__title')?.textContent?.trim() === l,
-      label,
-      { timeout: 5000 },
-    );
+  const openTab = async (mode) => {
+    await panel.evaluate((id) => document.getElementById(id)?.click(), `tab-${mode}`);
+    await panel.waitForSelector(`#panel-${mode}:not([hidden])`, { timeout: 5000 });
   };
-  const closeMode = async () => {
-    await panel.evaluate(() => {
-      const close = [...document.querySelectorAll('.mode:not([hidden]) button')].find(
-        (b) => b.textContent.trim() === 'Close',
-      );
-      close?.click();
-    });
-    await panel.waitForTimeout(150);
+  // The main copy button follows the format chosen in Settings.
+  const setCopyFormat = async (format) => {
+    await panel.evaluate((id) => {
+      document.getElementById('settings-trigger')?.click();
+      document.getElementById(id)?.click();
+    }, `set-copy-format-${format}`);
+    await panel.keyboard.press('Escape');
   };
-  const setCopyFormat = (label) =>
-    panel.evaluate((wanted) => {
-      document.getElementById('copy-format-trigger')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      const item = [...document.querySelectorAll('#copy-format-menu [role="menuitemradio"]')].find(
-        (el) => el.textContent.trim() === wanted,
-      );
-      if (!item) throw new Error(`no "${wanted}" copy format`);
-      item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    }, label);
   const shoot = async ({ keepFocus = false } = {}) => {
     // Nothing focused, so no focus ring or caret lands in the picture –
     // except where the focus is what shows the feature.
@@ -104,7 +80,7 @@ try {
   // 1. The quadratic formula built in the panel, its LaTeX pasted into a
   // TeXnique problem and accepted.
   await panel.setViewportSize(SIDE);
-  await setCopyFormat('LaTeX');
+  await setCopyFormat('latex');
   await setEquation(QUADRATIC);
   const texEditing = await shoot();
 
@@ -122,11 +98,11 @@ try {
   const texSearching = await shoot({ keepFocus: true });
   await panel.fill('.symbol-search__input', '');
   await panel.setViewportSize(PANEL);
-  await setCopyFormat('MathML');
+  await setCopyFormat('mathml');
 
-  // 3. Drawing a ∀ and its matches.
+  // 3. A drawn ∀ and its matches.
   await setEquation('');
-  await openMode('from', 'Drawing');
+  await openTab('drawing');
   const box = await panel.evaluate(() => {
     const r = document.querySelector('.draw-find__surface').getBoundingClientRect();
     return { x: r.x, y: r.y, width: r.width, height: r.height };
@@ -145,11 +121,11 @@ try {
   }
   await panel.waitForSelector('.draw-find__option', { timeout: 10000 });
   const drawing = await shoot();
-  await closeMode();
+  await openTab('symbols');
 
-  // 4. My library with the starter formulae.
+  // 4. The library with the starter formulae.
   await setEquation(QUADRATIC);
-  await openMode('from', 'My library');
+  await openTab('library');
   await panel.evaluate(() => {
     [...document.querySelectorAll('.mode:not([hidden]) button')]
       .find((b) => b.textContent.trim() === 'Add starter formulae')
@@ -157,7 +133,7 @@ try {
   });
   await panel.waitForSelector('.library-row__insert', { timeout: 5000 });
   const library = await shoot();
-  await closeMode();
+  await openTab('symbols');
 
   // 5. The high-contrast theme.
   await setEquation('\\int_0^{\\infty}e^{-x^2}\\,dx=\\frac{\\sqrt{\\pi}}{2}');

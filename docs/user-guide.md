@@ -13,8 +13,8 @@ Contents
 5. [Style part of the equation](#5-style-part-of-the-equation)
 6. [Copy the equation into another program](#6-copy-the-equation-into-another-program)
 7. [Hear the equation](#7-hear-the-equation)
-8. [Save and reuse equations: My library](#8-save-and-reuse-equations-my-library)
-9. [Type your own shortcuts: Custom shortcuts](#9-type-your-own-shortcuts-custom-shortcuts)
+8. [Save and reuse equations: the library](#8-save-and-reuse-equations-the-library)
+9. [Type your own shortcuts](#9-type-your-own-shortcuts)
 10. [Read or edit the source](#10-read-or-edit-the-source)
 11. [Make the panel yours: Settings](#11-make-the-panel-yours-settings)
 12. [Keyboard shortcuts](#12-keyboard-shortcuts)
@@ -32,14 +32,14 @@ toolbar icon. The panel opens at the side of the browser window with the
 cursor already in the equation field, so you can start typing at once.
 
 The toolbar icon and the shortcut open the side panel unless you choose
-otherwise: **More ▾ › Settings › Interface › Toolbar icon opens** also
-offers *New window* and *New tab*, and applies the next time you click the
-icon or press the shortcut. To change the shortcut itself, open
+otherwise: **Settings › Window › Toolbar icon opens** also offers *New
+window* and *New tab*, and applies the next time you click the icon or
+press the shortcut. To change the shortcut itself, open
 `chrome://extensions/shortcuts` in a tab, or use the *Change shortcuts in
 Chrome…* link in the Keyboard shortcuts list.
 
-If the side panel feels narrow, **More ▾ › Open in a new window** or
-**Open in a new tab** gives the editor a window of its own. Everything
+If the side panel feels narrow, **Settings › Window › Open in window** or
+**Open in tab** gives the editor a window of its own. Everything
 works the same there. The window reopens at the size and place you last
 left it, kept on this computer only and moved back onto the screen if the
 monitor it was on has gone.
@@ -63,7 +63,7 @@ A command completes by itself only when no longer command starts with it:
 for a key press. Otherwise the panel waits for you, so `\le` stays open while
 you type `\leq`, `\left` or `\leftarrow`, and `\sin` while you type `\sinh`.
 Press **Space**, **Tab** or **Enter** to confirm such a command, or pick it
-from the list. Settings › Editing › Autocomplete delay sets how long the
+from the list. Settings › Typing › Autocomplete delay sets how long the
 panel waits before completing a command that qualifies.
 
 **Empty slots.** Structures come with empty slots (a square root's inside,
@@ -79,8 +79,9 @@ keeps that content in place.
 
 ## 3. Put in a symbol
 
-There are four routes to a symbol. All of them insert at the cursor and
-hand focus straight back to the equation.
+Under the equation and its buttons are four tabs: **Symbols**, **Draw**,
+**Library** and **Shortcuts**. There are four routes to a symbol. All of
+them insert at the cursor.
 
 **Search by name or description.** Press **Ctrl+/** (**Cmd+/** on a Mac)
 from anywhere in the panel. A small search box opens directly under the
@@ -92,7 +93,7 @@ again) closes it without inserting. Over 700 symbols and templates are
 indexed and the search runs offline. Anything you have saved to your
 library appears in the same results.
 
-The *Search symbols* box above the palette searches the same way, for
+The *Find a symbol* box in the Symbols tab searches the same way, for
 browsing: **Enter** inserts and keeps you in the box, so you can insert
 several symbols in a row.
 
@@ -100,19 +101,18 @@ Pressing `/` on its own, in the equation, builds a fraction. It
 does not open the search. See [section 14](#14-when-something-looks-wrong)
 if that catches you out.
 
-**The symbol palette.** Below the search box, the palette has eight tabs:
-Recent, Layout, Operators, Greek, Sets, Arrows, Functions and Matrix. The
-tab strip scrolls sideways when the panel is narrow. **Arrow Left** and
+**The symbol keys.** Below the search box are nine categories: Recent,
+Layout, Operators, Greek, Styles, Sets, Arrows, Functions and Matrix. The
+row of categories scrolls sideways when the panel is narrow. **Arrow Left** and
 **Arrow Right** move between tabs, **Tab** moves into the grid, and the
 arrow keys move between symbols. **Enter** or **space** inserts one. The
 Recent tab keeps the twelve symbols you inserted most recently.
 
-From the equation, **Tab** moves to the search box, then the **Insert…**
-control, then the category tabs and then the symbol grid. **Escape** from
-the search or the palette returns to the equation.
+From the equation, **Tab** moves to the copy buttons, then *Skip symbols*,
+the four tabs, the search box, the categories and the symbol grid.
+**Escape** from the search or the keys returns to the equation.
 
-**Draw it.** Choose **Insert… › Drawing** beside the search box, or
-**More ▾ › Drawing**. Sketch the symbol with a mouse, trackpad, pen or
+**Draw it.** Open the **Draw** tab. Sketch the symbol with a mouse, trackpad, pen or
 finger, using as many strokes as you like. The best matches update after
 every stroke; choose one with the arrow keys and **Enter**. *Undo stroke*
 and *Clear* start again. Recognition compares your strokes with real
@@ -120,10 +120,9 @@ handwriting samples and needs no connection. Every symbol you can draw is
 also findable by the search, which is the keyboard route to the same
 symbols.
 
-**From your library.** **Insert… › My library** or **More ▾ › My library**
-opens your saved equations. This is for whole equations, not single
+**From your library.** The **Library** tab lists your saved equations. This is for whole equations, not single
 symbols: the quadratic formula in one keystroke, say. See
-[section 8](#8-save-and-reuse-equations-my-library).
+[section 8](#8-save-and-reuse-equations-the-library).
 
 ## 4. Build structures
 
@@ -145,8 +144,9 @@ and **Arrow Down** move into them.
 
 ## 5. Style part of the equation
 
-Select the part to style, then open **Style ▾** above the field and choose
-Bold, Italic, Upright, Blackboard bold, Calligraphic or Fraktur. With
+Select the part to style, then open the **Styles** category in the Symbols
+tab and press Bold, Italic, Upright, Blackboard bold, Calligraphic or
+Fraktur. A key stays pressed while its style is on. With
 nothing selected, the style is armed for whatever you type next. Every
 change is announced. **Ctrl+B** and **Ctrl+I** (**Cmd** on a Mac) toggle
 bold and italic directly, and typed commands such as `\mathbb` behave the
@@ -154,19 +154,20 @@ same way.
 
 ## 6. Copy the equation into another program
 
-Press **Copy**, just under the equation, or **Alt+C** (**Option+C** on a
-Mac) from anywhere in the panel. The line under the button confirms what was
-copied.
+Two buttons sit just under the equation, one for each format:
 
-The **▾** beside Copy chooses the format:
+- **Copy MathML** pastes as real, editable maths into maths-aware programs:
+  Word, Google Docs, OneNote, LibreOffice, Pages and many learning
+  platforms.
+- **Copy LaTeX** pastes as source text, for Overleaf, Markdown, Moodle,
+  forums and anywhere else that reads LaTeX.
 
-- **MathML** pastes as real, editable maths into maths-aware programs: Word,
-  Google Docs, OneNote, LibreOffice, Pages and many learning platforms.
-- **LaTeX** pastes as source text, for Overleaf, Markdown, Moodle, forums
-  and anywhere else that reads LaTeX.
-
-The choice is remembered. Settings › Editing › *Tidy brackets in copied
-LaTeX* removes the extra braces MathLive sometimes writes.
+The line under the buttons confirms what was copied. The first, filled
+button is the main format, and **Alt+C** (**Option+C** on a Mac) copies in
+it from anywhere in the panel. Settings › Copy › *Main copy format* chooses
+which of the two that is, and the choice is remembered. *Tidy brackets in
+copied LaTeX*, in the same group, removes the extra braces MathLive
+sometimes writes.
 
 **Ctrl+C** (**Cmd+C** on a Mac) in the equation copies the LaTeX of the
 selection, or of the whole equation when nothing is selected, whatever the
@@ -174,8 +175,8 @@ format above is set to.
 
 ## 7. Hear the equation
 
-**Speak** reads the equation aloud in the browser's own voice, and turns
-into **Stop speaking** while it plays. The rules that turn maths into words
+**Read aloud** reads the equation in the browser's own voice, and turns
+into **Stop reading** while it plays. The rules that turn maths into words
 come from the Speech Rule Engine, and Settings › Speech chooses between two
 styles:
 
@@ -186,10 +187,10 @@ styles:
 Screen readers read the equation the same way as they move through it, so
 the setting shapes both.
 
-## 8. Save and reuse equations: My library
+## 8. Save and reuse equations: the library
 
-**Save.** Press **Save to library**, beside Copy under the equation, or **Alt+S**
-(**Option+S**). The form saves the whole equation, or just the selection if
+**Save.** Press **Save to library** at the top of the Library tab, or
+**Alt+S** (**Option+S**) from anywhere in the panel. The form saves the whole equation, or just the selection if
 you have one. The name starts as the equation itself between dollar signs;
 type a better one if you like – the name is what you will search for later.
 Maths between dollar signs in the name is shown as maths – *Area of a
@@ -202,8 +203,7 @@ then comes back as a template you fill in with Tab.
 
 **Insert.** Three ways:
 
-- **Insert… › My library** beside the search box, or **More ▾ › My
-  library**, lists everything you have saved. Filter by typing, sort by
+- The **Library** tab lists everything you have saved. Filter by typing, sort by
   recently used, name or recently added, and press **Enter** on an entry
   to insert it. Once any entry has a category (set in the **Category**
   field of the save or edit form, which suggests the ones you already
@@ -211,7 +211,7 @@ then comes back as a template you fill in with Tab.
   choose a category to list only its formulae, combined with whatever
   you have typed, and choose **All categories** to see everything again.
   If nothing matches, the list says to clear the filters.
-- The **symbol search** (**Ctrl+/**, or the *Search symbols* box) matches
+- The **symbol search** (**Ctrl+/**, or the *Find a symbol* box) matches
   saved equations as well as symbols.
 - A **trigger** of your own. Give an entry a trigger such as `quad` in the
   form and then, in the equation, type `\quad` and press **space**, **Tab**
@@ -221,21 +221,20 @@ then comes back as a template you fill in with Tab.
 **Keep it safe.** *Export library* writes a JSON file you can back up or
 share; *Import library…* reads one, and asks whether to merge or replace
 what you already have. A formula whose trigger is already in use – by
-another formula, a custom shortcut or a LaTeX command – comes in without
+another formula, a shortcut or a LaTeX command – comes in without
 it. The optional starter pack adds a small set of common
 formulae to build on. The library lives in this browser profile only, so
 export it before moving machines.
 
-## 9. Type your own shortcuts: Custom shortcuts
+## 9. Type your own shortcuts
 
-A custom shortcut is a short `\` trigger of your own that types a longer
-piece of LaTeX: `\al` for alpha, `\RR` for the real numbers, `\ddx` for a
-derivative. **More ▾ › Custom shortcuts**, or the *Custom shortcuts…*
-button in Keyboard shortcuts, opens the list.
+A shortcut is a short `\` trigger of your own that types a longer piece of
+LaTeX: `\al` for alpha, `\RR` for the real numbers, `\ddx` for a
+derivative. The **Shortcuts** tab lists them.
 
 **Use one.** Type the trigger in the equation, such as `\al`, and press
-**space**, **Tab** or **Enter**. Like library triggers, custom shortcuts
-never fire on their own.
+**space**, **Tab** or **Enter**. Like library triggers, shortcuts never
+fire on their own.
 
 **Wrap a selection.** Select part of the equation first, then type the
 trigger and confirm it: the selection goes into the shortcut's first empty
@@ -249,7 +248,7 @@ works the same for library triggers.
 **Add or edit.** *Add shortcut* opens a form with the trigger, the LaTeX it
 inserts, and an optional name and keywords. A trigger is two or more
 letters, and cannot be a LaTeX command or a trigger already used by another
-shortcut or by My library. *Blank out selection* turns part of the LaTeX
+shortcut or by the library. *Blank out selection* turns part of the LaTeX
 into an empty slot you fill in with Tab. In the list, press **Enter** on a
 shortcut to insert it, or *Edit* to change or delete it. *Undo delete*
 brings back the last one you deleted.
@@ -267,43 +266,49 @@ to keep every copy, each under a new trigger, or only the first. Like the librar
 
 ## 10. Read or edit the source
 
-**Equation source**, the disclosure under the symbols, shows the equation as
-LaTeX or MathML. The LaTeX is editable: change it and the equation follows.
+**LaTeX source**, the disclosure under the tabs, shows the equation as
+LaTeX or, with *Show as* set to MathML, as MathML. The LaTeX is editable: change it and the equation follows.
 Its open or closed state is remembered.
 
 ## 11. Make the panel yours: Settings
 
-**More ▾ › Settings**, or **Alt+,** (**Option+,**), opens Settings inside the
-panel. Settings apply to every window and tab the editor is open in, and
-follow you to other computers signed into the same Chrome profile.
+The **Settings** button beside the Equation heading, or **Alt+,**
+(**Option+,**), opens Settings inside the panel. Settings apply to every
+window and tab the editor is open in, and follow you to other computers
+signed into the same Chrome profile.
 
-**Interface.** *Toolbar icon opens* chooses what the icon and its shortcut
-open: the side panel, a new window or a new tab ([section 1](#1-open-the-panel)).
-Then one checkbox per piece of the panel: the Equation heading, the
-Style and More menus, the symbol palette, its search box, its categories and
-keys, the Insert… control, the equation source, and the Copy, Speak and Save
-buttons. Switch off what you do not use and the panel becomes as bare as an
-equation field and a keyboard. Every shortcut keeps working with its button
-gone, and *Show every piece* brings the lot back. **Alt+,** always reaches
-Settings, whatever else is off.
+**Copy.** The main copy format and *Tidy brackets in copied LaTeX*, both
+described in [section 6](#6-copy-the-equation-into-another-program).
 
 **Appearance.** Theme (system, light, dark or high contrast), the size of
 the panel's text, and the size of the equation itself, as a slider or a
 typed percentage.
 
-**Editing.** *Automatically shrink large equations to fit* keeps a long
-equation on screen. *Autocomplete delay* sets how long commands that no longer
-command starts with wait before completing. *Typing / inserts a fraction* can be switched off if you
-would rather `/` stay a plain slash. *Tidy brackets in copied LaTeX* is
-described in [section 6](#6-copy-the-equation-into-another-program).
+**Typing.** *Typing / inserts a fraction* can be switched off if you would
+rather `/` stay a plain slash. *Shrink large equations to fit* keeps a long
+equation on screen. *Autocomplete delay* sets how long a command that no
+longer command starts with waits before completing.
 
 **Speech.** The reading style and level from
 [section 7](#7-hear-the-equation).
 
+**Window.** *Open in window* and *Open in tab* move the editor out of the
+side panel, and *Toolbar icon opens* chooses what the icon and its shortcut
+open ([section 1](#1-open-the-panel)).
+
+**Interface.** One checkbox per piece of the panel: the Equation heading,
+the copy buttons, the Read aloud button, the tabs below the field, the
+symbol search box, the symbol categories and keys, the Save to library
+button and the equation source. Switch off what you do not use and the
+panel becomes as bare as an equation field and a keyboard. Every shortcut
+keeps working with its button gone, and *Show every piece* brings the lot
+back. The Settings button and **Alt+,** always reach Settings, whatever
+else is off.
+
 ## 12. Keyboard shortcuts
 
-**More ▾ › Keyboard shortcuts** lists these inside the panel, with the live
-bindings if you have changed them. On a Mac read Cmd for Ctrl and Option for
+The *Keyboard shortcuts* button at the end of the Shortcuts tab lists these
+inside the panel, with the live bindings if you have changed them. On a Mac read Cmd for Ctrl and Option for
 Alt in the first two groups.
 
 Panel
@@ -316,7 +321,7 @@ Panel
 | Copy the equation | Alt+C |
 | Save to library | Alt+S |
 | Open Settings | Alt+, |
-| Close a mode and return to the equation | Escape |
+| Return to the equation | Escape |
 
 In the equation
 
@@ -345,15 +350,17 @@ The panel is built for keyboard-only use with a screen reader:
   Speech.
 - Every insertion, style change, copy and save is announced, as is the
   highlighted row of the command list and the number of matches.
-- Menus are standard menu buttons: **Enter** or **Arrow Down** opens,
-  arrows move, **Enter** chooses, **Escape** closes and returns focus.
+- The four tabs are one **Tab** stop: **Arrow Left** and **Arrow Right**
+  choose a tab, and the next **Tab** moves into it.
 - Symbol grids and result lists are single-stop: one **Tab** lands on them,
-  and the arrow keys move inside. So are Copy, Speak and Save to library:
-  **Tab** from the equation lands on Copy, **Arrow Right** and **Arrow
-  Left** move between them, and the next **Tab** goes on to the symbols.
-- Opening a workspace mode (Drawing, My library, Settings, Keyboard
-  shortcuts) moves focus into it; **Escape** or its Close button returns
-  focus to the equation.
+  and the arrow keys move inside. So are the copy buttons and Read aloud:
+  **Tab** from the equation lands on the main copy button, and **Arrow
+  Right** and **Arrow Left** move between them.
+- *Skip symbols* comes next: **Enter** on it passes the tabs and lands on
+  the source. *Back to equation*, the last stop in the panel, returns to
+  the field.
+- Opening Settings or the keyboard shortcut list moves focus into it;
+  **Escape** or its close button returns focus to the equation.
 - Nothing you switch off in Settings › Interface removes a function: the
   shortcuts stay, and switching a piece off is announced.
 
@@ -367,7 +374,7 @@ use assistive technology are especially welcome.
 
 **I pressed `/` to search and got a fraction.** In the equation, `/`
 builds a fraction. The search is **Ctrl+/** (**Cmd+/** on a Mac). If you
-would rather `/` stayed a plain slash, switch off Settings › Editing ›
+would rather `/` stayed a plain slash, switch off Settings › Typing ›
 *Typing / inserts a fraction*. The first time it happens the panel shows a
 short hint under the field saying the same.
 
@@ -378,11 +385,11 @@ shortcuts (Ctrl+/, Alt+C, Alt+S, Alt+,) work only while the panel has
 focus: click into it or press **Ctrl+Shift+U** first.
 
 **The panel is too narrow.** Drag the side panel's edge, or open the
-editor in its own window or tab from **More ▾**. Every menu stays inside
+editor in its own window or tab from Settings › Window. Everything fits
 the panel down to 320 pixels wide.
 
-**Pasted maths came out as text.** Choose MathML under Copy ▾ for word
-processors and LaTeX for text editors. Some programs need *Paste* rather
+**Pasted maths came out as text.** Use Copy MathML for word processors
+and Copy LaTeX for text editors. Some programs need *Paste* rather
 than *Paste as plain text*.
 
 **Nothing is spoken.** Speech uses the browser's voices. If the system has

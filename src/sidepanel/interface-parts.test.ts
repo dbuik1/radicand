@@ -15,11 +15,10 @@ describe('the interface-part table', () => {
     expect(listed).toEqual(flags);
   });
 
-  it('gives each piece a label and a hint, and lists it once', () => {
+  it('gives each piece a label, and lists it once', () => {
     const seen = new Set<string>();
     for (const spec of INTERFACE_PARTS) {
       expect(spec.label.length).toBeGreaterThan(0);
-      expect(spec.hint.length).toBeGreaterThan(0);
       expect(seen.has(spec.part)).toBe(false);
       seen.add(spec.part);
       expect(interfacePartSpec(spec.part)).toBe(spec);

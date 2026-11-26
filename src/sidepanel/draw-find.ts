@@ -1,7 +1,7 @@
 /**
  * Draw-to-find: sketch a symbol with a pointer and insert one of the
  * closest matches – for when you know what a symbol looks like but not its
- * name. The Drawing mode of the workspace (opened from the Insert… controls)
+ * name. The Draw tab of the workspace
  * shows a drawing surface with Undo/Clear controls and a ranked candidate
  * list; the text search remains the keyboard-equivalent route to every
  * symbol, and a "Search instead" control beside Undo and Clear hands over
@@ -95,11 +95,8 @@ export function createDrawToFind(
   const hintSub = document.createElement('span');
   hintSub.className = 'draw-find__hint-sub';
   hintSub.textContent = 'Use any number of strokes';
-  const hintKeys = document.createElement('span');
-  hintKeys.className = 'draw-find__hint-sub';
-  hintKeys.textContent = `${SEARCH_SHORTCUT_LABEL} searches by name instead`;
-  hint.append(hintTitle, hintSub, hintKeys);
-  surface.setAttribute('aria-describedby', hint.id);
+  hint.append(hintTitle, hintSub);
+
   surface.append(canvas, hint);
 
   const controls = document.createElement('div');
@@ -124,6 +121,10 @@ export function createDrawToFind(
   searchInsteadKey.setAttribute('aria-hidden', 'true');
   searchInsteadKey.textContent = SEARCH_SHORTCUT_LABEL;
   searchInsteadBtn.append('Search instead', searchInsteadKey);
+  // The surface cannot be drawn on from the keyboard, so its description
+  // ends with the way to search by name instead.
+  searchInsteadBtn.id = 'draw-search-instead';
+  surface.setAttribute('aria-describedby', `${hint.id} ${searchInsteadBtn.id}`);
   controls.append(undoBtn, clearBtn, searchInsteadBtn);
 
   // The visible status line doubles as the live region: what sighted users
@@ -451,7 +452,7 @@ export function createDrawToFind(
   surface.addEventListener('contextmenu', (event) => event.preventDefault());
 
   // Escape (from the surface, the controls or the list) is the workspace's:
-  // it closes the Drawing mode and returns to the equation field.
+  // it leaves the Draw tab and returns to the equation field.
 
   // -------------------------------------------------------------- controls
   undoBtn.addEventListener('click', () => {
