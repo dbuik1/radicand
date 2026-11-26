@@ -36,4 +36,4 @@ Review of 2026-11-26 (link in AGENTS.md). Layout B1 approved by the owner: the e
 - Nothing the user typed is lost by closing the panel.
 
 ## Accessibility & Inclusion
-Targets of at least 44 px in the redesign, visible focus on every control, no information by colour alone, reduced motion respected, speech in ClearSpeak or MathSpeak.
+Targets of at least 44 px in the redesign, visible focus on every control, no information by colour alone, reduced motion respected, speech in the ClearSpeak or MathSpeak speech style.

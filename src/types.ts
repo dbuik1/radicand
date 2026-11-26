@@ -17,7 +17,7 @@ export type Theme = 'system' | 'light' | 'dark' | 'high-contrast';
  */
 export type Surface = 'panel' | 'window' | 'tab';
 
-/** Speech rule set exposed to the user. */
+/** Speech style exposed to the user. */
 export type SpeechRuleSet = 'clearspeak' | 'mathspeak';
 
 /** Speech verbosity level. */

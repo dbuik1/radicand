@@ -16,7 +16,7 @@ Built on [MathLive](https://mathlive.io/).
   matches.
 - **Copy anywhere** – MathML pastes as real maths into maths-aware word
   processors; LaTeX for everything else.
-- **Hear it** – spoken maths in ClearSpeak or MathSpeak.
+- **Hear it** – spoken maths in the ClearSpeak or MathSpeak speech style.
 - **Reuse your work** – a library of named formulae and your own `\`
   shortcuts, both exportable as JSON.
 - **Make it yours** – light, dark and high-contrast themes, text size, and a

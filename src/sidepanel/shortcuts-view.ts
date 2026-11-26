@@ -76,10 +76,10 @@ export function buildShortcutHints(): HTMLElement {
     for (const item of items) {
       list.appendChild(shortcutRow(item.description, item.shortcut));
     }
-    // "Copy the equation" is a panel-local shortcut (not registered with
+    // "Quick copy" is a panel-local shortcut (not registered with
     // chrome.commands), so it is always listed here regardless of whether the
     // fetch below succeeds.
-    list.appendChild(shortcutRow('Copy the equation', COPY_SHORTCUT_LABEL));
+    list.appendChild(shortcutRow('Quick copy', COPY_SHORTCUT_LABEL));
     list.appendChild(shortcutRow('Save to library', SAVE_SHORTCUT_LABEL));
     list.appendChild(shortcutRow('Search for a symbol', SEARCH_SHORTCUT_LABEL));
     list.appendChild(shortcutRow('Build a fraction while typing', '/'));

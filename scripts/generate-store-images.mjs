@@ -48,7 +48,7 @@ const PAPER = { ground: '#dfe6f2', shade: '#f6f8fc', line: '#1f6fdc', text: '#14
   faint: 'rgb(20 35 60 / 0.2)', card: '#ffffff', paper: 'ruled', mark: 'rgb(31 111 220 / 0.13)', panel: 'dark' };
 const SKY = { ground: '#5aabff', shade: '#ffffff', line: '#14233c', accent: '#1f6fdc', text: '#14233c', muted: '#414e66',
   faint: 'rgb(20 35 60 / 0.25)', card: '#eef2f9', paper: 'dots', mark: 'rgb(20 35 60 / 0.1)', panel: 'light' };
-const BLUE = { ground: '#dbe7fa', shade: '#1f6fdc', line: '#14233c', accent: '#ffffff', text: '#ffffff', muted: '#eaf2ff',
+const BLUE = { ground: '#1f6fdc', shade: '#1859c0', line: '#ffffff', accent: '#bfdcff', text: '#ffffff', muted: '#eaf2ff',
   faint: 'rgb(255 255 255 / 0.45)', card: '#1a5fc4', paper: 'plain', mark: 'transparent', panel: 'light' };
 const CONTRAST = { ground: '#000000', shade: '#141414', line: '#ffd60a', text: '#ffffff', muted: '#ffffff',
   faint: 'rgb(255 255 255 / 0.45)', card: '#000000', paper: 'grid', mark: 'rgb(255 214 10 / 0.07)', panel: 'high-contrast' };
@@ -176,7 +176,13 @@ try {
   await panel.evaluate(() => {
     document.documentElement.style.zoom = '2';
   });
-  const fieldMaths = (await panel.locator('math-field').screenshot()).toString('base64');
+  // Only the maths itself is taken, so the page can show all of it.
+  const mathsBox = await panel.evaluate(() => {
+    const base = document.querySelector('math-field').shadowRoot.querySelector('.ML__base');
+    const r = base.getBoundingClientRect();
+    return { x: r.x - 8, y: r.y - 8, width: r.width + 16, height: r.height + 16 };
+  });
+  const fieldMaths = (await panel.screenshot({ clip: mathsBox })).toString('base64');
   await panel.evaluate(() => {
     document.documentElement.style.zoom = '';
   });
@@ -221,8 +227,8 @@ try {
     },
     {
       file: 'screenshot-4-library.png',
-      title: '<em>Keep</em> the formulae you reuse',
-      body: 'Save an equation with a name and insert it again in one step.',
+      title: 'Save formulae<br>you use <em>again<br>and again</em>',
+      body: '',
       specimen: specimenContents(),
       panel: library,
       theme: BLUE,
@@ -230,7 +236,7 @@ try {
     {
       file: 'screenshot-5-contrast.png',
       title: 'Built for <em>keyboard</em> and screen reader',
-      body: 'Every control works from the keyboard. Equations are read aloud in ClearSpeak or MathSpeak.',
+      body: 'Works fully from the keyboard, and reads aloud in the ClearSpeak or MathSpeak speech style.',
       specimen: specimenSpoken(spoken),
       panel: contrast,
       theme: CONTRAST,
@@ -348,7 +354,7 @@ function specimenSheet(fieldMaths) {
     </div>
     <div class="sheet" style="position: absolute; left: 44px; bottom: 0; width: 504px; padding: 28px 36px 34px; border-radius: 6px; box-shadow: 0 22px 50px rgb(0 0 0 / 0.45); transform: rotate(-2deg);">
       <p class="serif" style="font-size: 24px; line-height: 1.4;">The roots of <math><mi>a</mi><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><mi>b</mi><mi>x</mi><mo>+</mo><mi>c</mi><mo>=</mo><mn>0</mn></math> are</p>
-      <div style="height: 132px; margin-top: 8px; background: url(data:image/png;base64,${fieldMaths}) center / auto 204px no-repeat;"></div>
+      <div style="height: 132px; margin-top: 8px; background: url(data:image/png;base64,${fieldMaths}) center / contain no-repeat;"></div>
     </div>
   </div>`;
 }
@@ -415,7 +421,7 @@ function specimenSpoken(spoken) {
     `<div style="display: flex; align-items: center; gap: 8px;">${keys.map(key).join('')}<span style="margin-left: 10px; font-size: 21px; font-weight: 600;">${label}</span></div>`;
   return `<div style="width: 100%;">
     <p style="font-size: 28px; font-weight: 600; line-height: 1.36; padding-left: 22px; border-left: 6px solid ${CONTRAST.line};">“${spoken}”</p>
-    <div style="display: flex; gap: 30px; margin-top: 36px;">${row(['Alt', 'C'], 'Copy')}${row(['Ctrl', '/'], 'Find a symbol')}</div>
+    <div style="display: flex; gap: 26px; margin-top: 32px; white-space: nowrap;">${row(['Alt', 'C'], 'Quick copy')}${row(['Ctrl', '/'], 'Find symbol')}</div>
   </div>`;
 }
 

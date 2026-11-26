@@ -25,7 +25,7 @@ Radicand is a maths equation editor that lives in Chrome's side panel. Type LaTe
 • Visual editing with LaTeX underneath – type \sqrt, \alpha or / and see the maths; open the source view to edit the LaTeX directly.
 • Find any symbol – search over 700 symbols by description ("for all", "open face R"), browse the palette, or draw the symbol and pick from the matches.
 • Copy anywhere – MathML pastes as real maths into maths-aware word processors; LaTeX for everything else.
-• Hear it – spoken maths in ClearSpeak or MathSpeak.
+• Hear it – spoken maths in the ClearSpeak or MathSpeak speech style.
 • Reuse your work – a library of named formulae and your own \ shortcuts, both exportable as JSON.
 • Make it yours – light, dark and high-contrast themes, text size, and a switch for every piece of the interface, down to a bare equation field.
 
@@ -90,7 +90,7 @@ Write maths equations in the browser's side panel and copy them as MathML or LaT
   ```
 - `clipboardWrite`:
   ```text
-  The two copy buttons and Alt+C put the equation on the clipboard as MathML or LaTeX so it can be pasted into a document.
+  The two copy buttons and the Alt+C quick copy put the equation on the clipboard as MathML or LaTeX so it can be pasted into a document.
   ```
 
 **Remote code**: No, I am not using remote code. Every script is in the

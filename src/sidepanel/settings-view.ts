@@ -434,7 +434,7 @@ export function createSettingsView(): HTMLElement {
       'Speech',
       labelledSelect<SpeechRuleSet>(
         'set-ruleset',
-        'Speech rule set',
+        'Speech style',
         [
           { label: 'ClearSpeak', value: 'clearspeak' },
           { label: 'MathSpeak', value: 'mathspeak' },
@@ -444,7 +444,7 @@ export function createSettingsView(): HTMLElement {
           void updateSettings({ speechRuleSet });
           void configureSpeech({ ...getSettings(), speechRuleSet });
           announce(
-            `Speech rule set changed to ${speechRuleSet === 'mathspeak' ? 'MathSpeak' : 'ClearSpeak'}`,
+            `Speech style changed to ${speechRuleSet === 'mathspeak' ? 'MathSpeak' : 'ClearSpeak'}`,
           );
         },
       ),

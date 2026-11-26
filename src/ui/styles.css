@@ -580,18 +580,23 @@ body {
   box-shadow: 0 0 0 1px var(--color-border), var(--shadow-field);
 }
 
-/* The bar's inner edge is the frame's outer edge, so its corner radius is
-   the frame's plus its own weight. */
+/* The bar's inner edge is the frame's outer edge, so each corner's radius
+   is the frame's plus the stroke beside it. On the right the stroke thins
+   round the corner to the weight of the frame's own edge and ends where the
+   corner does, so the bar runs into the frame instead of stopping short. */
 .radical::after {
+  --sign-edge: 1px;
   content: '';
   position: absolute;
   left: -4px;
-  right: -4px;
+  right: calc(-1 * var(--sign-edge));
   top: -4px;
-  height: calc(var(--radius-field) + 14px);
+  height: calc(var(--radius-field) + 4px);
   border: solid var(--color-brand);
-  border-width: 4px 4px 0;
-  border-radius: calc(var(--radius-field) + 4px) calc(var(--radius-field) + 4px) 0 0;
+  border-width: 4px var(--sign-edge) 0 4px;
+  border-radius: calc(var(--radius-field) + 4px) calc(var(--radius-field) + var(--sign-edge)) 0 0 /
+    calc(var(--radius-field) + 4px) calc(var(--radius-field) + 4px) 0 0;
+  box-sizing: border-box;
   pointer-events: none;
 }
 
@@ -601,10 +606,10 @@ body {
   content: '';
   position: absolute;
   left: -22px;
-  /* The rising stroke stops where the bar's left end comes down to meet it. */
-  top: calc(var(--radius-field) + 8px);
+  /* The rising stroke ends where the bar's corner ends, on the same line. */
+  top: var(--radius-field);
   width: 22px;
-  height: calc(100% - var(--radius-field) - 8px);
+  height: calc(100% - var(--radius-field));
   background: var(--color-brand);
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 30'%3E%3Cpath d='M2.2 9.6 L4.6 8 L9 27.8' fill='none' stroke='%23000' stroke-width='4' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 0 100% / 12px 30px,
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 100' preserveAspectRatio='none'%3E%3Cpath d='M9 100 L20 0' fill='none' stroke='%23000' stroke-width='4' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat 0 0 / 100% calc(100% - 2.2px);
@@ -625,6 +630,7 @@ body {
 }
 
 .radical:focus-within::after {
+  --sign-edge: 3px;
   border-color: var(--color-accent);
 }
 
