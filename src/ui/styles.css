@@ -2204,6 +2204,21 @@ a:not(.skip-link):hover {
   }
 }
 
+/* Past this width more room adds nothing: the column stops growing and
+   sits in the middle of the window. */
+@media (min-width: 1000px) {
+  .app__main {
+    width: 100%;
+    max-width: 960px;
+    margin-inline: auto;
+  }
+
+  /* A narrower search box leaves the nine categories one line. */
+  .palette__content {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+}
+
 /* ---- Increased contrast preference ---------------------------------------- */
 @media (prefers-contrast: more) {
   :root {
