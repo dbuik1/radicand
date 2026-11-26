@@ -845,10 +845,14 @@ function buildCategoryTabs(editor: EditorController): HTMLElement {
 
   // Keep the Recent panel (index 0) in sync as symbols are used or loaded,
   // by swapping in a freshly built grid (the panel's first child).
+  // A key pressed from the keyboard holds focus while its own grid is
+  // replaced, so focus follows the key to the front of the new grid, where
+  // the symbol just used now sits.
   const refreshRecent = (): void => {
-    panels[0]!.firstElementChild!.replaceWith(
-      buildGrid(editor, getRecent(), 'Recent symbols'),
-    );
+    const held = panels[0]!.contains(document.activeElement);
+    const grid = buildGrid(editor, getRecent(), 'Recent symbols');
+    panels[0]!.firstElementChild!.replaceWith(grid);
+    if (held) grid.querySelector<HTMLElement>('button')?.focus();
   };
   onRecentChange(refreshRecent);
   void loadRecent(); // async; fires onRecentChange when ready

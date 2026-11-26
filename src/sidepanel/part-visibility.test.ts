@@ -147,8 +147,8 @@ describe('announcing what went', () => {
     track(bindPart('speak', button));
     button.focus();
 
+    // Focus stays on the hidden button, as it does in a browser at this point.
     await setPart('speak', false);
-    button.blur();
     await new Promise((resolve) => requestAnimationFrame(resolve));
     expect(rescued).toBe(1);
   });
