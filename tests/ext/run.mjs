@@ -387,6 +387,8 @@ try {
 
     await openTab('drawing');
     await page.keyboard.press('ControlOrMeta+Slash');
+    // The Escape above focused the field, so the same window is open here.
+    await page.waitForTimeout(200);
     const fromMode = await quickState();
     check(
       'Ctrl+/ opens the quick search over another tab',
