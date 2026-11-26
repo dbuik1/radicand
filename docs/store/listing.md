@@ -31,7 +31,7 @@ Radicand is a maths equation editor that lives in Chrome's side panel. Type LaTe
 
 Open the panel with the toolbar icon or Ctrl+Shift+U (Cmd+Shift+U on a Mac).
 
-Accessibility: the editor targets WCAG 2.2 AA and is checked by an automated audit and keyboard tests on every change. It works at 400% zoom and in Windows High Contrast.
+Accessibility: the editor targets WCAG 2.2 AA and is checked by an automated audit and keyboard tests on every change. It works at 400% zoom and in Windows High Contrast. Known issues remain, chiefly in the equation field the MathLive library provides, and are being worked on. Radicand changes quickly and has not had an independent accessibility audit.
 
 Privacy: no analytics, no network requests and no access to the pages you visit. Your library and settings stay in your browser.
 
