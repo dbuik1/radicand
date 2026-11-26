@@ -27,17 +27,10 @@ function fakeEditor(initial = '') {
 
 describe('the kept equation', () => {
   let stored: Record<string, unknown>;
-  let pagehide: (() => void) | undefined;
 
   beforeEach(() => {
     vi.useFakeTimers();
     stored = {};
-    pagehide = undefined;
-    vi.stubGlobal('window', {
-      addEventListener: (type: string, listener: () => void) => {
-        if (type === 'pagehide') pagehide = listener;
-      },
-    });
     vi.stubGlobal('chrome', {
       storage: {
         session: {
@@ -77,24 +70,24 @@ describe('the kept equation', () => {
     expect(editor.getLatex()).toBe('y');
   });
 
-  it('stores an edit after a pause', async () => {
+  it('stores each edit at once, with no pause', async () => {
     const { editor, type } = fakeEditor();
-    const { installDraft } = await import('./draft');
+    const { installDraft, flushDraft } = await import('./draft');
     await installDraft(editor);
+    type('a');
     type('a+b');
-    expect(stored.draft).toBeUndefined();
-    await vi.advanceTimersByTimeAsync(300);
+    await flushDraft();
     expect(stored.draft).toBe('a+b');
+    expect(chrome.storage.session.set).toHaveBeenCalledTimes(2);
   });
 
-  it('stores a pending edit when the page closes', async () => {
-    const { editor, type } = fakeEditor();
+  it('does not write the equation it has just put back', async () => {
+    stored.draft = 'x^2';
+    const { editor, element, type } = fakeEditor();
+    element.addEventListener('input', () => type(editor.getLatex()));
     const { installDraft } = await import('./draft');
     await installDraft(editor);
-    type('a+b');
-    pagehide?.();
-    await vi.advanceTimersByTimeAsync(0);
-    expect(stored.draft).toBe('a+b');
+    expect(chrome.storage.session.set).not.toHaveBeenCalled();
   });
 
   it('stores an emptied field, so nothing returns', async () => {

@@ -188,11 +188,22 @@ try {
       });
     }, { part, shown });
   const setSymbolsShown = (shown) => setStoredPart('symbols', shown);
+  // page.waitForFunction treats a promise as a true result and returns at
+  // once, so stored state is polled from here, where the promise is awaited.
+  const untilStored = async (read, arg, { timeout = 5000 } = {}) => {
+    const deadline = Date.now() + timeout;
+    for (;;) {
+      const value = await page.evaluate(read, arg);
+      if (value) return value;
+      if (Date.now() > deadline) throw new Error('Timed out waiting for stored state');
+      await page.waitForTimeout(50);
+    }
+  };
   // Storage writes are debounced (400 ms), so a reload must wait for the
   // write itself rather than a fixed sleep. Each helper resolves once the
   // stored record carries every given field with the given value.
   const storedSettingsHave = (fields) =>
-    page.waitForFunction(
+    untilStored(
       (want) =>
         (chrome.storage.sync ?? chrome.storage.local)
           .get('settings')
@@ -201,7 +212,7 @@ try {
       { timeout: 5000 },
     );
   const storedLibraryEntryHas = (fields) =>
-    page.waitForFunction(
+    untilStored(
       (want) =>
         chrome.storage.local
           .get('library')
@@ -672,7 +683,7 @@ try {
     check('the menus, the source and the actions bar all go', bare.more && bare.style && bare.source && bare.actions);
 
     // Wait for the debounced write of the last toggle before reloading.
-    await page.waitForFunction(
+    await untilStored(
       () =>
         (chrome.storage.sync ?? chrome.storage.local)
           .get('settings')
@@ -710,7 +721,7 @@ try {
     // The restore is saved after a short delay, and the stored change is
     // applied again when it lands; let it land before the next section
     // opens a menu that the re-application could close under it.
-    await page.waitForFunction(
+    await untilStored(
       () =>
         (chrome.storage.sync ?? chrome.storage.local)
           .get('settings')
@@ -793,8 +804,7 @@ try {
     );
     const opened = await page.evaluate(async () => (await chrome.windows.getAll({ windowTypes: ['popup'] }))[0] ?? null);
     await page.evaluate((id) => chrome.windows.update(id, { width: 640, height: 520 }), opened?.id);
-    const stored = await page
-      .waitForFunction(
+    const stored = await untilStored(
         () =>
           chrome.storage.local
             .get('popoutBounds')
@@ -802,7 +812,7 @@ try {
         undefined,
         { timeout: 10000 },
       )
-      .then((handle) => handle.jsonValue(), () => null);
+      .then((bounds) => bounds, () => null);
     check('resizing the pop-out stores its new bounds', stored !== null, 'popoutBounds stayed at the seeded size');
     await popup.close();
   });
@@ -952,8 +962,7 @@ try {
     await openFromMore('Custom shortcuts');
     await page.locator('.mode--customShortcuts button', { hasText: /^Add \d+ common shortcuts$/ }).click();
     await page.locator('.mode--customShortcuts .library-row__insert').first().waitFor({ timeout: 5000 });
-    const stored = await page
-      .waitForFunction(
+    const stored = await untilStored(
         () => chrome.storage.local.get('shortcuts').then((r) => (r.shortcuts?.entries?.length ?? 0) >= 40),
         undefined,
         { timeout: 5000 },
@@ -1181,7 +1190,7 @@ try {
     await page.evaluate(() => document.querySelector('math-field').setValue(''));
     await focusField();
     await page.keyboard.type('k+7');
-    await page.waitForFunction(
+    await untilStored(
       () => chrome.storage.session.get('draft').then((r) => r.draft === 'k+7'),
       undefined,
       { timeout: 5000 },

@@ -90,12 +90,13 @@ export function openInTab(): void {
  * tab, whose geometry is not ours to remember.
  */
 export async function rememberWindowBoundsIfPopout(): Promise<void> {
-  if (typeof chrome === 'undefined' || !chrome.tabs?.getCurrent || !chrome.windows?.getCurrent) {
-    return;
-  }
+  if (typeof chrome === 'undefined' || !chrome.windows?.getCurrent) return;
   try {
-    const [tab, win] = await Promise.all([chrome.tabs.getCurrent(), chrome.windows.getCurrent()]);
-    if (tab === undefined && win?.type === 'popup' && win.id !== undefined) {
+    // The window type alone tells the surfaces apart: the docked panel and
+    // an editor tab both sit in a normal browser window, and the popup holds
+    // a tab of its own, so the presence of a tab says nothing.
+    const win = await chrome.windows.getCurrent();
+    if (win?.type === 'popup' && win.id !== undefined) {
       rememberPopoutBounds(win.id);
     }
   } catch {
