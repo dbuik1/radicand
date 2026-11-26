@@ -1138,6 +1138,31 @@ try {
       await page.waitForTimeout(250);
     }
     check('speech locale maps load from the extension origin', sawLocalMathmaps());
+
+    // Read aloud sends the speech engine's own wording to the synthesiser,
+    // not the field's fallback text (which says "x squared" as "x  squared"
+    // with quoted, capitalised letters).
+    await page.evaluate(() => {
+      window.__spoken = [];
+      speechSynthesis.speak = (utterance) => window.__spoken.push(utterance.text);
+    });
+    const spokenFor = async (latex) => {
+      await page.evaluate((value) => {
+        window.__spoken.length = 0;
+        document.querySelector('math-field').setValue(value);
+      }, latex);
+      await page.locator('.actions-bar > button.btn--secondary').click();
+      await page.waitForFunction(() => window.__spoken.length > 0, null, { timeout: 10000 });
+      const text = await page.evaluate(() => window.__spoken[0]);
+      // The button is a toggle: put it back to rest for the next reading.
+      await page.locator('.actions-bar > button.btn--secondary').click();
+      return text;
+    };
+    const half = await spokenFor('\\frac{1}{2}');
+    check('Read aloud says a simple fraction in ClearSpeak', half === 'one half', half);
+    const quadratic = await spokenFor('x^2+3x');
+    check('Read aloud says a power and a product in ClearSpeak', quadratic === 'x squared plus 3 x', quadratic);
+    await page.evaluate(() => document.querySelector('math-field').setValue(''));
   });
 
   await section('focus survives a Recent insert and a hidden palette', async () => {
