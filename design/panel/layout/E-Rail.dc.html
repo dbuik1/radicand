@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Layout E, rail</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.b{display:flex;gap:40px;width:2140px;height:720px;background:#e6e6e6;font:15px/1.4 system-ui,sans-serif;color:#1f1f1f}
+.f{width:400px;height:720px;background:#fff;display:flex;overflow:hidden}
+.w{width:820px}
+.eq{font:26px/1.2 Georgia,'Times New Roman',serif;display:flex;align-items:center}
+.fr{display:inline-flex;flex-direction:column;align-items:center;margin:0 6px}
+.fr>span:first-child{border-bottom:1.5px solid #1f1f1f;padding:0 5px 3px}
+.fr>span:last-child{padding-top:3px}
+.ov{border-top:1.5px solid #1f1f1f}
+button,input{font:inherit;color:inherit}
+.bt{height:44px;padding:0 12px;border:1px solid #b5b5b5;border-radius:6px;background:#fff;white-space:nowrap}
+.pr{background:#1f1f1f;border-color:#1f1f1f;color:#fff;font-weight:600}
+.in{height:44px;border:1px solid #8a8a8a;border-radius:6px;padding:0 12px;width:100%;box-sizing:border-box;background:#fff}
+.k{height:44px;border:1px solid #c8c8c8;border-radius:6px;background:#fff;font:19px Georgia,serif;padding:0}
+.ks{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.r{display:flex;gap:8px;align-items:center}
+.c{display:flex;flex-direction:column}
+.m{color:#5c5c5c}
+.s{font-size:13px}
+.h{font-weight:600}
+.li{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 8px;border:0;background:none;text-align:left;width:100%;box-sizing:border-box}
+.on.li{background:#ededed}
+.li b{font:19px Georgia,serif;width:24px;text-align:center;font-weight:400}
+.g{flex:1}
+.rl{width:76px;background:#f0f0f0;border-right:1px solid #dcdcdc;padding:8px 6px;gap:4px;box-sizing:border-box}
+.ri{height:52px;border:0;border-radius:6px;background:none;font-size:12px;padding:0}
+.on.ri{background:#1f1f1f;color:#fff;font-weight:600}
+.wd .ri{font-size:15px;text-align:left;padding:0 12px;height:44px}
+.fd{border:1px solid #8a8a8a;border-radius:8px;height:130px;padding:0 12px;display:flex;align-items:center}
+.mn{padding:16px;gap:12px;min-width:0}
+.sv{display:flex;align-items:center;gap:8px;min-height:56px;border-bottom:1px solid #ececec}
+.sv span{font:17px Georgia,serif}
+</style>
+</helmet>
+<div class="b">
+
+<div class="f">
+<div class="c rl"><button class="ri on">Symbols</button><button class="ri">Draw</button><button class="ri">Library</button><button class="ri">Shortcuts</button><span class="g"></span><button class="ri">Settings</button></div>
+<div class="c g mn">
+<span class="h">Equation</span>
+<div class="fd"><div class="eq"><i>x</i>&nbsp;=&nbsp;<span class="fr"><span>−<i>b</i> ± √<span class="ov"><i>b</i>² − 4<i>ac</i></span></span><span>2<i>a</i></span></span></div></div>
+<div class="r"><button class="bt pr g">Copy MathML</button><button class="bt">Speak</button><button class="bt">Save</button></div>
+<input class="in" aria-label="Find a symbol" placeholder="Find a symbol">
+<div class="s m">Recent</div>
+<div class="ks"><button class="k">½</button><button class="k">√</button><button class="k">xⁿ</button><button class="k">xₙ</button><button class="k">π</button><button class="k">×</button><button class="k">≤</button><button class="k">≥</button><button class="k">∑</button><button class="k">∫</button><button class="k">∞</button><button class="k">≠</button></div>
+<div class="s m">Greek</div>
+<div class="ks"><button class="k">α</button><button class="k">β</button><button class="k">γ</button><button class="k">δ</button><button class="k">θ</button><button class="k">λ</button></div>
+</div>
+</div>
+
+<div class="f">
+<div class="c rl"><button class="ri on">Symbols</button><button class="ri">Draw</button><button class="ri">Library</button><button class="ri">Shortcuts</button><span class="g"></span><button class="ri">Settings</button></div>
+<div class="c g mn">
+<span class="h">Equation</span>
+<div class="fd"><div class="eq" style="font-size:22px"><i>c</i>² = <i>a</i>² + <i>b</i>² − 2<i>ab</i> cos</div></div>
+<div class="r"><button class="bt pr g">Copy MathML</button><button class="bt">Speak</button><button class="bt">Save</button></div>
+<input class="in" aria-label="Find a symbol" value="angle" style="border:2px solid #1f1f1f">
+<div class="s m">8 symbols</div>
+<div class="c"><button class="li on"><b>∠</b>Angle</button><button class="li"><b>∡</b>Measured angle</button><button class="li"><b>∢</b>Spherical angle</button><button class="li"><b>⟨</b>Left angle bracket</button><button class="li"><b>⟩</b>Right angle bracket</button></div>
+</div>
+</div>
+
+<div class="f">
+<div class="c rl"><button class="ri">Symbols</button><button class="ri">Draw</button><button class="ri on">Library</button><button class="ri">Shortcuts</button><span class="g"></span><button class="ri">Settings</button></div>
+<div class="c g mn">
+<span class="h">Equation</span>
+<div class="fd"><div class="eq"><i>x</i>&nbsp;=&nbsp;<span class="fr"><span>−<i>b</i> ± √<span class="ov"><i>b</i>² − 4<i>ac</i></span></span><span>2<i>a</i></span></span></div></div>
+<div class="r"><button class="bt pr g">Copy MathML</button><button class="bt">Speak</button><button class="bt">Save</button></div>
+<div><span class="h">Copied as MathML.</span> Paste it into your document.</div>
+<input class="in" aria-label="Filter library" placeholder="Filter library">
+<div class="c"><div class="sv"><div class="c g"><div class="h">Euler's identity</div><span><i>e</i><sup><i>iπ</i></sup> + 1 = 0</span></div><button class="bt">Insert</button></div><div class="sv"><div class="c g"><div class="h">Pythagoras</div><span><i>a</i>² + <i>b</i>² = <i>c</i>²</span></div><button class="bt">Insert</button></div></div>
+</div>
+</div>
+
+<div class="f w">
+<div class="c rl wd" style="width:168px;padding:16px 8px"><button class="ri on">Symbols</button><button class="ri">Draw</button><button class="ri">Library</button><button class="ri">Shortcuts</button><span class="g"></span><button class="ri">Settings</button></div>
+<div class="c g mn">
+<span class="h">Equation</span>
+<div class="fd g" style="justify-content:center"><div class="eq" style="font-size:36px"><i>x</i>&nbsp;=&nbsp;<span class="fr"><span>−<i>b</i> ± √<span class="ov"><i>b</i>² − 4<i>ac</i></span></span><span>2<i>a</i></span></span></div></div>
+<div class="r"><button class="bt pr g">Copy MathML</button><button class="bt">Speak</button><button class="bt">Save</button></div>
+</div>
+<div class="c mn" style="width:330px;box-sizing:border-box;border-left:1px solid #dcdcdc">
+<input class="in" aria-label="Find a symbol" placeholder="Find a symbol">
+<div class="s m">Recent</div>
+<div class="ks"><button class="k">½</button><button class="k">√</button><button class="k">xⁿ</button><button class="k">xₙ</button><button class="k">π</button><button class="k">×</button><button class="k">≤</button><button class="k">≥</button><button class="k">∑</button><button class="k">∫</button><button class="k">∞</button><button class="k">≠</button></div>
+<div class="s m">Greek</div>
+<div class="ks"><button class="k">α</button><button class="k">β</button><button class="k">γ</button><button class="k">δ</button><button class="k">θ</button><button class="k">λ</button></div>
+<div class="s m">Operators</div>
+<div class="ks"><button class="k">±</button><button class="k">÷</button><button class="k">∂</button><button class="k">∈</button><button class="k">→</button><button class="k">∀</button></div>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2140,"height":720}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
