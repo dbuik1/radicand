@@ -77,7 +77,7 @@ part agrees to the [code of conduct](CODE_OF_CONDUCT.md).
 ## Licence
 
 MIT License – see [LICENSE](LICENSE). The extension bundles MathLive and
-MiniSearch (MIT), the KaTeX and STIX Two Math fonts (SIL Open Font License
+MiniSearch (MIT), the KaTeX, STIX Two Math and Inter fonts (SIL Open Font License
 1.1) and Speech Rule Engine (Apache License 2.0); every build includes
 their notices in `THIRD-PARTY-NOTICES.txt`. The symbol-search and drawing
 data have their own terms, set out in

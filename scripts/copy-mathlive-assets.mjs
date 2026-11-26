@@ -11,7 +11,7 @@
  *   (`base.json` + `en.json`) to keep the bundle lean – the UI is en-GB.
  *
  * The same run writes `public/THIRD-PARTY-NOTICES.txt`: every third-party
- * component that reaches `dist/` (MathLive, the KaTeX fonts, STIX Two Math,
+ * component that reaches `dist/` (MathLive, the KaTeX fonts, STIX Two Math, Inter,
  * Speech Rule Engine, MiniSearch, and the three data sets behind symbol
  * search and draw-to-find) is redistributed under a licence that
  * requires its copyright notice and licence text to travel with each copy.
@@ -86,14 +86,17 @@ const katexHeader = [
 
 const rule = (title) => `${'='.repeat(72)}\n${title}\n${'='.repeat(72)}`;
 
+// The copyright statement held in the Inter font files' name table.
+const interHeader = 'Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)';
+
 const sections = [
   {
     title: `MathLive ${await version('mathlive')} – MIT License`,
     body: (await readFile(resolve(mathlive, 'LICENSE.txt'), 'utf8')).trim(),
   },
   {
-    title: 'KaTeX fonts (dist/fonts/) and STIX Two Math (dist/assets/) – SIL Open Font License 1.1',
-    body: `${katexHeader}\n\n${stixHeader}\n\n${oflText}`,
+    title: 'KaTeX fonts (dist/fonts/), STIX Two Math and Inter (dist/assets/) – SIL Open Font License 1.1',
+    body: `${katexHeader}\n\n${stixHeader}\n\n${interHeader}\n\n${oflText}`,
   },
   {
     title: `Speech Rule Engine ${await version('speech-rule-engine')} – Apache License 2.0`,
