@@ -237,7 +237,13 @@ export async function loadSettings(): Promise<Settings> {
     // Keep the cache fresh if settings change in another context.
     chrome.storage.onChanged.addListener((changes, area) => {
       if ((area === 'sync' || area === 'local') && changes[STORAGE_KEY]) {
-        const next = normalise(changes[STORAGE_KEY].newValue);
+        // A stored value that lands while a local change is still on its way
+        // to storage is older than that change: the local change stays on
+        // top, so the write that follows does not carry the setting back.
+        const next = normalise({
+          ...((changes[STORAGE_KEY].newValue as Partial<Settings>) ?? {}),
+          ...unwritten,
+        });
         // Skip re-notification when the value hasn't actually changed – this
         // would otherwise notify twice in the context that made the change.
         if (JSON.stringify(next) === JSON.stringify(current)) return;
@@ -260,6 +266,9 @@ export function getSettings(): Settings {
 /** Trailing-debounce handle for the persistence write (see updateSettings). */
 let persistTimer: ReturnType<typeof setTimeout> | undefined;
 
+/** Every local change that storage has not yet confirmed holding. */
+let unwritten: Partial<Settings> = {};
+
 /** Set while writes are failing, so the failure is reported once. */
 let saveFailed = false;
 
@@ -267,10 +276,13 @@ let saveFailed = false;
 function persistNow(): void {
   persistTimer = undefined;
   if (!hasChromeStorage()) return;
+  const carried = unwritten;
   getStorageArea()
     .set({ [STORAGE_KEY]: current })
     .then(() => {
       saveFailed = false;
+      // Changes made while this write was in flight are still unwritten.
+      if (unwritten === carried) unwritten = {};
     })
     .catch((error: unknown) => {
       console.error('Failed to save settings:', error);
@@ -296,6 +308,7 @@ export async function updateSettings(patch: Partial<Settings>): Promise<Settings
   // so loadSettings can replay them over the persisted snapshot (see above).
   if (!loadResolved) earlyPatch = { ...earlyPatch, ...patch };
   current = normalise({ ...current, ...patch });
+  unwritten = { ...unwritten, ...patch };
   cacheAppearance(current);
   // Always notify listeners synchronously for instant UI updates.
   for (const listener of listeners) listener(current);
