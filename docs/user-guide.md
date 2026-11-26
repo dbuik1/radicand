@@ -210,7 +210,6 @@ then comes back as a template you fill in with Tab.
   use, or carried in by an import), a **Category** menu appears beside the sort menu:
   choose a category to list only its formulae, combined with whatever
   you have typed, and choose **All categories** to see everything again.
-  If nothing matches, the list says to clear the filters.
 - The **symbol search** (**Ctrl+/**, or the *Find a symbol* box) matches
   saved equations as well as symbols.
 - A **trigger** of your own. Give an entry a trigger such as `quad` in the

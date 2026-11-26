@@ -163,11 +163,10 @@ export function createLatexEditor(options: {
   blankOut.type = 'button';
   blankOut.className = 'btn btn--secondary btn--slim';
   blankOut.textContent = 'Blank out selection';
-  blankOut.title = 'Turns the selection into a Tab-navigable slot';
   blankOut.addEventListener('click', () => {
     const { selectionStart, selectionEnd } = input;
     if (selectionStart === null || selectionEnd === null || selectionStart === selectionEnd) {
-      error.textContent = 'Select part of the LaTeX first, then blank it out.';
+      error.textContent = 'Select part of the LaTeX first';
       lastBody = null; // the next validation must put its own text back
       input.focus();
       return;

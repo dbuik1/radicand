@@ -171,7 +171,7 @@ describe('custom shortcuts view', () => {
     type(filter, 'zzz');
     expect(rows()).toEqual([]);
     expect(root.querySelector('.palette__empty')!.textContent).toBe(
-      'No shortcuts match – clear the filter to see all 2',
+      'No shortcuts match',
     );
   });
 

@@ -290,7 +290,7 @@ function createSearchCombobox(
 
   const empty = document.createElement('p');
   empty.className = classes.empty;
-  empty.textContent = 'No matching symbols. Try another word, or draw it in the Draw tab.';
+  empty.textContent = 'No matching symbols';
   empty.hidden = true;
 
   let results: SymbolEntry[] = [];

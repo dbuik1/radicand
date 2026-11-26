@@ -158,7 +158,7 @@ describe('draw-to-find', () => {
     await tick();
     // The plausible-match count is independent of the five rows shown, and
     // the visually-hidden suffix announces the best match.
-    expect(status.textContent).toBe('7 matches – keep drawing to refine, best match: For all');
+    expect(status.textContent).toBe('7 matches, best match: For all');
     expect(status.querySelector('.visually-hidden')?.textContent).toBe(', best match: For all');
   });
 
@@ -177,7 +177,7 @@ describe('draw-to-find', () => {
     expect(undoBtn.disabled).toBe(true);
   });
 
-  it('shows the no-match redirect, announces it, and hands over to the text search', async () => {
+  it('says there is no close match and hands over to the text search', async () => {
     const { load } = fakeRecogniser(recognition([]));
     const { toggle, surface, status, region, onSearchInstead } = mount(load);
 
@@ -185,10 +185,7 @@ describe('draw-to-find', () => {
     drawStroke(surface);
     await tick();
 
-    expect(status.textContent).toBe('No close match. Try the text search.');
-    expect(status.querySelector('.visually-hidden')?.textContent).toBe(' Try the text search.');
-    const noMatch = region.querySelector<HTMLElement>('.draw-find__nomatch')!;
-    expect(noMatch.hidden).toBe(false);
+    expect(status.textContent).toBe('No close match');
     region.querySelector<HTMLButtonElement>('.draw-find__search-instead')!.click();
     expect(onSearchInstead).toHaveBeenCalledTimes(1);
   });

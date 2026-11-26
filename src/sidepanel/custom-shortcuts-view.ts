@@ -49,11 +49,7 @@ function shortcuts(count: number): string {
   return `${count} shortcut${count === 1 ? '' : 's'}`;
 }
 
-function noMatchText(total: number): string {
-  return total === 1
-    ? 'No shortcuts match – clear the filter to see your one shortcut'
-    : `No shortcuts match – clear the filter to see all ${total}`;
-}
+const NO_MATCH_TEXT = 'No shortcuts match';
 
 /** "a", "a and b", "a, b and c". */
 function listed(items: readonly string[]): string {
@@ -608,7 +604,7 @@ export function buildCustomShortcutsPanel(
         'read-only here. They can still be inserted.';
     } else if (!isEmpty && shown.length === 0) {
       message.hidden = false;
-      message.textContent = noMatchText(all.length);
+      message.textContent = NO_MATCH_TEXT;
     }
 
     for (const control of [addBtn, importBtn, commonBtn, emptyAdd, emptyCommon, emptyImport]) {
@@ -876,7 +872,7 @@ export function buildCustomShortcutsPanel(
     clearTimeout(countTimer);
     countTimer = setTimeout(() => {
       if (filter.value !== currentFilter) return;
-      announce(shown === 0 ? noMatchText(total) : `${shown} of ${shortcuts(total)}`);
+      announce(shown === 0 ? NO_MATCH_TEXT : `${shown} of ${shortcuts(total)}`);
     }, 400);
   });
 

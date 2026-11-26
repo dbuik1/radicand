@@ -167,15 +167,10 @@ try {
     scans.push(await scan('finder'));
     await closeFinder(page);
 
-    // Then Drawing: draw a ∀ so its candidate list renders, and unhide the
-    // no-match text so both of its result states are in the scanned DOM.
+    // Then Drawing: draw a ∀ so its candidate list renders.
     await openMode(page, 'drawing');
     await drawForAll(page);
     await page.waitForSelector('.draw-find__option', { timeout: 10000 });
-    await page.evaluate(() => {
-      const block = document.querySelector('.draw-find__nomatch');
-      if (block) block.hidden = false;
-    });
     scans.push(await scan('drawing'));
 
     // Then the Library tab, Settings and the keyboard shortcut list.
@@ -714,10 +709,6 @@ try {
   await openMode(targetPage, 'drawing');
   await drawForAll(targetPage);
   await targetPage.waitForSelector('.draw-find__option', { timeout: 10000 });
-  await targetPage.evaluate(() => {
-    const block = document.querySelector('.draw-find__nomatch');
-    if (block) block.hidden = false;
-  });
   await targetPage.waitForTimeout(50);
   record(await measureVisibleTargets());
   // Then the remaining modes, whose controls are only rendered while open.

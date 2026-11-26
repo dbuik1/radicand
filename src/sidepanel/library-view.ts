@@ -52,16 +52,8 @@ import type { CategoryOption } from './library-filter';
 type SortOrder = 'used' | 'name' | 'added';
 type RowButton = 'insert' | 'edit';
 
-/**
- * Shown in the list, and announced, when the filter matches nothing. Names
- * the way out (clearing the filter) and what that shows.
- */
-function noMatchText(total: number, categoryChosen: boolean): string {
-  const what = categoryChosen ? 'filters' : 'filter';
-  return total === 1
-    ? `No formulae match – clear the ${what} to see your one formula`
-    : `No formulae match – clear the ${what} to see all ${total}`;
-}
+/** Shown in the list, and announced, when the filter matches nothing. */
+const NO_MATCH_TEXT = 'No formulae match';
 
 /** "formula" or "formulae" for a count. */
 function formulae(count: number): string {
@@ -482,7 +474,7 @@ export function buildLibraryPanel(
     if (shownRows.length === 0) {
       // An empty library is already stated by the tab's status line, with
       // Save to library beside it; only a filter with no hits needs words.
-      empty.textContent = all.length === 0 ? '' : noMatchText(all.length, currentCategory !== null);
+      empty.textContent = all.length === 0 ? '' : NO_MATCH_TEXT;
       empty.hidden = all.length === 0;
     } else {
       empty.hidden = true;
@@ -499,9 +491,8 @@ export function buildLibraryPanel(
     starterBtn.disabled = readOnly;
     const seeded = derived.seeded;
     starterBtn.textContent = seeded ? 'Remove starter formulae' : 'Add starter formulae';
-    starterHint.textContent = seeded
-      ? 'Removing takes back only the starter formulae you have not edited'
-      : "Quadratic formula, standard deviation, Maxwell's equations and more";
+    starterHint.textContent = seeded ? 'Formulae you edited stay' : '';
+    starterHint.hidden = !seeded;
     rowButtons = nextRowButtons;
     orderStale = false;
 
@@ -708,7 +699,7 @@ export function buildLibraryPanel(
       if (filter.value !== currentFilter) return;
       announce(
         shown === 0
-          ? noMatchText(total, currentCategory !== null)
+          ? NO_MATCH_TEXT
           : `${shown} of ${formulae(total)}`,
       );
     }, 400);

@@ -647,7 +647,7 @@ function buildGrid(
   if (buttons.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'palette__empty';
-    empty.textContent = 'No symbols used yet – ones you insert from any tab appear here';
+    empty.textContent = 'Symbols you insert appear here';
     grid.appendChild(empty);
     return grid;
   }
@@ -747,6 +747,7 @@ function buildCategoryTabs(editor: EditorController): HTMLElement {
     tab.id = tabId;
     tab.className = 'palette__tab';
     tab.textContent = name;
+    tab.dataset.label = name;
     tab.setAttribute('role', 'tab');
     tab.setAttribute('aria-controls', panelId);
     tab.setAttribute('aria-selected', String(selected));

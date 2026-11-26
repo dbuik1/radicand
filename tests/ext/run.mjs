@@ -1120,7 +1120,7 @@ try {
     await page.locator('#library-filter').fill('alpha');
     await page.waitForFunction(() => document.querySelectorAll('.library-row').length === 0);
     const emptyText = await page.locator('.library-panel .palette__empty').textContent();
-    check('a category and search with no match say how to clear them', /clear the filters/.test(emptyText ?? ''), emptyText ?? '');
+    check('a category and search with no match say so', emptyText === 'No formulae match', emptyText ?? '');
     await page.locator('#library-filter').fill('');
     await select.selectOption({ label: 'All categories' });
     await page.waitForFunction(() => document.querySelectorAll('.library-row').length === 3);

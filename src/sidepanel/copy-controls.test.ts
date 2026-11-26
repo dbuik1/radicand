@@ -101,7 +101,7 @@ describe('copy result line', () => {
     document.body.append(group, status);
     group.querySelector<HTMLButtonElement>('#copy-button')!.click();
     await vi.waitFor(() =>
-      expect(status.textContent).toBe('Copied as MathML. Paste into your document.'),
+      expect(status.textContent).toBe('Copied as MathML'),
     );
     expect(status.hidden).toBe(false);
     expect(status.classList.contains('actions-bar__status--done')).toBe(true);
@@ -117,7 +117,7 @@ describe('copy result line', () => {
     const stop = installCopyShortcut(editor);
     document.dispatchEvent(new KeyboardEvent('keydown', { altKey: true, code: 'KeyC' }));
     await vi.waitFor(() =>
-      expect(status.textContent).toBe('Copied as MathML. Paste into your document.'),
+      expect(status.textContent).toBe('Copied as MathML'),
     );
     changeListeners.forEach((listener) => listener());
     expect(status.hidden).toBe(true);
@@ -165,7 +165,7 @@ describe('copy result line', () => {
     await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
     expect(writeText).toHaveBeenLastCalledWith(editor.getValue('latex'));
     await vi.waitFor(() =>
-      expect(status.textContent).toBe('Copied as LaTeX. Paste into your document.'),
+      expect(status.textContent).toBe('Copied as LaTeX'),
     );
     expect(getSettings().copyFormat).toBe('mathml');
   });

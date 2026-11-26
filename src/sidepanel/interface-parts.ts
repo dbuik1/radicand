@@ -21,12 +21,6 @@
  * name (WCAG 4.1.2), so removing it would leave the field unnamed.
  */
 import type { InterfacePart } from '../types';
-import {
-  COPY_SHORTCUT_LABEL,
-  SAVE_SHORTCUT_LABEL,
-  SEARCH_SHORTCUT_LABEL,
-  SYMBOLS_SHORTCUT_LABEL,
-} from './shortcut-labels';
 
 export interface InterfacePartSpec {
   part: InterfacePart;
@@ -54,7 +48,6 @@ export const INTERFACE_PARTS: readonly InterfacePartSpec[] = [
   {
     part: 'copy',
     label: 'Copy buttons',
-    hint: `${COPY_SHORTCUT_LABEL} still copies.`,
     mode: 'remove',
   },
   {
@@ -65,13 +58,11 @@ export const INTERFACE_PARTS: readonly InterfacePartSpec[] = [
   {
     part: 'symbols',
     label: 'Tabs below the field',
-    hint: `${SYMBOLS_SHORTCUT_LABEL} shows and hides them too.`,
     mode: 'remove',
   },
   {
     part: 'symbolSearch',
     label: 'Symbol search box',
-    hint: `${SEARCH_SHORTCUT_LABEL} brings it back.`,
     mode: 'remove',
   },
   {
@@ -82,7 +73,6 @@ export const INTERFACE_PARTS: readonly InterfacePartSpec[] = [
   {
     part: 'saveToLibrary',
     label: 'Save to library button',
-    hint: `${SAVE_SHORTCUT_LABEL} still saves.`,
     mode: 'remove',
   },
   {

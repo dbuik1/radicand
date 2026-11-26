@@ -159,8 +159,8 @@
   --color-active: var(--color-divider);
   --color-field: #141f33;
   --color-brand: #5aabff;
-  --color-primary: #5aabff;
-  --color-primary-text: #06101f;
+  --color-primary: #f4f7fc;
+  --color-primary-text: #080d17;
   --color-done: #8fe0b4;
   --color-tint-text: #ffffff;
 }
@@ -228,8 +228,8 @@
     --color-active: var(--color-divider);
     --color-field: #141f33;
     --color-brand: #5aabff;
-    --color-primary: #5aabff;
-    --color-primary-text: #06101f;
+    --color-primary: #f4f7fc;
+    --color-primary-text: #080d17;
     --color-done: #8fe0b4;
     --color-tint-text: #ffffff;
   }
@@ -969,10 +969,6 @@ details[open] > .disclosure__summary::before {
   font-weight: 600;
 }
 
-.draw-find__hint-sub {
-  font-size: var(--font-caption);
-}
-
 .draw-find__controls {
   display: flex;
   flex-wrap: wrap;
@@ -1054,19 +1050,6 @@ details[open] > .disclosure__summary::before {
   color: inherit;
 }
 
-.draw-find__nomatch {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-2);
-}
-
-.draw-find__nomatch-text {
-  margin: 0;
-  font-size: var(--font-small);
-  color: var(--color-text-muted);
-}
-
 /* The best-match highlight is state, not chrome: it must survive forced
    colours. The ink survives on its own (a canvas bitmap
    is not force-recoloured) and is painted with the surface's used text
@@ -1146,9 +1129,22 @@ details[open] > .disclosure__summary::before {
   color: var(--color-text-muted);
   background: none;
   border: 0;
-  border-radius: var(--radius-pill);
+  border-radius: 8px;
   cursor: pointer;
+  position: relative;
+  display: inline-grid;
+  align-content: center;
   transition: background-color var(--motion-fast), color var(--motion-fast);
+}
+
+/* The label again at the selected weight, unseen: it holds the width so the
+   strip does not shift when the selection moves. */
+.palette__tab::after {
+  content: attr(data-label);
+  height: 0;
+  font-weight: 600;
+  visibility: hidden;
+  overflow: hidden;
 }
 
 .palette__tab:hover {
@@ -1156,10 +1152,20 @@ details[open] > .disclosure__summary::before {
   background: var(--color-hover);
 }
 
+/* The selected category is ink on the page with a rule under its label:
+   the filled shapes are left to the keys below. */
 .palette__tab[aria-selected='true'] {
-  font-weight: 700;
-  color: var(--color-tint-text);
-  background: var(--color-accent-tint);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.palette__tab[aria-selected='true']::before {
+  content: '';
+  position: absolute;
+  inset: auto 10px 4px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 1px;
 }
 
 /* Keys flow in a grid that fits as many 44px columns as the panel allows:
@@ -1199,13 +1205,11 @@ details[open] > .disclosure__summary::before {
   background: var(--color-active);
 }
 
-/* A text style that is on for the selection: tinted, with a heavier edge so
-   the state does not rest on the fill alone. */
+/* A text style that is on for the selection: the key inverts to ink. */
 .style-keys__key[aria-pressed='true'] {
-  background: var(--color-accent-tint);
-  color: var(--color-tint-text);
-  box-shadow: inset 0 0 0 1px var(--color-accent);
-  border-color: var(--color-accent);
+  background: var(--color-text);
+  color: var(--color-bg);
+  border-color: var(--color-text);
 }
 
 /* On for part of the selection only. */

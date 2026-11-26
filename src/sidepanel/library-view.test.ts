@@ -223,7 +223,7 @@ describe('library view', () => {
     });
     filter.value = 'zzz';
     filter.dispatchEvent(new Event('input', { bubbles: true }));
-    await vi.waitFor(() => expect(status.textContent).toBe('No formulae match – clear the filter to see all 2'), {
+    await vi.waitFor(() => expect(status.textContent).toBe('No formulae match'), {
       timeout: 2000,
     });
   });
@@ -260,7 +260,7 @@ describe('library view', () => {
     filter.dispatchEvent(new Event('input', { bubbles: true }));
     expect(panel.querySelectorAll('.library-row')).toHaveLength(0);
     expect(panel.querySelector('.palette__empty')!.textContent).toBe(
-      'No formulae match – clear the filters to see all 3',
+      'No formulae match',
     );
 
     select.value = '';

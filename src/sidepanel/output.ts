@@ -248,7 +248,7 @@ async function copyEquation(
 
   try {
     await copyToClipboard(buildPayload(editor, format));
-    const copied = `Copied as ${meta?.announceName ?? format}. Paste into your document.`;
+    const copied = `Copied as ${meta?.announceName ?? format}`;
     report(copied);
   } catch (error) {
     console.error('Copy failed:', error);

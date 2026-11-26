@@ -92,10 +92,7 @@ export function createDrawToFind(
   const hintTitle = document.createElement('span');
   hintTitle.className = 'draw-find__hint-title';
   hintTitle.textContent = 'Draw a symbol';
-  const hintSub = document.createElement('span');
-  hintSub.className = 'draw-find__hint-sub';
-  hintSub.textContent = 'Use any number of strokes';
-  hint.append(hintTitle, hintSub);
+  hint.append(hintTitle);
 
   surface.append(canvas, hint);
 
@@ -130,7 +127,7 @@ export function createDrawToFind(
   // The visible status line doubles as the live region: what sighted users
   // read is what screen readers hear, once per completed stroke. A
   // visually-hidden suffix carries anything the announcement needs that the
-  // layout shows elsewhere (the best match, the search redirect).
+  // layout shows elsewhere (the best match).
   const status = document.createElement('p');
   status.className = 'draw-find__status';
   status.setAttribute('role', 'status');
@@ -157,15 +154,7 @@ export function createDrawToFind(
   listbox.setAttribute('aria-label', 'Drawing matches');
   listbox.hidden = true;
 
-  const noMatch = document.createElement('div');
-  noMatch.className = 'draw-find__nomatch';
-  noMatch.hidden = true;
-  const noMatchText = document.createElement('p');
-  noMatchText.className = 'draw-find__nomatch-text';
-  noMatchText.textContent = "The text search covers every symbol, including ones drawing can't find.";
-  noMatch.append(noMatchText);
-
-  region.append(surface, controls, listbox, noMatch);
+  region.append(surface, controls, listbox);
 
   // ------------------------------------------------------------- ink state
   const strokes: Stroke[] = [];
@@ -253,7 +242,6 @@ export function createDrawToFind(
   const clearResults = (): void => {
     listbox.hidden = true;
     listbox.replaceChildren();
-    noMatch.hidden = true;
     shownCandidates = [];
   };
 
@@ -327,8 +315,7 @@ export function createDrawToFind(
     const { candidates, matches, confident } = recognition;
     shownCandidates = candidates;
     if (candidates.length === 0) {
-      setStatus('No close match.', { strong: true, suffix: ' Try the text search.' });
-      noMatch.hidden = false;
+      setStatus('No close match', { strong: true });
       if (hadFocus) surface.focus();
       return;
     }
@@ -371,7 +358,7 @@ export function createDrawToFind(
     if (confident || strokes.length >= 4) {
       setStatus(`Best match: ${best.name}`);
     } else {
-      setStatus(`${matches} match${matches === 1 ? '' : 'es'} – keep drawing to refine`, {
+      setStatus(`${matches} match${matches === 1 ? '' : 'es'}`, {
         suffix: `, best match: ${best.name}`,
       });
     }
