@@ -5,8 +5,8 @@
  * Every image is one plate in a series. A large radical sign runs up the
  * left edge and its bar across the top, so the content is the radicand; the
  * number in the crook of the sign (where a root's index goes) is the plate
- * number. Headlines and the specimen beside each panel are set in the
- * bundled STIX Two Math, the face of the R in the icon.
+ * number. Text is in Inter, the panel's own face; maths is in the bundled
+ * STIX Two Math.
  *
  * The panel shots come from the built extension in `dist/` loaded into
  * Chromium, so run `npm run build` first. Nothing is fetched.
@@ -42,10 +42,10 @@ const GAUSSIAN = '\\int_0^{\\infty}e^{-x^2}\\,dx=\\frac{\\sqrt{\\pi}}{2}';
 
 // The two grounds: the brand's ink with its dark-theme blue, and the
 // high-contrast theme's black with its yellow.
-const INK = { ground: '#0e1a2e', line: '#5aabff', text: '#f4f7fc', muted: '#c3cde0', faint: 'rgb(244 247 252 / 0.14)',
-  sheet: '#f4f7fc', sheetText: '#14233c', grid: 'rgb(90 171 255 / 0.055)' };
+const INK = { ground: '#0a1424', line: '#5aabff', text: '#f4f7fc', muted: '#c3cde0', faint: 'rgb(244 247 252 / 0.14)',
+  sheet: '#f4f7fc', sheetText: '#14233c', grid: 'rgb(90 171 255 / 0.05)', shade: '#152847', card: '#0e1a2e' };
 const CONTRAST = { ground: '#000000', line: '#ffd60a', text: '#ffffff', muted: '#ffffff', faint: 'rgb(255 255 255 / 0.4)',
-  sheet: '#000000', sheetText: '#ffffff', grid: 'rgb(255 214 10 / 0.07)' };
+  sheet: '#000000', sheetText: '#ffffff', grid: 'rgb(255 214 10 / 0.06)', shade: '#141414', card: '#000000' };
 
 const BASE_CSS = `
   ${FONTS}
@@ -176,35 +176,35 @@ try {
   const plates = [
     {
       file: 'screenshot-1-editing.png',
-      title: 'Write maths beside your work',
-      body: 'Type LaTeX or pick symbols in Chrome’s side panel, then copy the equation as MathML or LaTeX.',
+      title: 'Write maths <em>beside</em> your work',
+      body: 'Type LaTeX or pick symbols, then copy the equation as MathML or LaTeX.',
       specimen: specimenSheet(),
       panel: editing,
     },
     {
       file: 'screenshot-2-search.png',
-      title: 'Find a symbol by its meaning',
+      title: 'Find a symbol by its <em>meaning</em>',
       body: 'Search over 700 symbols by description, or browse them by category.',
       specimen: specimenEntry(),
       panel: searching,
     },
     {
       file: 'screenshot-3-drawing.png',
-      title: 'Draw the symbol you cannot name',
+      title: '<em>Draw</em> the symbol you cannot name',
       body: 'Sketch it with a mouse, pen or finger and pick from the matches.',
       specimen: specimenDrawn(),
       panel: drawing,
     },
     {
       file: 'screenshot-4-library.png',
-      title: 'Keep the formulae you reuse',
+      title: '<em>Keep</em> the formulae you reuse',
       body: 'Save an equation with a name and insert it again in one step.',
       specimen: specimenContents(),
       panel: library,
     },
     {
       file: 'screenshot-5-contrast.png',
-      title: 'Built for keyboard and screen reader',
+      title: 'Built for <em>keyboard</em> and screen reader',
       body: 'Every control works from the keyboard. Equations are read aloud in ClearSpeak or MathSpeak.',
       specimen: specimenSpoken(spoken),
       panel: contrast,
@@ -239,25 +239,33 @@ try {
 }
 
 /**
- * The radical sign as an SVG the size of the image: a short hook, a heavy
- * down-stroke to `foot`, a fine stroke rising to the bar at `top`, and the
- * bar running to `right`, where it turns down as a printed vinculum does.
+ * The radical sign as an SVG the size of the image: a short hook, a stroke
+ * down to `foot`, a stroke rising to the bar at `top`, and the bar
+ * running to `right`, where it turns down as a printed vinculum does. The
+ * space under the bar is a shade lighter than the ground, so the sign reads
+ * as the thing that holds the content, and the bar carries the ticks of a
+ * ruler on its underside.
  */
-function radicalSvg({ width, height, foot, top, right, colour, scale = 1 }) {
+function radicalSvg({ width, height, foot, top, right, theme, scale = 1 }) {
   const [fx, fy] = foot;
-  const fine = 6 * scale;
-  const heavy = 12 * scale;
-  const hookStart = [fx - 62 * scale, fy - 104 * scale];
-  const hookTurn = [fx - 40 * scale, fy - 118 * scale];
-  // The rising stroke leans as the panel's own sign does: 14 across for
-  // every 100 up.
-  const rise = [fx + (fy - top) * 0.14, top];
+  // One even stroke with round joins, in the proportions of the panel's own
+  // sign: a short hook, then down to the foot.
+  const weight = 11 * scale;
+  const lean = 0.14;
+  const hookStart = [fx - 62 * scale, fy - 118 * scale];
+  const hookTurn = [fx - 40 * scale, fy - 130 * scale];
+  const rise = [fx + (fy - top) * lean, top];
+  // The rising stroke's line carried on to the bottom edge closes the shade.
+  const base = [fx - (height - fy) * lean, height];
+  const ticks = [];
+  for (let x = right - 40, n = 1; x > rise[0] + 30; x -= 40, n += 1) {
+    ticks.push(`M${x},${top + weight / 2} v${(n % 5 === 0 ? 20 : 10) * scale}`);
+  }
   return `<svg class="radical" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" aria-hidden="true">
-    <g fill="none" stroke="${colour}" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M${hookStart} L${hookTurn}" stroke-width="${fine}"/>
-      <path d="M${hookTurn} L${fx},${fy}" stroke-width="${heavy}"/>
-      <path d="M${fx},${fy} L${rise} L${right},${top} L${right},${top + 26 * scale}" stroke-width="${fine}"/>
-    </g>
+    <polygon points="${rise} ${right},${top} ${right},${height} ${base}" fill="${theme.shade}"/>
+    <path d="${ticks.join(' ')}" stroke="${theme.line}" stroke-width="${2 * scale}" opacity="0.45"/>
+    <path d="M${hookStart} L${hookTurn} L${fx},${fy} L${rise} L${right},${top} L${right},${top + 34 * scale}"
+      fill="none" stroke="${theme.line}" stroke-width="${weight}" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`;
 }
 
@@ -265,66 +273,77 @@ function plateHtml({ title, body, specimen, panel, number, theme = INK }) {
   const t = theme;
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     ${BASE_CSS}
-    body { width: 1280px; height: 800px; background: ${t.ground}; color: ${t.text};
-      background-image: linear-gradient(${t.grid} 1px, transparent 1px), linear-gradient(90deg, ${t.grid} 1px, transparent 1px);
-      background-size: 40px 40px; background-position: 19px 3px; }
-    .index { position: absolute; left: 70px; top: 388px; font-size: 54px; line-height: 1; color: ${t.line}; }
-    .copy { position: absolute; left: 236px; top: 136px; width: 520px; }
-    h1 { font-family: 'STIX Two Math', serif; font-weight: 400; font-size: 66px; line-height: 1.06; letter-spacing: -0.012em; }
-    .body { margin-top: 22px; font-size: 21px; line-height: 1.5; color: ${t.muted}; max-width: 22em; }
-    .specimen { position: absolute; left: 236px; bottom: 56px; width: 520px; height: 250px; display: flex; align-items: flex-end; color: ${t.text}; }
-    .panel { position: absolute; left: 816px; top: 124px; width: ${PANEL.width}px; height: ${PANEL.height}px; border-radius: 16px;
-      overflow: hidden; box-shadow: 0 30px 70px rgb(0 0 0 / 0.5), 0 0 0 1px ${t.faint}; }
+    body { width: 1280px; height: 800px; background: ${t.ground}; color: ${t.text}; }
+    .grid { position: absolute; inset: 0; background-image: linear-gradient(${t.grid} 1px, transparent 1px), linear-gradient(90deg, ${t.grid} 1px, transparent 1px);
+      background-size: 40px 40px; background-position: 15px 23px; }
+    .index { position: absolute; left: 52px; top: 362px; font-size: 76px; font-weight: 800; line-height: 1; color: ${t.line}; letter-spacing: -0.03em; }
+    .copy { position: absolute; left: 244px; top: 122px; width: 560px; }
+    h1 { font-weight: 800; font-size: 64px; line-height: 1.02; letter-spacing: -0.035em; }
+    h1 em { font-style: normal; color: ${t.line}; }
+    .body { margin-top: 22px; font-size: 22px; line-height: 1.45; color: ${t.muted}; max-width: 23em; }
+    .specimen { position: absolute; left: 244px; top: 340px; bottom: 44px; width: 548px; display: flex; align-items: center; color: ${t.text}; }
+    .panel { position: absolute; left: 836px; top: 132px; width: ${PANEL.width}px; height: ${PANEL.height}px; border-radius: 16px;
+      overflow: hidden; box-shadow: 0 34px 80px rgb(0 0 0 / 0.55), 0 0 0 1px ${t.faint}; }
     .panel img { display: block; width: 100%; height: 100%; }
-    .rule { border: 0; border-top: 1px solid ${t.faint}; }
+    .rule { border: 0; border-top: 2px solid ${t.faint}; }
     .sheet { background: ${t.sheet}; color: ${t.sheetText}; }
+    .card { background: ${t.card}; border: 1.5px solid ${t.faint}; }
     .line { color: ${t.line}; }
     .muted { color: ${t.muted}; }
-    .faint-edge { border: 1.5px solid ${t.faint}; }
+    .faint-edge { border: 2px solid ${t.faint}; }
   </style></head><body>
-    ${radicalSvg({ width: 1280, height: 800, foot: [140, 600], top: 76, right: 1216, colour: t.line })}
-    <p class="index serif" aria-hidden="true">${number}</p>
+    ${radicalSvg({ width: 1280, height: 800, foot: [150, 610], top: 70, right: 1236, theme: t })}
+    <div class="grid"></div>
+    <p class="index" aria-hidden="true">${number}</p>
     <div class="copy"><h1>${title}</h1><p class="body">${body}</p></div>
     <div class="specimen">${specimen}</div>
     <div class="panel"><img alt="" src="data:image/png;base64,${panel}"></div>
   </body></html>`;
 }
 
-/** Plate 1: the equation where it ends up, on a page of someone's notes. */
+/** Plate 1: the same equation as its LaTeX and as it lands on a page of notes. */
 function specimenSheet() {
-  return `<div class="sheet serif" style="width: 440px; padding: 26px 32px 30px; border-radius: 4px; box-shadow: 0 18px 40px rgb(0 0 0 / 0.35); transform: rotate(-1.6deg); transform-origin: left bottom;">
-    <p style="font-size: 21px; line-height: 1.4;">The roots of <math><mi>a</mi><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><mi>b</mi><mi>x</mi><mo>+</mo><mi>c</mi><mo>=</mo><mn>0</mn></math> are</p>
-    <div style="font-size: 34px; margin-top: 16px;">${QUADRATIC_MATHML}</div>
+  return `<div style="position: relative; width: 100%; height: 350px;">
+    <div class="card mono" style="position: absolute; left: 0; top: 0; width: 500px; padding: 22px 26px 80px; border-radius: 12px; font-size: 22px;">
+      <span class="muted">x=</span><span class="line">\\frac</span>{-b<span class="line">\\pm\\sqrt</span>{b^2-4ac}}{2a}
+    </div>
+    <div class="sheet" style="position: absolute; left: 44px; bottom: 0; width: 504px; padding: 28px 36px 34px; border-radius: 6px; box-shadow: 0 22px 50px rgb(0 0 0 / 0.45); transform: rotate(-2deg);">
+      <p class="serif" style="font-size: 24px; line-height: 1.4;">The roots of <math><mi>a</mi><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><mi>b</mi><mi>x</mi><mo>+</mo><mi>c</mi><mo>=</mo><mn>0</mn></math> are</p>
+      <div style="font-size: 52px; margin-top: 16px;">${QUADRATIC_MATHML}</div>
+    </div>
   </div>`;
 }
 
 /** Plate 2: the symbol set as a dictionary sets a headword. */
 function specimenEntry() {
-  return `<div style="display: flex; align-items: flex-end; gap: 36px; width: 100%;">
-    <span class="serif line" style="font-size: 210px; line-height: 0.82;">∠</span>
-    <div style="padding-bottom: 6px; flex: 1;">
-      <p class="serif" style="font-size: 44px; line-height: 1;">angle</p>
-      <p class="mono muted" style="font-size: 19px; margin-top: 12px;">\\angle</p>
-      <hr class="rule" style="margin: 18px 0 14px;">
-      <p class="serif muted" style="font-size: 22px; line-height: 1.5;">∡ measured angle<br>∢ spherical angle</p>
+  const also = [['∡', 'measured angle'], ['∢', 'spherical angle'], ['⟨', 'left angle bracket']];
+  return `<div style="display: flex; align-items: flex-end; gap: 40px; width: 100%;">
+    <span class="serif line" style="font-size: 330px; line-height: 0.8;">∠</span>
+    <div style="flex: 1; padding-bottom: 4px;">
+      <p style="font-size: 52px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">angle</p>
+      <p class="mono line" style="font-size: 22px; margin-top: 12px;">\\angle</p>
+      <hr class="rule" style="margin: 20px 0 16px;">
+      ${also.map(([glyph, name]) => `<p style="display: flex; gap: 14px; font-size: 22px; line-height: 1.6;" class="muted"><span class="serif" style="width: 24px; color: ${INK.text};">${glyph}</span>${name}</p>`).join('')}
     </div>
   </div>`;
 }
 
 /** Plate 3: three pen strokes beside the symbol they are read as. */
 function specimenDrawn() {
-  return `<div style="display: flex; align-items: flex-end; gap: 30px;">
-    <svg width="190" height="200" viewBox="0 0 190 200" aria-hidden="true">
-      <g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M22 26 C34 62, 62 128, 92 180"/>
-        <path d="M168 20 C150 70, 122 126, 96 184"/>
-        <path d="M50 96 C78 90, 112 92, 142 88"/>
-      </g>
-    </svg>
-    <span class="serif muted" style="font-size: 54px; line-height: 1; padding-bottom: 66px;">→</span>
-    <div style="text-align: center;">
-      <span class="serif line" style="display: block; font-size: 210px; line-height: 0.86;">∀</span>
-      <p class="mono muted" style="font-size: 19px; margin-top: 14px;">\\forall</p>
+  return `<div style="display: flex; align-items: flex-end; gap: 28px; width: 100%;">
+    <div class="card" style="width: 236px; height: 250px; border-radius: 14px; border-style: dashed; display: grid; place-items: center;">
+      <svg width="190" height="200" viewBox="0 0 190 200" aria-hidden="true">
+        <g fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 26 C34 62, 62 128, 92 180"/>
+          <path d="M168 20 C150 70, 122 126, 96 184"/>
+          <path d="M50 96 C78 90, 112 92, 142 88"/>
+        </g>
+      </svg>
+    </div>
+    <span class="line" style="font-size: 60px; font-weight: 800; line-height: 1; padding-bottom: 92px;">→</span>
+    <div style="text-align: center; flex: 1;">
+      <span class="serif line" style="display: block; font-size: 300px; line-height: 0.8;">∀</span>
+      <p class="mono muted" style="font-size: 22px; margin-top: 16px;">\\forall</p>
     </div>
   </div>`;
 }
@@ -335,13 +354,15 @@ function specimenContents() {
     ['Quadratic formula', `<math><mfrac><mrow><mo>−</mo><mi>b</mi><mo>±</mo><msqrt><msup><mi>b</mi><mn>2</mn></msup><mo>−</mo><mn>4</mn><mi>a</mi><mi>c</mi></msqrt></mrow><mrow><mn>2</mn><mi>a</mi></mrow></mfrac></math>`],
     ['Euler’s identity', `<math><msup><mi>e</mi><mrow><mi>i</mi><mi>π</mi></mrow></msup><mo>+</mo><mn>1</mn><mo>=</mo><mn>0</mn></math>`],
     ['Pythagoras’ theorem', `<math><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup><mo>=</mo><msup><mi>c</mi><mn>2</mn></msup></math>`],
+    ['Area of a circle', `<math><mi>A</mi><mo>=</mo><mi>π</mi><msup><mi>r</mi><mn>2</mn></msup></math>`],
+    ['Sum of a series', `<math><munderover><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mi>k</mi><mo>=</mo><mfrac><mrow><mi>n</mi><mo>(</mo><mi>n</mi><mo>+</mo><mn>1</mn><mo>)</mo></mrow><mn>2</mn></mfrac></math>`],
   ];
-  return `<div class="serif" style="width: 100%; display: grid; gap: 18px;">${rows
+  return `<div style="width: 100%; display: grid; gap: 20px;">${rows
     .map(
-      ([name, maths]) => `<div style="display: flex; align-items: baseline; gap: 12px; font-size: 27px;">
+      ([name, maths]) => `<div style="display: flex; align-items: center; gap: 14px; font-size: 26px; font-weight: 600; min-height: 56px;">
         <span>${name}</span>
-        <span class="muted" style="flex: 1; border-bottom: 2px dotted; opacity: 0.45; transform: translateY(-5px);"></span>
-        <span class="line">${maths}</span>
+        <span class="muted" style="flex: 1; border-bottom: 3px dotted; opacity: 0.4;"></span>
+        <span class="line" style="font-size: 28px; font-weight: 400;">${maths}</span>
       </div>`,
     )
     .join('')}</div>`;
@@ -350,13 +371,12 @@ function specimenContents() {
 /** Plate 5: the keys that do the work, and the words the equation is read as. */
 function specimenSpoken(spoken) {
   const key = (label) =>
-    `<span class="faint-edge" style="display: inline-block; min-width: 46px; padding: 8px 12px; border-radius: 8px; border-bottom-width: 4px; font-size: 19px; font-weight: 600; text-align: center;">${label}</span>`;
+    `<span class="faint-edge" style="display: inline-block; min-width: 54px; padding: 10px 14px; border-radius: 10px; border-bottom-width: 5px; font-size: 21px; font-weight: 700; text-align: center;">${label}</span>`;
   const row = (keys, label) =>
-    `<div style="display: flex; align-items: center; gap: 8px;">${keys.map(key).join('')}<span style="margin-left: 10px; font-size: 20px;">${label}</span></div>`;
+    `<div style="display: flex; align-items: center; gap: 8px;">${keys.map(key).join('')}<span style="margin-left: 10px; font-size: 21px; font-weight: 600;">${label}</span></div>`;
   return `<div style="width: 100%;">
-    <p class="serif" style="font-size: 25px; line-height: 1.36;">“${spoken}”</p>
-    <hr class="rule" style="margin: 20px 0;">
-    <div style="display: flex; gap: 34px;">${row(['Alt', 'C'], 'Copy')}${row(['Ctrl', '/'], 'Find a symbol')}</div>
+    <p style="font-size: 28px; font-weight: 600; line-height: 1.36; padding-left: 22px; border-left: 6px solid ${CONTRAST.line};">“${spoken}”</p>
+    <div style="display: flex; gap: 30px; margin-top: 36px;">${row(['Alt', 'C'], 'Copy')}${row(['Ctrl', '/'], 'Find a symbol')}</div>
   </div>`;
 }
 
@@ -368,22 +388,23 @@ function promoHtml({ width, height, panel }) {
   const t = INK;
   const small = !panel;
   const sign = small
-    ? { foot: [84, 196], top: 78, right: 404, scale: 0.62, name: 62, left: 116, nameTop: 104 }
-    : { foot: [150, 408], top: 96, right: 1330, scale: 1, name: 132, left: 232, nameTop: 150 };
+    ? { foot: [70, 214], top: 60, right: 416, scale: 0.6, name: 68, left: 112, nameTop: 98 }
+    : { foot: [130, 446], top: 76, right: 1352, scale: 1, name: 150, left: 212, nameTop: 150 };
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     ${BASE_CSS}
-    body { width: ${width}px; height: ${height}px; background: ${t.ground}; color: ${t.text};
-      background-image: linear-gradient(${t.grid} 1px, transparent 1px), linear-gradient(90deg, ${t.grid} 1px, transparent 1px);
+    body { width: ${width}px; height: ${height}px; background: ${t.ground}; color: ${t.text}; }
+    .grid { position: absolute; inset: 0; background-image: linear-gradient(${t.grid} 1px, transparent 1px), linear-gradient(90deg, ${t.grid} 1px, transparent 1px);
       background-size: 40px 40px; background-position: 9px 15px; }
-    .name { position: absolute; left: ${sign.left}px; top: ${sign.nameTop}px; font-family: 'STIX Two Math', serif;
-      font-size: ${sign.name}px; line-height: 1; letter-spacing: -0.01em; }
-    .tag { position: absolute; left: ${sign.left + 4}px; top: ${sign.nameTop + sign.name + (small ? 12 : 30)}px;
-      font-size: ${small ? 17 : 30}px; color: ${t.muted}; }
-    .panel { position: absolute; left: 920px; top: 150px; width: ${PANEL.width}px; border-radius: 16px 16px 0 0; overflow: hidden;
+    .name { position: absolute; left: ${sign.left}px; top: ${sign.nameTop}px; font-weight: 800;
+      font-size: ${sign.name}px; line-height: 1; letter-spacing: -0.04em; }
+    .tag { position: absolute; left: ${sign.left + 4}px; top: ${sign.nameTop + sign.name + (small ? 12 : 28)}px;
+      font-size: ${small ? 18 : 34}px; font-weight: 500; color: ${t.muted}; }
+    .panel { position: absolute; left: 936px; top: 138px; width: ${PANEL.width}px; border-radius: 16px 16px 0 0; overflow: hidden;
       box-shadow: 0 30px 70px rgb(0 0 0 / 0.5), 0 0 0 1px ${t.faint}; }
     .panel img { display: block; width: 100%; }
   </style></head><body>
-    ${radicalSvg({ width, height, foot: sign.foot, top: sign.top, right: sign.right, colour: t.line, scale: sign.scale })}
+    ${radicalSvg({ width, height, foot: sign.foot, top: sign.top, right: sign.right, theme: t, scale: sign.scale })}
+    <div class="grid"></div>
     <p class="name">Radicand</p>
     <p class="tag">Maths, beside your work</p>
     ${panel ? `<div class="panel"><img alt="" src="data:image/png;base64,${panel}"></div>` : ''}
