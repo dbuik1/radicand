@@ -48,17 +48,14 @@ other good fit if you would rather be listed with assistive tools.
 
 **Screenshots** (1280×800), in this order:
 
-1. `screenshot-1-editing.png` – Build the equation, then copy its LaTeX or
-   MathML anywhere
-2. `screenshot-2-search.png` – Stuck on a symbol? Search for it by what it
-   means
-3. `screenshot-3-drawing.png` – Draw it if you cannot name it
-4. `screenshot-4-library.png` – Keep the formulae you reuse
-5. `screenshot-5-contrast.png` – Made for the keyboard and screen readers
+1. `screenshot-1-editing.png` – Write maths beside your work
+2. `screenshot-2-search.png` – Find a symbol by its meaning
+3. `screenshot-3-drawing.png` – Draw the symbol you cannot name
+4. `screenshot-4-library.png` – Save formulae you use again and again
+5. `screenshot-5-contrast.png` – Built for keyboard and screen reader
 
-The first two show the panel beside [TeXnique](https://texnique.xyz/), an
-open-source LaTeX typesetting game, which has no connection with Radicand.
-Neither the captions nor the description name it.
+Each image sets the panel beside a specimen of what it does, under a
+large radical sign. No other site or product appears in them.
 
 **Small promo tile** (440×280): `promo-small-440x280.png`
 

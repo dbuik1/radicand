@@ -157,12 +157,11 @@ try {
       timeout: 15000,
     });    await page.waitForTimeout(FIELD_FOCUS_SETTLE);
   };
-  // Closing a view can put focus in the field, which opens the same window.
+  // Closing a view can put focus in the field, which opens the same window,
+  // and the field may not hold focus yet when the click returns.
   const closeView = async () => {
     await page.locator('.mode:not([hidden]) .mode__close').click();
-    if (await page.evaluate(() => document.activeElement?.tagName === 'MATH-FIELD')) {
-      await page.waitForTimeout(FIELD_FOCUS_SETTLE);
-    }
+    await page.waitForTimeout(FIELD_FOCUS_SETTLE);
   };
 
   // Write one interface-part flag straight into storage, the way the
