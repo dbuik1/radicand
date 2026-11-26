@@ -45,3 +45,5 @@ regression test, and run the **full** e2e suite before pushing.
 - Conventional Commits (`fix:`, `feat:`, `docs:`, `perf:`, …).
 - Comments state the constraint the code keeps, never where a change came
   from; `src/comment-hygiene.test.ts` enforces the common cases.
+
+Codebase audit report: https://claude.ai/artifact/PcBFKPLakSHFx6Nv5Hf8u5
