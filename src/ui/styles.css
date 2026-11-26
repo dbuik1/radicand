@@ -562,31 +562,35 @@ body {
 }
 
 /* ---- Equation field ------------------------------------------------------- */
-/* The field sits under a radical sign: a tick and rising stroke in the left
-   gutter and a bar across the top, all in the brand colour. The sign is
-   decoration on the frame, so the field itself keeps a plain 1px edge and
-   the focus ring. */
+/* The field sits under a radical sign in the brand colour: a tick and a
+   rising stroke in the left gutter, and a bar that is the frame's own top
+   edge. The bar follows the frame round its top right corner and ends in a
+   short stroke down, as a printed vinculum does. The gutter is kept narrow:
+   width is what an equation runs out of first. */
 .radical {
   position: relative;
   /* The equation sits in the middle of the frame however short it is. */
   display: flex;
   align-items: center;
   min-height: 132px;
-  margin: 3px 0 0 30px;
+  margin: 4px 4px 0 20px;
   background: var(--color-field);
   border-radius: 0 var(--radius-field) var(--radius-field) var(--radius-field);
   box-shadow: 0 0 0 1px var(--color-border), var(--shadow-field);
 }
 
+/* The bar's inner edge is the frame's outer edge, so its corner radius is
+   the frame's plus its own weight. */
 .radical::after {
   content: '';
   position: absolute;
-  left: -3px;
-  right: 0;
-  top: -3px;
-  height: 5px;
-  border-radius: 3px;
-  background: var(--color-brand);
+  left: -4px;
+  right: -4px;
+  top: -4px;
+  height: calc(var(--radius-field) + 14px);
+  border: solid var(--color-brand);
+  border-width: 4px 4px 0 0;
+  border-top-right-radius: calc(var(--radius-field) + 4px);
   pointer-events: none;
 }
 
@@ -595,23 +599,33 @@ body {
 .radical::before {
   content: '';
   position: absolute;
-  left: -30px;
-  top: -0.5px;
-  width: 32px;
-  height: 100%;
+  left: -22px;
+  top: -4px;
+  width: 22px;
+  height: calc(100% + 4px);
   background: var(--color-brand);
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 40'%3E%3Cpath d='M2.5 13 L7 10.5 L15.5 37.5' fill='none' stroke='%23000' stroke-width='5' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 0 100% / 18px 40px,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 100' preserveAspectRatio='none'%3E%3Cpath d='M15.5 100 L29.5 0' fill='none' stroke='%23000' stroke-width='5' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat 0 0 / 100% calc(100% - 2.5px);
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 40'%3E%3Cpath d='M2.5 13 L7 10.5 L15.5 37.5' fill='none' stroke='%23000' stroke-width='5' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 0 100% / 18px 40px,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 100' preserveAspectRatio='none'%3E%3Cpath d='M15.5 100 L29.5 0' fill='none' stroke='%23000' stroke-width='5' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat 0 0 / 100% calc(100% - 2.5px);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 30'%3E%3Cpath d='M2.2 9.6 L4.6 8 L9 27.8' fill='none' stroke='%23000' stroke-width='4' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 0 100% / 12px 30px,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 100' preserveAspectRatio='none'%3E%3Cpath d='M9 100 L18 0' fill='none' stroke='%23000' stroke-width='4' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat 0 0 / 100% calc(100% - 2.2px);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 30'%3E%3Cpath d='M2.2 9.6 L4.6 8 L9 27.8' fill='none' stroke='%23000' stroke-width='4' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 0 100% / 12px 30px,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 100' preserveAspectRatio='none'%3E%3Cpath d='M9 100 L18 0' fill='none' stroke='%23000' stroke-width='4' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat 0 0 / 100% calc(100% - 2.2px);
   pointer-events: none;
 }
 
 /* The field holds focus most of the time, so its ring is the frame's own
-   edge drawn heavier in the focus colour, not a second box around the sign. */
+   edge drawn heavier in the focus colour, and the sign takes that colour
+   with it: one shape, not a ring over a bar. */
 .radical:focus-within {
   box-shadow: 0 0 0 3px var(--color-accent), var(--shadow-field);
 }
+
+.radical:focus-within::before {
+  background: var(--color-accent);
+}
+
+.radical:focus-within::after {
+  border-color: var(--color-accent);
+}
+
 
 .math-field {
   /* A block, not a flex box: MathLive's content box must keep the field's
@@ -2263,9 +2277,11 @@ a:not(.skip-link):hover {
     forced-color-adjust: none;
   }
   .tabs__tab[aria-selected='true']::after,
-  .radical::before,
-  .radical::after {
+  .radical::before {
     background: Highlight;
+  }
+  .radical::after {
+    border-color: Highlight;
   }
   .actions-bar__status--done::before {
     background: CanvasText;

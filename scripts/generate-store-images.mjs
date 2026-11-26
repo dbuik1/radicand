@@ -40,12 +40,19 @@ const PANEL = { width: 400, height: 624 };
 const QUADRATIC = 'x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}';
 const GAUSSIAN = '\\int_0^{\\infty}e^{-x^2}\\,dx=\\frac{\\sqrt{\\pi}}{2}';
 
-// The two grounds: the brand's ink with its dark-theme blue, and the
-// high-contrast theme's black with its yellow.
-const INK = { ground: '#0a1424', line: '#5aabff', text: '#f4f7fc', muted: '#c3cde0', faint: 'rgb(244 247 252 / 0.14)',
-  sheet: '#f4f7fc', sheetText: '#14233c', grid: 'rgb(90 171 255 / 0.05)', shade: '#152847', card: '#0e1a2e' };
-const CONTRAST = { ground: '#000000', line: '#ffd60a', text: '#ffffff', muted: '#ffffff', faint: 'rgb(255 255 255 / 0.4)',
-  sheet: '#000000', sheetText: '#ffffff', grid: 'rgb(255 214 10 / 0.06)', shade: '#141414', card: '#000000' };
+// One series, five grounds. Each plate keeps the sign, the type and the
+// layout and changes its colours, its paper and the theme of its panel.
+const INK = { ground: '#0a1424', shade: '#152847', line: '#5aabff', text: '#f4f7fc', muted: '#c3cde0',
+  faint: 'rgb(244 247 252 / 0.16)', card: '#0a1424', paper: 'grid', mark: 'rgb(90 171 255 / 0.06)', panel: 'light' };
+const PAPER = { ground: '#dfe6f2', shade: '#f6f8fc', line: '#1f6fdc', text: '#14233c', muted: '#414e66',
+  faint: 'rgb(20 35 60 / 0.2)', card: '#ffffff', paper: 'ruled', mark: 'rgb(31 111 220 / 0.13)', panel: 'dark' };
+const BLUE = { ground: '#0f3f8c', shade: '#1a5fd0', line: '#ffffff', text: '#ffffff', muted: '#e3edff',
+  faint: 'rgb(255 255 255 / 0.3)', card: '#0f3f8c', paper: 'dots', mark: 'rgb(255 255 255 / 0.13)', panel: 'light' };
+const TINT = { ground: '#14233c', shade: '#dbe7fa', line: '#1f6fdc', text: '#14233c', muted: '#414e66',
+  faint: 'rgb(20 35 60 / 0.22)', card: '#ffffff', paper: 'plain', mark: 'transparent', panel: 'light' };
+const CONTRAST = { ground: '#000000', shade: '#141414', line: '#ffd60a', text: '#ffffff', muted: '#ffffff',
+  faint: 'rgb(255 255 255 / 0.45)', card: '#000000', paper: 'grid', mark: 'rgb(255 214 10 / 0.07)', panel: 'high-contrast' };
+const SHEET = { ground: '#fbfcfe', text: '#14233c' };
 
 const BASE_CSS = `
   ${FONTS}
@@ -78,7 +85,12 @@ try {
     await panel.evaluate((id) => document.getElementById(id)?.click(), `tab-${mode}`);
     await panel.waitForSelector(`#panel-${mode}:not([hidden])`, { timeout: 5000 });
   };
-  const shoot = async ({ keepFocus = false } = {}) => {
+  const setTheme = (theme) =>
+    panel.evaluate((name) => {
+      document.documentElement.dataset.theme = name;
+    }, theme.panel);
+  const shoot = async ({ keepFocus = false, theme = INK } = {}) => {
+    await setTheme(theme);
     // Nothing focused, so no focus ring or caret lands in the picture –
     // except where the focus is what shows the feature.
     if (!keepFocus) await panel.evaluate(() => document.activeElement?.blur());
@@ -118,30 +130,34 @@ try {
     }
   });
   await panel.waitForTimeout(200);
-  const searching = await shoot({ keepFocus: true });
+  const searching = await shoot({ keepFocus: true, theme: PAPER });
   await panel.fill('.symbol-search__input', '');
 
   // 3. A drawn ∀ and its matches.
   await setEquation('');
+  // The ink takes the theme's colour as it is drawn.
+  await setTheme(BLUE);
   await openTab('drawing');
   const box = await panel.evaluate(() => {
     const r = document.querySelector('.draw-find__surface').getBoundingClientRect();
     return { x: r.x, y: r.y, width: r.width, height: r.height };
   });
   const at = (fx, fy) => [box.x + 8 + fx * (box.width - 16), box.y + 8 + fy * (box.height - 16)];
-  for (const [from, to] of [
-    [[0.3, 0.12], [0.5, 0.88]],
-    [[0.7, 0.12], [0.5, 0.88]],
-    [[0.37, 0.48], [0.63, 0.48]],
+  // Drawn as a hand draws: strokes that bow, start and end unevenly, and a
+  // bar that slopes and overshoots.
+  for (const stroke of [
+    [[0.29, 0.15], [0.35, 0.37], [0.43, 0.61], [0.5, 0.87]],
+    [[0.72, 0.11], [0.66, 0.35], [0.57, 0.63], [0.5, 0.89]],
+    [[0.35, 0.51], [0.5, 0.47], [0.66, 0.49]],
   ]) {
-    await panel.mouse.move(...at(...from));
+    await panel.mouse.move(...at(...stroke[0]));
     await panel.mouse.down();
-    await panel.mouse.move(...at(...to), { steps: 12 });
+    for (const point of stroke.slice(1)) await panel.mouse.move(...at(...point), { steps: 5 });
     await panel.mouse.up();
     await panel.waitForTimeout(150);
   }
   await panel.waitForSelector('.draw-find__option', { timeout: 10000 });
-  const drawing = await shoot();
+  const drawing = await shoot({ theme: BLUE });
   await openTab('symbols');
 
   // 4. The library with the starter formulae.
@@ -155,16 +171,13 @@ try {
   await panel.waitForSelector('.library-row__insert', { timeout: 5000 });
   // The confirmation line clears by itself; the picture is of the list.
   await panel.waitForSelector('.actions-bar__status', { state: 'hidden', timeout: 10000 });
-  const library = await shoot();
+  const library = await shoot({ theme: TINT });
   await openTab('symbols');
 
   // 5. The high-contrast theme, and the words Read aloud says for its
   // equation: the synthesiser is replaced so the text can be read back.
   await setEquation(GAUSSIAN);
-  await panel.evaluate(() => {
-    document.documentElement.dataset.theme = 'high-contrast';
-  });
-  const contrast = await shoot();
+  const contrast = await shoot({ theme: CONTRAST });
   const spoken = await panel.evaluate(async () => {
     const heard = new Promise((resolve) => {
       speechSynthesis.speak = (utterance) => resolve(utterance.text);
@@ -185,8 +198,9 @@ try {
       file: 'screenshot-2-search.png',
       title: 'Find a symbol by its <em>meaning</em>',
       body: 'Search over 700 symbols by description, or browse them by category.',
-      specimen: specimenEntry(),
+      specimen: specimenEntry(PAPER),
       panel: searching,
+      theme: PAPER,
     },
     {
       file: 'screenshot-3-drawing.png',
@@ -194,6 +208,7 @@ try {
       body: 'Sketch it with a mouse, pen or finger and pick from the matches.',
       specimen: specimenDrawn(),
       panel: drawing,
+      theme: BLUE,
     },
     {
       file: 'screenshot-4-library.png',
@@ -201,6 +216,7 @@ try {
       body: 'Save an equation with a name and insert it again in one step.',
       specimen: specimenContents(),
       panel: library,
+      theme: TINT,
     },
     {
       file: 'screenshot-5-contrast.png',
@@ -236,6 +252,21 @@ try {
 } finally {
   await context.close();
   rmSync(userDataDir, { recursive: true, force: true });
+}
+
+/** The paper each plate is printed on: squared, ruled, dotted or plain. */
+function paperCss(t) {
+  if (t.paper === 'grid') {
+    return `background-image: linear-gradient(${t.mark} 1px, transparent 1px), linear-gradient(90deg, ${t.mark} 1px, transparent 1px);
+      background-size: 40px 40px; background-position: 15px 23px;`;
+  }
+  if (t.paper === 'ruled') {
+    return `background-image: linear-gradient(${t.mark} 2px, transparent 2px); background-size: 100% 36px; background-position: 0 20px;`;
+  }
+  if (t.paper === 'dots') {
+    return `background-image: radial-gradient(circle, ${t.mark} 2px, transparent 2.5px); background-size: 28px 28px; background-position: 9px 11px;`;
+  }
+  return '';
 }
 
 /**
@@ -274,8 +305,7 @@ function plateHtml({ title, body, specimen, panel, number, theme = INK }) {
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     ${BASE_CSS}
     body { width: 1280px; height: 800px; background: ${t.ground}; color: ${t.text}; }
-    .grid { position: absolute; inset: 0; background-image: linear-gradient(${t.grid} 1px, transparent 1px), linear-gradient(90deg, ${t.grid} 1px, transparent 1px);
-      background-size: 40px 40px; background-position: 15px 23px; }
+    .grid { position: absolute; inset: 0; ${paperCss(t)} }
     .index { position: absolute; left: 52px; top: 362px; font-size: 76px; font-weight: 800; line-height: 1; color: ${t.line}; letter-spacing: -0.03em; }
     .copy { position: absolute; left: 244px; top: 122px; width: 560px; }
     h1 { font-weight: 800; font-size: 64px; line-height: 1.02; letter-spacing: -0.035em; }
@@ -286,7 +316,7 @@ function plateHtml({ title, body, specimen, panel, number, theme = INK }) {
       overflow: hidden; box-shadow: 0 34px 80px rgb(0 0 0 / 0.55), 0 0 0 1px ${t.faint}; }
     .panel img { display: block; width: 100%; height: 100%; }
     .rule { border: 0; border-top: 2px solid ${t.faint}; }
-    .sheet { background: ${t.sheet}; color: ${t.sheetText}; }
+    .sheet { background: ${SHEET.ground}; color: ${SHEET.text}; }
     .card { background: ${t.card}; border: 1.5px solid ${t.faint}; }
     .line { color: ${t.line}; }
     .muted { color: ${t.muted}; }
@@ -315,7 +345,7 @@ function specimenSheet() {
 }
 
 /** Plate 2: the symbol set as a dictionary sets a headword. */
-function specimenEntry() {
+function specimenEntry(t) {
   const also = [['∡', 'measured angle'], ['∢', 'spherical angle'], ['⟨', 'left angle bracket']];
   return `<div style="display: flex; align-items: flex-end; gap: 40px; width: 100%;">
     <span class="serif line" style="font-size: 330px; line-height: 0.8;">∠</span>
@@ -323,7 +353,7 @@ function specimenEntry() {
       <p style="font-size: 52px; font-weight: 800; letter-spacing: -0.03em; line-height: 1;">angle</p>
       <p class="mono line" style="font-size: 22px; margin-top: 12px;">\\angle</p>
       <hr class="rule" style="margin: 20px 0 16px;">
-      ${also.map(([glyph, name]) => `<p style="display: flex; gap: 14px; font-size: 22px; line-height: 1.6;" class="muted"><span class="serif" style="width: 24px; color: ${INK.text};">${glyph}</span>${name}</p>`).join('')}
+      ${also.map(([glyph, name]) => `<p style="display: flex; gap: 14px; font-size: 22px; line-height: 1.6;" class="muted"><span class="serif" style="width: 24px; color: ${t.text};">${glyph}</span>${name}</p>`).join('')}
     </div>
   </div>`;
 }
@@ -334,9 +364,9 @@ function specimenDrawn() {
     <div class="card" style="width: 236px; height: 250px; border-radius: 14px; border-style: dashed; display: grid; place-items: center;">
       <svg width="190" height="200" viewBox="0 0 190 200" aria-hidden="true">
         <g fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 26 C34 62, 62 128, 92 180"/>
-          <path d="M168 20 C150 70, 122 126, 96 184"/>
-          <path d="M50 96 C78 90, 112 92, 142 88"/>
+          <path d="M30 36 C33 58, 50 88, 58 116 S 84 158, 99 174"/>
+          <path d="M152 16 C150 46, 132 72, 127 100 S 104 152, 92 188"/>
+          <path d="M38 106 C60 95, 86 106, 106 96 S 140 84, 162 92"/>
         </g>
       </svg>
     </div>
@@ -393,8 +423,7 @@ function promoHtml({ width, height, panel }) {
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     ${BASE_CSS}
     body { width: ${width}px; height: ${height}px; background: ${t.ground}; color: ${t.text}; }
-    .grid { position: absolute; inset: 0; background-image: linear-gradient(${t.grid} 1px, transparent 1px), linear-gradient(90deg, ${t.grid} 1px, transparent 1px);
-      background-size: 40px 40px; background-position: 9px 15px; }
+    .grid { position: absolute; inset: 0; ${paperCss(t)} }
     .name { position: absolute; left: ${sign.left}px; top: ${sign.nameTop}px; font-weight: 800;
       font-size: ${sign.name}px; line-height: 1; letter-spacing: -0.04em; }
     .tag { position: absolute; left: ${sign.left + 4}px; top: ${sign.nameTop + sign.name + (small ? 12 : 28)}px;
