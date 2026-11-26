@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Radical, other screens</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+body{margin:0}
+.b{display:flex;gap:40px;width:2600px;height:720px;background:#9a9a9a}
+.f{font:16px/1.4 "Inter","Segoe UI",system-ui,sans-serif;width:400px;height:720px;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box}
+.lt{--bg:#f3f5f9;--ink:#14233c;--muted:#414e66;--line:#c3cddd;--fline:#6b7890;--bline:#6b7890;--field:#fff;--btn:#fff;--key:#fff;--kline:#6b7890;--accent:#14233c;--on:#fff;--rad:#1f6fdc;--tint:#dbe7fa;--tintink:#14233c;--done:#0f5132;--shadow:0 1px 2px rgba(20,35,60,.06),0 10px 24px -14px rgba(20,35,60,.28)}
+.dk{--bg:#080d17;--ink:#f4f7fc;--muted:#c3cde0;--line:#3d4f73;--fline:#7f93b8;--bline:#7f93b8;--field:#141f33;--btn:#141f33;--key:#141f33;--kline:#7f93b8;--accent:#5aabff;--on:#06101f;--rad:#5aabff;--tint:#234a85;--tintink:#fff;--done:#8fe0b4;--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(0,0,0,.6)}
+.w{width:820px}
+.w .fd{height:124px}
+.w .pr{flex:none;min-width:180px}
+.w .tb{grid-template-columns:repeat(4,128px)}
+.w .ks{grid-template-columns:repeat(14,44px)}
+.fr2{display:flex;gap:16px;align-items:flex-end}
+.fc{display:flex;flex-direction:column;gap:12px;width:320px;flex:none}
+.top{display:flex;flex-direction:column;gap:14px;padding:16px 16px 18px}
+.hd{display:flex;align-items:center;gap:8px}
+.ttl{flex:1;font-weight:700;font-size:20px}
+.fd{position:relative;height:132px;margin:3px 0 0 30px;border-radius:0 14px 14px 14px;background:var(--field);box-shadow:0 0 0 1px var(--fline),var(--shadow);padding:0 20px;display:flex;align-items:center;box-sizing:border-box}
+.fd:after{content:"";position:absolute;left:-3px;right:0;top:-3px;height:5px;border-radius:3px;background:var(--rad)}
+.fd:before{content:"";position:absolute;left:-30px;top:-0.5px;width:32px;height:100%;background:var(--rad);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 40'%3E%3Cpath d='M2.5 13 L7 10.5 L15.5 37.5' fill='none' stroke='%23000' stroke-width='5' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 0 100%/18px 40px,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 100' preserveAspectRatio='none'%3E%3Cpath d='M15.5 100 L29.5 0' fill='none' stroke='%23000' stroke-width='5' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat 0 0/100% calc(100% - 2.5px);mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 40'%3E%3Cpath d='M2.5 13 L7 10.5 L15.5 37.5' fill='none' stroke='%23000' stroke-width='5' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 0 100%/18px 40px,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 100' preserveAspectRatio='none'%3E%3Cpath d='M15.5 100 L29.5 0' fill='none' stroke='%23000' stroke-width='5' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat 0 0/100% calc(100% - 2.5px)}
+.eq{font:34px/1.2 "STIX Two Text","Cambria Math",Georgia,serif;display:flex;align-items:center;color:var(--ink)}
+.eq,.fr span{white-space:nowrap}
+.fr{display:inline-flex;flex-direction:column;align-items:center;margin:0 8px}
+.fr>span:first-child{border-bottom:1.5px solid currentColor;padding:0 6px 3px}
+.fr>span:last-child{padding-top:3px}
+.ov{border-top:1.5px solid currentColor}
+button,input{font:inherit;color:inherit}
+.ac{display:flex;gap:8px}
+.ac .bt{flex:1 1 auto;padding:0 6px;min-width:0}
+.w .ac .bt{flex:none;padding:0 16px}
+.bt{height:44px;padding:0 12px;border:1px solid var(--bline);border-radius:10px;background:var(--btn);color:var(--ink);white-space:nowrap;font-weight:500}
+.sm{height:36px;padding:0 12px}
+.pr{flex:1;background:var(--accent);border-color:var(--accent);color:var(--on);font-weight:700}
+.in{height:44px;border:1px solid var(--fline);border-radius:10px;padding:0 12px;width:100%;box-sizing:border-box;background:var(--field);color:var(--ink)}
+.src{font:13px ui-monospace,SFMono-Regular,Menlo,monospace}
+.lb{font-weight:700;font-size:15px;margin-bottom:-4px}
+.tb{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line);padding:0 8px}
+.t{position:relative;background:none;border:0;height:46px;padding:0;color:var(--muted)}
+.t.on{color:var(--ink);font-weight:700}
+.t.on:after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:4px;border-radius:4px 4px 0 0;background:var(--rad)}
+.bd{display:flex;flex-direction:column;gap:12px;padding:16px;flex:1}
+.cats{display:flex;gap:2px;margin:0 -4px}
+.ct{background:none;border:0;border-radius:999px;height:36px;padding:0 10px;color:var(--muted);font-size:15px}
+.ct.on{background:var(--tint);color:var(--tintink);font-weight:700}
+.ks{display:grid;grid-template-columns:repeat(7,44px);gap:8px;justify-content:space-between}
+.k{width:44px;height:44px;border:1px solid var(--kline);border-radius:10px;background:var(--key);font:21px "STIX Two Text","Cambria Math",Georgia,serif;padding:0;color:var(--ink)}
+.h{font-weight:700}
+.dn{display:flex;gap:8px;align-items:center;font-size:15px}
+.ic{width:18px;height:18px;flex:none;color:var(--done)}
+.sv{display:flex;align-items:center;gap:12px;min-height:64px;border-bottom:1px solid var(--line)}
+.svt{flex:1}
+.mm{font:18px "STIX Two Text",Georgia,serif}
+.ds{border-top:1px solid var(--line);padding:0 16px}
+.ds summary{height:48px;display:flex;align-items:center;gap:10px;font-weight:700;cursor:pointer;list-style:none}
+.ds summary:before{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg)}
+
+.pad{height:150px;border:1.5px dashed var(--fline);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--field);color:var(--muted)}
+.pad svg{width:120px;height:70px;color:var(--ink)}
+.r{display:flex;gap:8px;align-items:center}
+.row{display:flex;align-items:center;gap:12px;min-height:56px;border-bottom:1px solid var(--line)}
+.row .g,.g{flex:1}
+.kk{font:13px ui-monospace,Menlo,monospace;background:var(--tint);color:var(--tintink);border-radius:6px;padding:2px 6px}
+.lk{background:none;border:0;padding:0;height:44px;text-decoration:underline;color:var(--ink);text-align:left;font-weight:700}
+.h2{font-weight:700;font-size:18px}
+.hint{font-size:14px;color:var(--muted)}
+.sel{background:var(--tint)}
+.gp{border-bottom:1px solid var(--line)}
+.gp summary{height:48px;display:flex;align-items:center;gap:10px;font-weight:700;list-style:none}
+.gp summary:before{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg)}
+.gp[open] summary:before{transform:rotate(45deg)}
+.gp .in{margin-bottom:12px}
+.rd{display:flex;align-items:center;gap:10px;min-height:44px}
+.skip{align-self:flex-start;height:44px;padding:0 12px;border-radius:10px;border:0;background:var(--tint);color:var(--tintink);font-weight:700;text-decoration:underline;outline:3px solid var(--rad);outline-offset:2px}
+.em{color:var(--muted);font-size:17px}
+.st{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.st .bt{display:flex;align-items:center;gap:10px;justify-content:flex-start}
+.st b{font:20px "STIX Two Text",Georgia,serif;width:22px;text-align:center}
+
+</style>
+</helmet>
+<div class="b">
+
+<div class="f lt"><div class="top"><div class="hd"><span class="ttl">Equation</span><button class="bt sm">Settings</button></div><div class="fd"><div class="eq"><span class="em">Type maths or pick a symbol</span></div></div><div class="ac"><button class="bt pr">Copy LaTeX</button><button class="bt">Copy MathML</button><button class="bt">Read aloud</button></div><button class="skip">Skip symbols</button></div><div class="tb"><button class="t on">Symbols</button><button class="t">Draw</button><button class="t">Library</button><button class="t">Shortcuts</button></div><div class="bd"><label class="lb" for="f1">Find a symbol</label><input class="in" id="f1"><div class="cats"><button class="ct on">Recent</button><button class="ct">Layout</button><button class="ct">Operators</button><button class="ct">Greek</button><button class="ct">Styles</button></div><div class="ks"><button class="k">½</button><button class="k">√</button><button class="k">xⁿ</button><button class="k">xₙ</button><button class="k">π</button><button class="k">×</button><button class="k">≤</button><button class="k">≥</button><button class="k">∑</button><button class="k">∫</button><button class="k">∞</button><button class="k">≠</button><button class="k">±</button><button class="k">÷</button><button class="k">α</button><button class="k">β</button><button class="k">θ</button><button class="k">λ</button><button class="k">∈</button><button class="k">→</button><button class="k">∂</button></div></div><details class="ds"><summary>LaTeX source</summary></details></div>
+
+<div class="f lt"><div class="top"><div class="hd"><span class="ttl">Equation</span><button class="bt sm">Settings</button></div><div class="fd"><div class="eq"><i>x</i>&nbsp;=&nbsp;<span class="fr"><span>−<i>b</i> ± √<span class="ov"><i>b</i>² − 4<i>ac</i></span></span><span>2<i>a</i></span></span></div></div><div class="ac"><button class="bt pr">Copy LaTeX</button><button class="bt">Copy MathML</button><button class="bt">Read aloud</button></div></div><div class="tb"><button class="t">Symbols</button><button class="t on">Draw</button><button class="t">Library</button><button class="t">Shortcuts</button></div><div class="bd"><div class="pad"><svg viewBox="0 0 120 70" aria-hidden="true"><path d="M14 52 C30 8 44 8 58 34 S92 62 106 16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="r"><button class="bt">Undo stroke</button><button class="bt">Clear drawing</button></div><div class="h">3 matches</div><div class="row"><span class="g"><span class="mm">∿</span> &nbsp;Sine wave</span><button class="bt">Insert symbol</button></div><div class="row"><span class="g"><span class="mm">∼</span> &nbsp;Tilde operator</span><button class="bt">Insert symbol</button></div></div></div>
+
+<div class="f lt"><div class="top"><div class="hd"><span class="ttl">Equation</span><button class="bt sm">Settings</button></div><div class="fd"><div class="eq"><i>x</i>&nbsp;=&nbsp;<span class="fr"><span>−<i>b</i> ± √<span class="ov"><i>b</i>² − 4<i>ac</i></span></span><span>2<i>a</i></span></span></div></div><div class="ac"><button class="bt pr">Copy LaTeX</button><button class="bt">Copy MathML</button><button class="bt">Read aloud</button></div></div><div class="tb"><button class="t">Symbols</button><button class="t">Draw</button><button class="t on">Library</button><button class="t">Shortcuts</button></div><div class="bd"><div class="h2">Save to library</div><label class="lb" for="n3">Name</label><input class="in sel" id="n3" value="Quadratic formula"><div class="hint">Type to replace the name</div><div class="r"><button class="bt pr">Save formula</button><button class="bt">Cancel</button></div><details class="gp"><summary>More options</summary></details></div></div>
+
+<div class="f lt"><div class="top"><div class="hd"><span class="ttl">Equation</span><button class="bt sm">Settings</button></div><div class="fd"><div class="eq"><i>x</i>&nbsp;=&nbsp;<span class="fr"><span>−<i>b</i> ± √<span class="ov"><i>b</i>² − 4<i>ac</i></span></span><span>2<i>a</i></span></span></div></div><div class="ac"><button class="bt pr">Copy LaTeX</button><button class="bt">Copy MathML</button><button class="bt">Read aloud</button></div></div><div class="tb"><button class="t">Symbols</button><button class="t">Draw</button><button class="t">Library</button><button class="t on">Shortcuts</button></div><div class="bd"><button class="bt">Add shortcut</button><label class="lb" for="s4">Filter shortcuts</label><input class="in" id="s4"><div class="row"><span class="g"><span class="kk">\half</span> &nbsp;<span class="mm">½</span></span><button class="bt">Edit shortcut</button></div><div class="row"><span class="g"><span class="kk">\R</span> &nbsp;<span class="mm">ℝ</span></span><button class="bt">Edit shortcut</button></div><button class="lk">Keyboard shortcuts</button></div></div>
+
+<div class="f lt"><div class="top"><div class="hd"><span class="ttl">Equation</span><button class="bt sm">Settings</button></div><div class="fd"><div class="eq"><i>x</i>&nbsp;=&nbsp;<span class="fr"><span>−<i>b</i> ± √<span class="ov"><i>b</i>² − 4<i>ac</i></span></span><span>2<i>a</i></span></span></div></div><div class="ac"><button class="bt pr">Copy LaTeX</button><button class="bt">Copy MathML</button><button class="bt">Read aloud</button></div></div><div class="tb"><button class="t on">Symbols</button><button class="t">Draw</button><button class="t">Library</button><button class="t">Shortcuts</button></div><div class="bd"><label class="lb" for="f5">Find a symbol</label><input class="in" id="f5"><div class="cats"><button class="ct">Recent</button><button class="ct">Layout</button><button class="ct">Operators</button><button class="ct">Greek</button><button class="ct on">Styles</button></div><div class="st"><button class="bt"><b style="font-weight:700">B</b>Bold</button><button class="bt"><b><i>I</i></b>Italic</button><button class="bt"><b>R</b>Upright</button><button class="bt"><b>ℝ</b>Blackboard bold</button><button class="bt"><b>ℛ</b>Calligraphic</button><button class="bt"><b>ℜ</b>Fraktur</button></div><div class="hint">Applies to the selection, or to what you type next</div></div></div>
+
+<div class="f lt"><div class="top"><div class="hd"><span class="ttl">Equation</span><button class="bt sm">Settings</button></div><div class="fd"><div class="eq"><i>x</i>&nbsp;=&nbsp;<span class="fr"><span>−<i>b</i> ± √<span class="ov"><i>b</i>² − 4<i>ac</i></span></span><span>2<i>a</i></span></span></div></div><div class="ac"><button class="bt pr">Copy LaTeX</button><button class="bt">Copy MathML</button><button class="bt">Read aloud</button></div></div><div class="bd" style="gap:0;border-top:1px solid var(--line)"><div class="r" style="min-height:56px"><span class="h2 g">Settings</span><button class="bt sm">Close settings</button></div>
+<details class="gp" open><summary>Copy</summary><div class="lb" style="margin:0 0 4px">Main copy format</div><div class="r" style="gap:24px"><label class="rd"><input type="radio" name="mf" checked> LaTeX</label><label class="rd"><input type="radio" name="mf"> MathML</label></div></details>
+<details class="gp"><summary>Appearance</summary></details>
+<details class="gp"><summary>Speech</summary></details>
+<details class="gp"><summary>Typing</summary></details>
+<details class="gp" open><summary>Window</summary><div class="r" style="padding-bottom:12px"><button class="bt">Open in window</button><button class="bt">Open in tab</button></div></details>
+</div></div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2600,"height":720}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

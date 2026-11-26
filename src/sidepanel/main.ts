@@ -10,6 +10,7 @@
 import { announce } from './a11y';
 import { createActionsBar } from './actions-bar';
 import { createEditor } from './editor';
+import { installDraft } from './draft';
 import { installAutoFit } from './editor/auto-fit';
 import { createEditorHeader } from './editor-header';
 import { installSettingsShortcut } from './more-menu';
@@ -161,6 +162,8 @@ async function boot(): Promise<void> {
       control?.focus();
     },
   });
+
+  void installDraft(editor);
 
   editor.focus();
   announce('Radicand ready. Equation field focused.');

@@ -31,6 +31,12 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      # The store zip is the build these suites load, so a fault that only a
+      # browser shows stops the release.
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: npm run test:ext
+      - run: npm run test:a11y
       - run: npm run build
       - name: Zip dist/
         run: |

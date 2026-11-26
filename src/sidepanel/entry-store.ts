@@ -15,6 +15,7 @@
  * `vite preview`), matching settings.ts.
  */
 import { hasChromeStorage } from '../settings-storage';
+import { report } from './a11y';
 
 /** The fields every stored entry carries; stores add their own. */
 export interface StoredEntry {
@@ -209,13 +210,25 @@ export function createEntryStore<E extends StoredEntry>(config: EntryStoreConfig
   /** Trailing-debounce handle for the persistence write. */
   let persistTimer: ReturnType<typeof setTimeout> | undefined;
 
+  /** Set while writes are failing, so the failure is reported once. */
+  let saveFailed = false;
+
   function persistNow(): void {
     persistTimer = undefined;
     if (!hasChromeStorage() || readOnly) return;
     const record: StoredRecord<E> = { version: RECORD_VERSION, entries };
     chrome.storage.local
       .set({ [storageKey]: record })
-      .catch((error: unknown) => console.error(`Failed to save the ${noun}:`, error));
+      .then(() => {
+        saveFailed = false;
+      })
+      .catch((error: unknown) => {
+        console.error(`Failed to save the ${noun}:`, error);
+        // Entries stay in memory only, so the user must hear it while an
+        // export can still rescue them.
+        if (!saveFailed) report(`The ${noun} was not saved. Export it to keep a copy.`, 'error');
+        saveFailed = true;
+      });
   }
 
   function schedulePersist(): void {

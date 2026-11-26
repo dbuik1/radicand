@@ -10,7 +10,7 @@
  * wait behind a "More options" disclosure.
  */
 import type { EditorController } from './editor';
-import { announce } from './a11y';
+import { announce, report } from './a11y';
 import { createLibraryForm } from './library-form';
 import { spokenName } from './name-maths';
 import { addLibraryEntry, isLibraryReadOnly } from './library';
@@ -73,11 +73,12 @@ export function createLibraryCapture(
     body_.replaceChildren(
       createLibraryForm({
         initial: { name: suggestName(body), body },
+        suggestedName: true,
         submitLabel: 'Save',
         moreOptions: true,
         onSubmit: (fields) => {
           const entry = addLibraryEntry(fields);
-          announce(`Saved "${spokenName(entry.name)}" to your library`);
+          report(`Saved "${spokenName(entry.name)}" to your library`);
         },
         onClose: close,
       }),

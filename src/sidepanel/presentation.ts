@@ -15,6 +15,7 @@
 
 import { rememberPopoutBounds } from '../popout-bounds';
 import { createEditorTab, createPopoutWindow } from '../surface';
+import { flushDraft } from './draft';
 
 /**
  * Whether *this* document is genuinely the docked side panel, as opposed to
@@ -63,7 +64,9 @@ async function closeIfDockedSidePanel(): Promise<void> {
  */
 export function openInWindow(): void {
   if (typeof chrome === 'undefined' || !chrome.windows?.create) return;
-  createPopoutWindow()
+  // The new surface reads the kept equation as it starts, so store it first.
+  flushDraft()
+    .then(() => createPopoutWindow())
     .then(() => closeIfDockedSidePanel())
     .catch((error: unknown) => {
       console.error('Failed to open the editor in a new window:', error);
@@ -73,7 +76,8 @@ export function openInWindow(): void {
 /** Open the editor in a full browser tab. */
 export function openInTab(): void {
   if (typeof chrome === 'undefined' || !chrome.tabs?.create) return;
-  createEditorTab()
+  flushDraft()
+    .then(() => createEditorTab())
     .then(() => closeIfDockedSidePanel())
     .catch((error: unknown) => {
       console.error('Failed to open the editor in a new tab:', error);
@@ -86,12 +90,13 @@ export function openInTab(): void {
  * tab, whose geometry is not ours to remember.
  */
 export async function rememberWindowBoundsIfPopout(): Promise<void> {
-  if (typeof chrome === 'undefined' || !chrome.tabs?.getCurrent || !chrome.windows?.getCurrent) {
-    return;
-  }
+  if (typeof chrome === 'undefined' || !chrome.windows?.getCurrent) return;
   try {
-    const [tab, win] = await Promise.all([chrome.tabs.getCurrent(), chrome.windows.getCurrent()]);
-    if (tab === undefined && win?.type === 'popup' && win.id !== undefined) {
+    // The window type alone tells the surfaces apart: the docked panel and
+    // an editor tab both sit in a normal browser window, and the popup holds
+    // a tab of its own, so the presence of a tab says nothing.
+    const win = await chrome.windows.getCurrent();
+    if (win?.type === 'popup' && win.id !== undefined) {
       rememberPopoutBounds(win.id);
     }
   } catch {

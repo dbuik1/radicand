@@ -93,6 +93,34 @@ describe('expression library store', () => {
     expect(fake.chrome.storage.local.set).toHaveBeenCalledTimes(1);
   });
 
+  it('reports a failed write once, and again after a write succeeds', async () => {
+    vi.useFakeTimers();
+    const { library, fake } = await freshLibrary();
+    // No live region in this environment; the on-screen display is under test.
+    vi.stubGlobal('document', { getElementById: () => null });
+    const a11y = await import('./a11y');
+    const shown: string[] = [];
+    a11y.setResultDisplay((message, kind) => shown.push(`${kind}: ${message}`));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const failure = 'error: The library was not saved. Export it to keep a copy.';
+
+    fake.chrome.storage.local.set.mockRejectedValue(new Error('quota'));
+    library.addLibraryEntry({ name: 'a', body: 'x' });
+    await vi.advanceTimersByTimeAsync(500);
+    library.addLibraryEntry({ name: 'b', body: 'y' });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(shown).toEqual([failure]);
+
+    fake.chrome.storage.local.set.mockResolvedValue(undefined);
+    library.addLibraryEntry({ name: 'c', body: 'z' });
+    await vi.advanceTimersByTimeAsync(500);
+    fake.chrome.storage.local.set.mockRejectedValue(new Error('quota'));
+    library.addLibraryEntry({ name: 'd', body: 'w' });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(shown).toEqual([failure, failure]);
+    vi.restoreAllMocks();
+  });
+
   it('drops a malformed entry without losing its neighbours', async () => {
     const good = {
       id: 'keep',

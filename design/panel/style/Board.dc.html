@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>S2 – Board</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.b{display:flex;gap:40px;width:2560px;height:720px;background:#8d8d8d}
+.f{font:15px/1.4 var(--ui);width:400px;height:720px;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box}
+.w{width:820px;flex-direction:row}
+.top{display:flex;flex-direction:column;gap:12px;padding:16px}
+.wl{flex:1}
+.side{width:388px;display:flex;flex-direction:column;border-left:1px solid var(--line)}
+.hd{display:flex;align-items:center;gap:8px}
+.ttl{flex:1;font-weight:700;font-size:18px}
+.fd{height:140px;border:1px solid var(--fline);border-radius:var(--r);background:var(--field);padding:0 20px;display:flex;align-items:center;box-sizing:border-box}
+.big{flex:1;height:auto;justify-content:center}
+.eq{font:34px/1.2 var(--math);display:flex;align-items:center;color:var(--eq)}
+.big .eq{font-size:40px}
+.eq,.fr span{white-space:nowrap}
+.fr{display:inline-flex;flex-direction:column;align-items:center;margin:0 8px}
+.fr>span:first-child{border-bottom:1.5px solid currentColor;padding:0 6px 3px}
+.fr>span:last-child{padding-top:3px}
+.ov{border-top:1.5px solid currentColor}
+button,input{font:inherit;color:inherit}
+.ac{display:flex;gap:8px}
+.bt{height:44px;padding:0 12px;border:1px solid var(--bline);border-radius:var(--r);background:var(--btn);color:var(--ink);white-space:nowrap;font-weight:500}
+.sm{height:36px}
+.pr{flex:1;background:var(--accent);border-color:var(--accent);color:var(--on);font-weight:700}
+.in{height:44px;border:1px solid var(--fline);border-radius:var(--r);padding:0 12px;width:100%;box-sizing:border-box;background:var(--field);color:var(--eq)}
+.src{font:13px ui-monospace,SFMono-Regular,Menlo,monospace}
+.lb{font-weight:600;font-size:14px;margin-bottom:-4px}
+.tb{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+.t{background:none;border:0;border-bottom:3px solid transparent;height:44px;padding:0;color:var(--muted)}
+.t.on{border-bottom-color:var(--mark);color:var(--ink);font-weight:700}
+.bd{display:flex;flex-direction:column;gap:10px;padding:16px;flex:1}
+.cats{display:flex}
+.ct{background:none;border:0;border-bottom:2px solid transparent;height:40px;padding:0 10px;color:var(--muted);font-size:14px}
+.ct.on{border-bottom-color:var(--ink);color:var(--ink);font-weight:600}
+.ks{display:grid;grid-template-columns:repeat(7,44px);gap:8px}
+.k{width:44px;height:44px;border:1px solid var(--kline);border-radius:var(--r);background:var(--key);font:19px var(--math);padding:0;color:var(--ink)}
+.h{font-weight:600}
+.dn{font-size:14px}
+.dn .h{color:var(--mark)}
+.sv{display:flex;align-items:center;gap:12px;min-height:60px;border-bottom:1px solid var(--line)}
+.svt{flex:1}
+.mm{font:18px var(--math)}
+.ds{border-top:1px solid var(--line);padding:0 16px}
+.ds summary{height:48px;display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;list-style:none}
+.ds summary:before{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg)}
+.f{--ui:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;--r:10px;--math:"STIX Two Math","Cambria Math",Georgia,serif}
+.lt{--bg:#fbfbf8;--ink:#1b2a26;--muted:#52625c;--line:#dfe3df;--fline:#7c8a84;--bline:#7c8a84;--kline:#e4e8e4;--field:#fff;--btn:#fbfbf8;--key:#f1f4f1;--accent:#0f6b4f;--on:#fff;--eq:#12201c;--mark:#0f6b4f;--frame:#c5c9cc}
+.dk{--bg:#1d2a25;--ink:#f1efe6;--muted:#a9b5ac;--line:#35463f;--fline:#7d9187;--bline:#7d9187;--kline:#243530;--field:#16211d;--btn:#1d2a25;--key:#243530;--accent:#f4d35e;--on:#1a1a12;--eq:#fbfaf3;--mark:#f4d35e;--frame:#6b4a2b}
+.f{border:6px solid var(--frame)}
+.fd{border:0;background:none;border-bottom:1px dashed var(--fline);border-radius:0}
+</style>
+</helmet>
+<div class="b">
+
+<div class="f lt"><div class="top"><div class="hd"><span class="ttl">Equation</span><button class="bt sm">Settings</button></div><div class="fd"><div class="eq"><i>x</i>&nbsp;=&nbsp;<span class="fr"><span>−<i>b</i> ± √<span class="ov"><i>b</i>² − 4<i>ac</i></span></span><span>2<i>a</i></span></span></div></div><div class="ac"><button class="bt pr">Copy LaTeX</button><button class="bt">Copy MathML</button><button class="bt">Read aloud</button></div></div><div class="tb"><button class="t on">Symbols</button><button class="t">Draw</button><button class="t">Library</button><button class="t">Shortcuts</button></div><div class="bd"><label class="lb" for="find1">Find a symbol</label><input class="in" id="find1"><div class="cats"><button class="ct on">Recent</button><button class="ct">Layout</button><button class="ct">Operators</button><button class="ct">Greek</button><button class="ct">More</button></div><div class="ks"><button class="k">½</button><button class="k">√</button><button class="k">xⁿ</button><button class="k">xₙ</button><button class="k">π</button><button class="k">×</button><button class="k">≤</button><button class="k">≥</button><button class="k">∑</button><button class="k">∫</button><button class="k">∞</button><button class="k">≠</button><button class="k">±</button><button class="k">÷</button><button class="k">α</button><button class="k">β</button><button class="k">θ</button><button class="k">λ</button><button class="k">∈</button><button class="k">→</button><button class="k">∂</button></div></div><details class="ds"><summary>LaTeX source</summary></details></div>
+
+<div class="f w lt"><div class="top wl"><div class="hd"><span class="ttl">Equation</span><button class="bt sm">Settings</button></div><div class="fd big"><div class="eq"><i>x</i>&nbsp;=&nbsp;<span class="fr"><span>−<i>b</i> ± √<span class="ov"><i>b</i>² − 4<i>ac</i></span></span><span>2<i>a</i></span></span></div></div><div class="ac"><button class="bt pr">Copy LaTeX</button><button class="bt">Copy MathML</button><button class="bt">Read aloud</button></div><label class="lb" for="src2">LaTeX source</label><input class="in src" id="src2" value="x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}"></div><div class="side"><div class="tb"><button class="t on">Symbols</button><button class="t">Draw</button><button class="t">Library</button><button class="t">Shortcuts</button></div><div class="bd"><label class="lb" for="find2w">Find a symbol</label><input class="in" id="find2w"><div class="cats"><button class="ct on">Recent</button><button class="ct">Layout</button><button class="ct">Operators</button><button class="ct">Greek</button><button class="ct">More</button></div><div class="ks"><button class="k">½</button><button class="k">√</button><button class="k">xⁿ</button><button class="k">xₙ</button><button class="k">π</button><button class="k">×</button><button class="k">≤</button><button class="k">≥</button><button class="k">∑</button><button class="k">∫</button><button class="k">∞</button><button class="k">≠</button><button class="k">±</button><button class="k">÷</button><button class="k">α</button><button class="k">β</button><button class="k">θ</button><button class="k">λ</button><button class="k">∈</button><button class="k">→</button><button class="k">∂</button></div></div></div></div>
+
+<div class="f dk"><div class="top"><div class="hd"><span class="ttl">Equation</span><button class="bt sm">Settings</button></div><div class="fd"><div class="eq"><i>x</i>&nbsp;=&nbsp;<span class="fr"><span>−<i>b</i> ± √<span class="ov"><i>b</i>² − 4<i>ac</i></span></span><span>2<i>a</i></span></span></div></div><div class="ac"><button class="bt pr">Copy LaTeX</button><button class="bt">Copy MathML</button><button class="bt">Read aloud</button></div><div class="dn"><span class="h">Copied as LaTeX.</span> Paste into your document.</div></div><div class="tb"><button class="t">Symbols</button><button class="t">Draw</button><button class="t on">Library</button><button class="t">Shortcuts</button></div><div class="bd"><button class="bt">Save to library</button><label class="lb" for="filt3">Filter formulae</label><input class="in" id="filt3"><div class="sv"><div class="svt"><div class="h">Euler's identity</div><span class="mm"><i>e</i><sup><i>iπ</i></sup> + 1 = 0</span></div><button class="bt">Insert formula</button></div><div class="sv"><div class="svt"><div class="h">Pythagoras</div><span class="mm"><i>a</i>² + <i>b</i>² = <i>c</i>²</span></div><button class="bt">Insert formula</button></div></div><details class="ds"><summary>LaTeX source</summary></details></div>
+
+<div class="f w dk"><div class="top wl"><div class="hd"><span class="ttl">Equation</span><button class="bt sm">Settings</button></div><div class="fd big"><div class="eq"><i>x</i>&nbsp;=&nbsp;<span class="fr"><span>−<i>b</i> ± √<span class="ov"><i>b</i>² − 4<i>ac</i></span></span><span>2<i>a</i></span></span></div></div><div class="ac"><button class="bt pr">Copy LaTeX</button><button class="bt">Copy MathML</button><button class="bt">Read aloud</button></div><label class="lb" for="src4">LaTeX source</label><input class="in src" id="src4" value="x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}"></div><div class="side"><div class="tb"><button class="t on">Symbols</button><button class="t">Draw</button><button class="t">Library</button><button class="t">Shortcuts</button></div><div class="bd"><label class="lb" for="find4w">Find a symbol</label><input class="in" id="find4w"><div class="cats"><button class="ct on">Recent</button><button class="ct">Layout</button><button class="ct">Operators</button><button class="ct">Greek</button><button class="ct">More</button></div><div class="ks"><button class="k">½</button><button class="k">√</button><button class="k">xⁿ</button><button class="k">xₙ</button><button class="k">π</button><button class="k">×</button><button class="k">≤</button><button class="k">≥</button><button class="k">∑</button><button class="k">∫</button><button class="k">∞</button><button class="k">≠</button><button class="k">±</button><button class="k">÷</button><button class="k">α</button><button class="k">β</button><button class="k">θ</button><button class="k">λ</button><button class="k">∈</button><button class="k">→</button><button class="k">∂</button></div></div></div></div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2560,"height":720}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

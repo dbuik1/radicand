@@ -22,6 +22,14 @@ export default defineManifest({
   version: pkg.version,
   description: pkg.description,
   minimum_chrome_version: '116',
+  // LaTeX can carry a URL (`\htmlStyle{background-image:url(...)}`), and an
+  // imported library file is LaTeX from someone else. The policy stops the
+  // panel fetching anything outside the package. MathLive styles its field
+  // with inline style attributes, so styles alone allow 'unsafe-inline'.
+  content_security_policy: {
+    extension_pages:
+      "default-src 'self'; script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'",
+  },
   background: {
     service_worker: 'src/background.ts',
     type: 'module',

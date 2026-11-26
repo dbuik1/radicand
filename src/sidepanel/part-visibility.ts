@@ -78,6 +78,12 @@ export function bindToSettings(apply: (settings: Settings) => void): () => void 
  * keyboard with nowhere to go, so `rescueFocus` is called on the next frame
  * when that has happened. Returns an unsubscribe function.
  */
+/** Whether an element is rendered, so focus on it is focus the user can see. */
+function isShown(element: Element): boolean {
+  if (typeof element.checkVisibility === 'function') return element.checkVisibility();
+  return element.closest('[hidden]') === null;
+}
+
 export function installPartAnnouncements(rescueFocus: () => void): () => void {
   let previous = { ...getSettings().parts };
   return onSettingsChange((next) => {
@@ -99,10 +105,11 @@ export function installPartAnnouncements(rescueFocus: () => void): () => void {
       announce(`${shown.length} pieces of the interface shown, ${changed.length - shown.length} hidden`);
     }
 
+    // The browser moves focus off a hidden element only after this frame,
+    // so the test is whether the focused element can still be seen.
     requestAnimationFrame(() => {
-      if (document.activeElement === document.body || document.activeElement === null) {
-        rescueFocus();
-      }
+      const active = document.activeElement;
+      if (active === null || active === document.body || !isShown(active)) rescueFocus();
     });
   });
 }

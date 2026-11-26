@@ -12,6 +12,10 @@ Everything below stays in your browser, in the extension's own storage:
 - The **symbols you used most recently**, for the Recent tab.
 - Your **settings**, such as theme, text size and which parts of the
   interface are shown.
+- The **size and position of the pop-out window**, so it reopens where you
+  left it.
+- The **equation you are working on**, so it is still there when you reopen
+  the panel. It is held in memory only and is gone when you quit the browser.
 
 The library, shortcuts and recent symbols are kept only on this device.
 Settings are saved in Chrome's synced extension storage, so if you have

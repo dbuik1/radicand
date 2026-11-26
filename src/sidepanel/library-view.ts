@@ -24,7 +24,7 @@
  */
 import { convertLatexToMarkup } from 'mathlive';
 import type { EditorController } from './editor';
-import { announce } from './a11y';
+import { announce, report } from './a11y';
 import { wireRovingTabindex } from './roving';
 import { createLibraryForm } from './library-form';
 import {
@@ -301,7 +301,7 @@ export function buildLibraryPanel(
             keywords: fields.keywords ?? '',
             category: fields.category ?? '',
           });
-          announce(`Saved changes to "${spokenName(fields.name)}"`);
+          report(`Saved changes to "${spokenName(fields.name)}"`);
         },
         // A save rebuilds the row, so the button is found again by entry id.
         onClose: () => closeForm(rowButton(entry.id, 'edit') ?? editButton),
@@ -534,7 +534,7 @@ export function buildLibraryPanel(
     link.download = 'maths-editor-library.json';
     link.click();
     URL.revokeObjectURL(url);
-    announce('Library exported as a JSON file');
+    report('Library exported as a JSON file');
   };
   exportBtn.addEventListener('click', doExport);
 
@@ -583,12 +583,12 @@ export function buildLibraryPanel(
   starterBtn.addEventListener('click', () => {
     if (hasSeededEntries()) {
       const removed = removeSeededEntries();
-      announce(
+      report(
         `Removed ${removed} starter formula${removed === 1 ? '' : 'e'}; ones you edited are kept`,
       );
     } else {
       const added = addSeededEntries(STARTER_PACK);
-      announce(`Added ${added} starter formulae to your library`);
+      report(`Added ${added} starter formula${added === 1 ? "" : "e"} to your library`);
     }
   });
   tools.append(exportBtn, importBtn, starterBtn, fileInput, starterHint);
@@ -676,7 +676,7 @@ export function buildLibraryPanel(
           : result.untriggered === 1
             ? ' 1 came in without its trigger, which was already in use.'
             : ` ${result.untriggered} came in without their triggers, which were already in use.`;
-      announce(
+      report(
         (strategy === 'replace'
           ? `Replaced the library: ${formulae(result.added)} imported, ${result.removed} removed.`
           : `Imported ${formulae(result.added)}` +

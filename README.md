@@ -81,4 +81,7 @@ MiniSearch (MIT), the KaTeX and STIX Two Math fonts (SIL Open Font License
 1.1) and Speech Rule Engine (Apache License 2.0); every build includes
 their notices in `THIRD-PARTY-NOTICES.txt`. The symbol-search and drawing
 data have their own terms, set out in
-[docs/symbol-index-licences.md](docs/symbol-index-licences.md).
+[docs/symbol-index-licences.md](docs/symbol-index-licences.md) and carried in
+the same notices file. Two files are under the Open Database License 1.0
+and not MIT: `src/assets/draw-prototypes.json` and
+`scripts/data/detexify-heldout.json.gz`.

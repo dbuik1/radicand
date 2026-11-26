@@ -8,7 +8,7 @@
  */
 import type { OutputFormat } from '../types';
 import type { EditorController } from './editor';
-import { announce } from './a11y';
+import { announce, report, setResultDisplay } from './a11y';
 import { stripRedundantFences } from './latex-clean';
 import { getSettings, updateSettings, onSettingsChange } from './settings';
 import { createMenu } from './menu';
@@ -177,30 +177,10 @@ export function createCopyControls(editor: EditorController): HTMLElement {
   return group;
 }
 
-/** How long a copy result stays on screen before the caption idles again. */
+/** The shortest time a result stays on screen before the caption idles again. */
 const COPY_STATUS_TIMEOUT_MS = 3000;
-
-/**
- * The visible caption under the actions bar that carries the result of a
- * copy. It is the sighted user's confirmation: the live region is
- * visually hidden, so without it Copy (and Alt+C) would change nothing on
- * screen. Idle, it names the current copy format, which otherwise only the
- * format half's accessible name states.
- */
-interface CopyStatus {
-  readonly element: HTMLElement;
-  /** Show a result for a few seconds, then idle again. */
-  show(text: string, kind: 'done' | 'error'): void;
-  /** Back to naming the current format. */
-  idle(): void;
-}
-
-/**
- * Registered by {@link createCopyStatus}; `copyEquation` writes to it from
- * both the button and the keyboard shortcut, and it is absent where the bar
- * is not mounted (the e2e harness, unit tests).
- */
-let copyStatus: CopyStatus | null = null;
+/** Longer results stay longer: this much reading time for each character. */
+const STATUS_MS_PER_CHARACTER = 70;
 
 /** Name the current copy format in the user's terms. */
 function formatName(format: OutputFormat): string {
@@ -208,7 +188,9 @@ function formatName(format: OutputFormat): string {
 }
 
 /**
- * Build the copy caption for the actions bar. It is `aria-hidden`: the live
+ * Build the caption under the actions bar. It shows the result of a copy, a
+ * save or an import, which the visually hidden live region alone would leave
+ * off the screen. Idle, it names the current copy format. It is `aria-hidden`: the live
  * region already announces the same result, so a screen reader would
  * otherwise hear it twice. The caption idles again after
  * {@link COPY_STATUS_TIMEOUT_MS} or as soon as the equation changes,
@@ -231,7 +213,7 @@ export function createCopyStatus(editor: EditorController): HTMLElement {
     element.textContent = text;
     element.classList.toggle('actions-bar__status--done', kind === 'done');
     element.classList.toggle('actions-bar__status--error', kind === 'error');
-    timer = setTimeout(idle, COPY_STATUS_TIMEOUT_MS);
+    timer = setTimeout(idle, Math.max(COPY_STATUS_TIMEOUT_MS, text.length * STATUS_MS_PER_CHARACTER));
   };
 
   idle();
@@ -246,7 +228,7 @@ export function createCopyStatus(editor: EditorController): HTMLElement {
     if (timer !== undefined) idle();
   });
 
-  copyStatus = { element, show, idle };
+  setResultDisplay(show);
   return element;
 }
 
@@ -269,8 +251,7 @@ async function copyEquation(
 ): Promise<void> {
   if (editor.isEmpty()) {
     const empty = 'Nothing to copy. The equation is empty.';
-    announce(empty, 'assertive');
-    copyStatus?.show(empty, 'error');
+    report(empty, 'error');
     return;
   }
 
@@ -280,8 +261,7 @@ async function copyEquation(
   try {
     await copyToClipboard(buildPayload(editor, format));
     const copied = `Copied as ${meta?.announceName ?? format}`;
-    announce(copied);
-    copyStatus?.show(copied, 'done');
+    report(copied);
   } catch (error) {
     console.error('Copy failed:', error);
     // Chromium rejects clipboard writes with NotAllowedError when the panel
@@ -291,8 +271,7 @@ async function copyEquation(
       (error as { name?: string } | null)?.name === 'NotAllowedError'
         ? `Copy needs the panel to be focused – click in the equation, then press ${COPY_SHORTCUT_LABEL}`
         : 'Copy failed – click in the panel and try again';
-    announce(failed, 'assertive');
-    copyStatus?.show(failed, 'error');
+    report(failed, 'error');
   } finally {
     trigger?.focus();
   }

@@ -11,6 +11,7 @@
  * from the extension origin. Exits non-zero on any failure.
  */
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -160,7 +161,13 @@ try {
   // A reload is complete once the panel has started up, which ends with
   // focus in the equation field; anything opened before then can have focus
   // taken from it.
-  const reloadPanel = async () => {
+  // Sections start from an empty field, so a reload drops the kept equation
+  // unless the section is about keeping it.
+  const reloadPanel = async ({ keepEquation = false } = {}) => {
+    if (!keepEquation) {
+      await page.evaluate(() => document.querySelector('math-field')?.setValue(''));
+      await page.evaluate(() => chrome.storage.session.remove('draft'));
+    }
     await page.reload();
     await page.locator('math-field').waitFor({ timeout: 15000 });
     await page.waitForFunction(() => document.activeElement?.tagName === 'MATH-FIELD', undefined, {
@@ -181,11 +188,22 @@ try {
       });
     }, { part, shown });
   const setSymbolsShown = (shown) => setStoredPart('symbols', shown);
+  // page.waitForFunction treats a promise as a true result and returns at
+  // once, so stored state is polled from here, where the promise is awaited.
+  const untilStored = async (read, arg, { timeout = 5000 } = {}) => {
+    const deadline = Date.now() + timeout;
+    for (;;) {
+      const value = await page.evaluate(read, arg);
+      if (value) return value;
+      if (Date.now() > deadline) throw new Error('Timed out waiting for stored state');
+      await page.waitForTimeout(50);
+    }
+  };
   // Storage writes are debounced (400 ms), so a reload must wait for the
   // write itself rather than a fixed sleep. Each helper resolves once the
   // stored record carries every given field with the given value.
   const storedSettingsHave = (fields) =>
-    page.waitForFunction(
+    untilStored(
       (want) =>
         (chrome.storage.sync ?? chrome.storage.local)
           .get('settings')
@@ -194,7 +212,7 @@ try {
       { timeout: 5000 },
     );
   const storedLibraryEntryHas = (fields) =>
-    page.waitForFunction(
+    untilStored(
       (want) =>
         chrome.storage.local
           .get('library')
@@ -665,7 +683,7 @@ try {
     check('the menus, the source and the actions bar all go', bare.more && bare.style && bare.source && bare.actions);
 
     // Wait for the debounced write of the last toggle before reloading.
-    await page.waitForFunction(
+    await untilStored(
       () =>
         (chrome.storage.sync ?? chrome.storage.local)
           .get('settings')
@@ -703,7 +721,7 @@ try {
     // The restore is saved after a short delay, and the stored change is
     // applied again when it lands; let it land before the next section
     // opens a menu that the re-application could close under it.
-    await page.waitForFunction(
+    await untilStored(
       () =>
         (chrome.storage.sync ?? chrome.storage.local)
           .get('settings')
@@ -786,8 +804,7 @@ try {
     );
     const opened = await page.evaluate(async () => (await chrome.windows.getAll({ windowTypes: ['popup'] }))[0] ?? null);
     await page.evaluate((id) => chrome.windows.update(id, { width: 640, height: 520 }), opened?.id);
-    const stored = await page
-      .waitForFunction(
+    const stored = await untilStored(
         () =>
           chrome.storage.local
             .get('popoutBounds')
@@ -795,7 +812,7 @@ try {
         undefined,
         { timeout: 10000 },
       )
-      .then((handle) => handle.jsonValue(), () => null);
+      .then((bounds) => bounds, () => null);
     check('resizing the pop-out stores its new bounds', stored !== null, 'popoutBounds stayed at the seeded size');
     await popup.close();
   });
@@ -810,7 +827,10 @@ try {
     await page.keyboard.press('Alt+s');
     const nameField = page.locator('.library-form input').first();
     await nameField.waitFor({ timeout: 5000 });
-    await nameField.fill('Smoke expression');
+    // Typed, not filled: typing replaces the suggested name only if the form
+    // selected it.
+    await page.waitForFunction(() => document.activeElement?.matches('.library-form input'), undefined, { timeout: 5000 });
+    await page.keyboard.type('Smoke expression');
     await page.keyboard.press('Enter');
     await page.waitForFunction(
       () => document.querySelector('#sr-status')?.textContent.includes('Saved "Smoke expression"'),
@@ -820,6 +840,10 @@ try {
     check(
       'Alt+S saves the equation to the library',
       (await page.locator('#sr-status').textContent()).includes('Saved "Smoke expression"'),
+    );
+    check(
+      'the save is confirmed on screen',
+      (await page.locator('.actions-bar__status').textContent()).includes('Saved "Smoke expression"'),
     );
     await openMode('My library');
     const row = page.locator('.library-row__insert[aria-label="Smoke expression"]');
@@ -938,8 +962,7 @@ try {
     await openFromMore('Custom shortcuts');
     await page.locator('.mode--customShortcuts button', { hasText: /^Add \d+ common shortcuts$/ }).click();
     await page.locator('.mode--customShortcuts .library-row__insert').first().waitFor({ timeout: 5000 });
-    const stored = await page
-      .waitForFunction(
+    const stored = await untilStored(
         () => chrome.storage.local.get('shortcuts').then((r) => (r.shortcuts?.entries?.length ?? 0) >= 40),
         undefined,
         { timeout: 5000 },
@@ -1134,6 +1157,77 @@ try {
       await page.waitForTimeout(250);
     }
     check('speech locale maps load from the extension origin', sawLocalMathmaps());
+  });
+
+  await section('focus survives a Recent insert and a hidden palette', async () => {
+    // 7. Two keyboard paths that used to leave focus on <body>. The Recent
+    //    tab rebuilds its grid when a key is used, and hiding the palette
+    //    takes a focused key off screen.
+    await reloadPanel();
+    await page.locator('.palette__tab').first().click();
+    const recentKey = page.locator('.palette__grid:visible .palette__btn').first();
+    await recentKey.waitFor({ timeout: 5000 });
+    await recentKey.focus();
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(300);
+    check(
+      'a key pressed on the Recent tab keeps focus in the grid',
+      await page.evaluate(() => document.activeElement?.classList.contains('palette__btn') === true),
+      await page.evaluate(() => document.activeElement?.tagName),
+    );
+    await setSymbolsShown(false);
+    const rescued = await page
+      .waitForFunction(() => document.activeElement?.tagName === 'MATH-FIELD', undefined, { timeout: 5000 })
+      .then(() => true, () => false);
+    check('hiding the palette moves focus to the field', rescued, await page.evaluate(() => document.activeElement?.tagName));
+    await setSymbolsShown(true);
+    await page.locator('.palette__tab').first().waitFor({ state: 'visible', timeout: 5000 });
+  });
+
+  await section('the equation survives a reload', async () => {
+    // 7a. The field's LaTeX is kept in chrome.storage.session, so a reload
+    //     (or a close and reopen) brings the equation back.
+    await page.evaluate(() => document.querySelector('math-field').setValue(''));
+    await focusField();
+    await page.keyboard.type('k+7');
+    await untilStored(
+      () => chrome.storage.session.get('draft').then((r) => r.draft === 'k+7'),
+      undefined,
+      { timeout: 5000 },
+    );
+    await reloadPanel({ keepEquation: true });
+    const kept = await page
+      .waitForFunction(() => document.querySelector('math-field').getValue('latex') === 'k+7', undefined, { timeout: 5000 })
+      .then(() => true, () => false);
+    check('the equation is back after a reload', kept, await page.evaluate(() => document.querySelector('math-field').getValue('latex')));
+  });
+
+  await section('LaTeX cannot fetch a remote address', async () => {
+    // 7b. LaTeX that names a URL must not reach it. A local server stands in
+    //     for the remote host, and a second page keeps the refusal Chrome
+    //     logs out of the main page's error count.
+    const hits = [];
+    const server = createServer((request, response) => {
+      hits.push(request.url);
+      response.end();
+    });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const probe = await context.newPage();
+    try {
+      await probe.goto(`chrome-extension://${extensionId}/${panelPath}`);
+      await probe.locator('math-field').waitFor({ timeout: 15000 });
+      const rendered = await probe.evaluate((port) => {
+        const field = document.querySelector('math-field');
+        field.setValue(`\\htmlStyle{background-image:url(http://127.0.0.1:${port}/beacon.png)}{x}`);
+        return field.getValue().includes('beacon.png');
+      }, server.address().port);
+      await probe.waitForTimeout(1000);
+      check('the field keeps the LaTeX that names a URL', rendered, 'the field dropped the URL, so the next check proves nothing');
+      check('LaTeX with a URL makes no request', hits.length === 0, hits.join(', '));
+    } finally {
+      await probe.close();
+      await new Promise((resolve) => server.close(resolve));
+    }
   });
 
   await section('errors and traffic', async () => {
