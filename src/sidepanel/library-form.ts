@@ -24,7 +24,6 @@ import type { NewLibraryEntry } from './library';
 import { triggerProblem } from './triggers';
 
 export interface LibraryFormOptions {
-  /** Heading shown above the fields. */
   /** Heading above the fields; omitted when the host shows its own title. */
   title?: string;
   /**
@@ -34,6 +33,11 @@ export interface LibraryFormOptions {
    */
   moreOptions?: boolean;
   initial: Partial<NewLibraryEntry>;
+  /**
+   * The name is a suggestion: select it, so the first key typed replaces it.
+   * Left off when editing, where the name is the user's own.
+   */
+  suggestedName?: boolean;
   /** Entry id being edited, so its own trigger does not self-collide. */
   excludeId?: string;
   submitLabel: string;
@@ -395,6 +399,9 @@ export function createLibraryForm(options: LibraryFormOptions): HTMLElement {
   refresh();
   renderNamePreview();
   // Focus the name once mounted (the caller appends the form first).
-  queueMicrotask(() => nameInput.focus());
+  queueMicrotask(() => {
+    nameInput.focus();
+    if (options.suggestedName) nameInput.select();
+  });
   return form;
 }

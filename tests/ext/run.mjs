@@ -817,7 +817,10 @@ try {
     await page.keyboard.press('Alt+s');
     const nameField = page.locator('.library-form input').first();
     await nameField.waitFor({ timeout: 5000 });
-    await nameField.fill('Smoke expression');
+    // Typed, not filled: typing replaces the suggested name only if the form
+    // selected it.
+    await page.waitForFunction(() => document.activeElement?.matches('.library-form input'), undefined, { timeout: 5000 });
+    await page.keyboard.type('Smoke expression');
     await page.keyboard.press('Enter');
     await page.waitForFunction(
       () => document.querySelector('#sr-status')?.textContent.includes('Saved "Smoke expression"'),
@@ -827,6 +830,10 @@ try {
     check(
       'Alt+S saves the equation to the library',
       (await page.locator('#sr-status').textContent()).includes('Saved "Smoke expression"'),
+    );
+    check(
+      'the save is confirmed on screen',
+      (await page.locator('.actions-bar__status').textContent()).includes('Saved "Smoke expression"'),
     );
     await openMode('My library');
     const row = page.locator('.library-row__insert[aria-label="Smoke expression"]');
@@ -1141,6 +1148,31 @@ try {
       await page.waitForTimeout(250);
     }
     check('speech locale maps load from the extension origin', sawLocalMathmaps());
+  });
+
+  await section('focus survives a Recent insert and a hidden palette', async () => {
+    // 7. Two keyboard paths that used to leave focus on <body>. The Recent
+    //    tab rebuilds its grid when a key is used, and hiding the palette
+    //    takes a focused key off screen.
+    await reloadPanel();
+    await page.locator('.palette__tab').first().click();
+    const recentKey = page.locator('.palette__grid:visible .palette__btn').first();
+    await recentKey.waitFor({ timeout: 5000 });
+    await recentKey.focus();
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(300);
+    check(
+      'a key pressed on the Recent tab keeps focus in the grid',
+      await page.evaluate(() => document.activeElement?.classList.contains('palette__btn') === true),
+      await page.evaluate(() => document.activeElement?.tagName),
+    );
+    await setSymbolsShown(false);
+    const rescued = await page
+      .waitForFunction(() => document.activeElement?.tagName === 'MATH-FIELD', undefined, { timeout: 5000 })
+      .then(() => true, () => false);
+    check('hiding the palette moves focus to the field', rescued, await page.evaluate(() => document.activeElement?.tagName));
+    await setSymbolsShown(true);
+    await page.locator('.palette__tab').first().waitFor({ state: 'visible', timeout: 5000 });
   });
 
   await section('the equation survives a reload', async () => {

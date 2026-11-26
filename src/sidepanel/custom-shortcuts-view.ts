@@ -15,7 +15,7 @@
  * command or a My library trigger, and an import names the ones it skips.
  */
 import type { EditorController } from './editor';
-import { announce } from './a11y';
+import { announce, report } from './a11y';
 import { wireRovingTabindex } from './roving';
 import { createLatexEditor, formField } from './library-form';
 import { renderPreview } from './library-view';
@@ -456,7 +456,7 @@ export function buildCustomShortcutsPanel(
         onSubmit: (fields) => {
           const added = addShortcut(fields);
           closeForm(rowButtons.get(added.id)?.insert ?? null);
-          announce(`Added \\${added.trigger}`);
+          report(`Added \\${added.trigger}`);
         },
         onClose: () => closeForm(),
       }),
@@ -491,7 +491,7 @@ export function buildCustomShortcutsPanel(
         onSubmit: (fields) => {
           updateShortcut(shortcut.id, fields);
           closeForm(rowButtons.get(shortcut.id)?.edit ?? null);
-          announce(`Saved \\${fields.trigger}`);
+          report(`Saved \\${fields.trigger}`);
         },
         onClose: () => closeForm(rowButtons.get(shortcut.id)?.edit ?? null),
         extraControls: [del],
@@ -636,7 +636,7 @@ export function buildCustomShortcutsPanel(
       return problem === null || problem.startsWith('A custom shortcut');
     });
     const added = addSeededShortcuts(usable);
-    announce(
+    report(
       added === 0
         ? 'The common shortcuts are already in your list'
         : `Added ${shortcuts(added)}`,
@@ -650,7 +650,7 @@ export function buildCustomShortcutsPanel(
   commonBtn.addEventListener('click', () => {
     if (hasSeededShortcuts()) {
       const removed = removeSeededShortcuts();
-      announce(`Removed ${shortcuts(removed)}; ones you edited are kept`);
+      report(`Removed ${shortcuts(removed)}; ones you edited are kept`);
       // With nothing left the button is gone: land on the empty state.
       if (commonBtn.closest('[hidden]')) focusFirst();
     } else {
@@ -667,7 +667,7 @@ export function buildCustomShortcutsPanel(
     link.download = 'maths-editor-shortcuts.json';
     link.click();
     URL.revokeObjectURL(url);
-    announce('Shortcuts exported as a JSON file');
+    report('Shortcuts exported as a JSON file');
   };
   exportBtn.addEventListener('click', doExport);
 
@@ -827,7 +827,7 @@ export function buildCustomShortcutsPanel(
       // Back to the Import… button that was used, or, when the import
       // emptied or filled the list and hid it, the first control shown.
       closeForm();
-      announce(
+      report(
         (strategy === 'replace'
           ? `Replaced your shortcuts: ${shortcuts(result.added)} imported, ${result.removed} removed`
           : `Imported ${shortcuts(result.added)}`) +

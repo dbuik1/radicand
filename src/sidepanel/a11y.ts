@@ -34,3 +34,26 @@ export function announce(message: string, politeness: Politeness = 'polite'): vo
     region.textContent = message;
   });
 }
+
+/** What happened: a step that completed, or one that failed. */
+export type ResultKind = 'done' | 'error';
+
+let showResult: ((message: string, kind: ResultKind) => void) | null = null;
+
+/**
+ * Register the on-screen place where results appear (the caption under the
+ * actions bar). Absent where that bar is not mounted.
+ */
+export function setResultDisplay(show: (message: string, kind: ResultKind) => void): void {
+  showResult = show;
+}
+
+/**
+ * Report the result of a committing step – a save, an import, a copy – to
+ * everyone: spoken through the live region and shown on screen. A result
+ * that only a screen reader hears leaves a sighted user unsure it happened.
+ */
+export function report(message: string, kind: ResultKind = 'done'): void {
+  announce(message, kind === 'error' ? 'assertive' : 'polite');
+  showResult?.(message, kind);
+}
