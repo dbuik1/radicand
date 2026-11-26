@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { DEFAULT_SETTINGS, updateSettings } from './settings';
 import { buildPayload, copyToClipboard } from './output';
 import type { EditorController } from './editor';
 import type { OutputFormat } from '../types';
@@ -35,6 +36,24 @@ describe('buildPayload', () => {
     const payload = buildPayload(editor, 'latex');
     expect(payload.plain).toBe('x');
     expect(payload.html).toBeUndefined();
+  });
+});
+
+describe('buildPayload with tidy brackets', () => {
+  const fenced = fakeEditor({ latex: '\\left(x\\right)' });
+
+  afterEach(async () => {
+    await updateSettings({ tidyBrackets: DEFAULT_SETTINGS.tidyBrackets });
+  });
+
+  it('tidies plain brackets in copied LaTeX when the setting is on', async () => {
+    await updateSettings({ tidyBrackets: true });
+    expect(buildPayload(fenced, 'latex').plain).toBe('(x)');
+  });
+
+  it('copies the LaTeX as written when the setting is off', async () => {
+    await updateSettings({ tidyBrackets: false });
+    expect(buildPayload(fenced, 'latex').plain).toBe('\\left(x\\right)');
   });
 });
 

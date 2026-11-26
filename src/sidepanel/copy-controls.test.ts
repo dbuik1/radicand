@@ -7,7 +7,7 @@ import type { EditorController } from './editor';
 function fakeEditor(): EditorController {
   return {
     element: {} as never,
-    getValue: () => '<math><mi>x</mi></math>',
+    getValue: (format) => (format === 'latex' ? 'x' : '<math><mi>x</mi></math>'),
     getLatex: () => 'x',
     getSpokenText: () => 'x',
     setLatex: () => {},
@@ -141,5 +141,26 @@ describe('copy caption', () => {
     group.querySelector<HTMLButtonElement>('.copy-split__main')!.click();
     await vi.waitFor(() => expect(status.textContent).toBe('Nothing to copy. The equation is empty.'));
     expect(status.classList.contains('actions-bar__status--error')).toBe(true);
+  });
+  it('puts the chosen format on the clipboard, from the button and the shortcut', async () => {
+    const editor = fakeEditor();
+    document.body.append(createCopyControls(editor), createCopyStatus(editor));
+    const writeText = navigator.clipboard.writeText as ReturnType<typeof vi.fn>;
+    const main = document.querySelector<HTMLButtonElement>('.copy-split__main')!;
+
+    main.click();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    expect(writeText).toHaveBeenLastCalledWith(editor.getValue('mathml'));
+
+    await updateSettings({ copyFormat: 'latex' });
+    main.click();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
+    expect(writeText).toHaveBeenLastCalledWith(editor.getValue('latex'));
+
+    const stop = installCopyShortcut(editor);
+    document.dispatchEvent(new KeyboardEvent('keydown', { altKey: true, code: 'KeyC' }));
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(3));
+    expect(writeText).toHaveBeenLastCalledWith(editor.getValue('latex'));
+    stop();
   });
 });
