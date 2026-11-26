@@ -130,6 +130,9 @@ console.log('✓ no-network check passed: only justified, inert external referen
     'SIL OPEN FONT LICENSE',
     'Apache License',
     'Luca Ongaro',
+    'Open Database License',
+    'David Carlisle',
+    'LaTeX Project Public Licence',
   ];
   const missing = required.filter((marker) => !notices.includes(marker));
   if (missing.length > 0) {

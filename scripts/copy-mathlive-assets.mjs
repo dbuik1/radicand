@@ -12,7 +12,8 @@
  *
  * The same run writes `public/THIRD-PARTY-NOTICES.txt`: every third-party
  * component that reaches `dist/` (MathLive, the KaTeX fonts, STIX Two Math,
- * Speech Rule Engine, MiniSearch) is redistributed under a licence that
+ * Speech Rule Engine, MiniSearch, and the three data sets behind symbol
+ * search and draw-to-find) is redistributed under a licence that
  * requires its copyright notice and licence text to travel with each copy.
  * The file is assembled from the packages' own licence files so a dependency
  * bump can never ship a stale text; `scripts/check-no-network.mjs` fails the
@@ -101,6 +102,48 @@ const sections = [
   {
     title: `MiniSearch ${await version('minisearch')} – MIT License`,
     body: (await readFile(resolve(minisearch, 'LICENSE.txt'), 'utf8')).trim(),
+  },
+  // The three data sets below ship as derived data inside the bundles, so
+  // their notices have to be readable in the package itself.
+  {
+    title: 'Draw-to-find stroke prototypes – Open Database License (ODbL) 1.0',
+    body: [
+      'Derived from the Detexify training data by Daniel Kirsch and the Detexify',
+      'contributors: https://github.com/kirel/detexify-data',
+      '',
+      'The prototypes are a derivative database: drawings were mapped to symbols,',
+      'filtered, clustered and quantised. They are made available under the Open',
+      'Database License 1.0: https://opendatacommons.org/licenses/odbl/1-0/',
+      'The derived data is published at https://github.com/dbuik1/radicand',
+      '(src/assets/draw-prototypes.json).',
+    ].join('\n'),
+  },
+  {
+    title: 'Symbol search aliases from unicode.xml – W3C Software Notice and License',
+    body: [
+      'Copyright David Carlisle 1999-2025',
+      '',
+      'Use and distribution of this code are permitted under the terms of the',
+      'W3C Software Notice and License.',
+      'http://www.w3.org/Consortium/Legal/2002/copyright-software-20021231.html',
+      '',
+      'Source: https://github.com/w3c/xml-entities (unicode.xml). The data was',
+      'filtered to the characters this extension renders, cleaned and reformatted;',
+      'nothing of the original file ships verbatim. It is provided "as is", without',
+      'warranty of any kind.',
+    ].join('\n'),
+  },
+  {
+    title: 'Symbol names from unimathsymbols.txt – LaTeX Project Public Licence 1.3',
+    body: [
+      'unimathsymbols.txt by Günter Milde, taken from',
+      'https://github.com/kawabata/math-symbols and licensed under the LaTeX',
+      'Project Public Licence 1.3 or later: https://www.latex-project.org/lppl/',
+      '',
+      'The symbol index is a modified, renamed derivative: LaTeX commands and',
+      'descriptions were extracted, filtered and reformatted. The original file is',
+      'not included.',
+    ].join('\n'),
   },
 ];
 
