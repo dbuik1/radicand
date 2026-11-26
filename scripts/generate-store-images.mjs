@@ -1,13 +1,18 @@
 /**
  * Generate the Chrome Web Store images: five 1280×800 screenshots, the
- * 440×280 small promo tile and the 1400×560 marquee, into docs/store/. The panel shots come from the
- * built extension in `dist/` loaded into Chromium, so run `npm run build`
- * first. The first two screenshots show the panel beside texnique.xyz, a
- * LaTeX typesetting game, fetched live – so this script needs a network
- * connection and `curl`. Run: node scripts/generate-store-images.mjs
+ * 440×280 small promo tile and the 1400×560 marquee, into docs/store/.
+ *
+ * Every image is one plate in a series. A large radical sign runs up the
+ * left edge and its bar across the top, so the content is the radicand; the
+ * number in the crook of the sign (where a root's index goes) is the plate
+ * number. Headlines and the specimen beside each panel are set in the
+ * bundled STIX Two Math, the face of the R in the icon.
+ *
+ * The panel shots come from the built extension in `dist/` loaded into
+ * Chromium, so run `npm run build` first. Nothing is fetched.
+ * Run: node scripts/generate-store-images.mjs
  */
-import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,27 +24,39 @@ const OUT = path.join(ROOT, 'docs', 'store');
 mkdirSync(OUT, { recursive: true });
 
 const manifest = JSON.parse(readFileSync(path.join(DIST, 'manifest.json'), 'utf8'));
-const icon = readFileSync(path.join(ROOT, 'src', 'assets', 'icons', 'icon-128.png')).toString('base64');
-
-// The panel is shown at the width Chrome gives a side panel by default.
-const PANEL = { width: 400, height: 720 };
-const QUADRATIC = 'x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}';
-// The browser-window shots: a Chrome window with the page on the left and
-// the side panel, under its own header, on the right.
-const WINDOW = { width: 1200, height: 668, toolbar: 44, panelHeader: 36 };
-const SIDE = { width: PANEL.width, height: WINDOW.height - WINDOW.toolbar - WINDOW.panelHeader };
-const PAGE = { width: WINDOW.width - PANEL.width - 1, height: WINDOW.height - WINDOW.toolbar };
-const TEXNIQUE = 'https://texnique.xyz/';
-// The promo tile and the marquee share one design at two sizes: the name, the
-// line and four tools on white, beside a blue edge carrying the real panel.
-const PROMO = {
-  small: { file: 'promo-small-440x280.png', width: 440, height: 280, side: 92, pad: '24px 18px 24px 26px',
-    logo: 44, name: 26, line: 30, card: 66, gap: 8, label: 13, key: [22, 24, 13], speaker: 24, forAll: 22, sketch: 30,
-    sidePad: '34px 0 34px 12px', panelWidth: 160, panelInset: 10 },
-  marquee: { file: 'promo-marquee-1400x560.png', width: 1400, height: 560, side: 400, pad: '56px 48px 56px 72px',
-    logo: 88, name: 52, line: 76, card: 140, gap: 18, label: 24, key: [44, 48, 26], speaker: 52, forAll: 48, sketch: 64,
-    sidePad: '56px 0 0 48px', panelWidth: 400, panelInset: 16 },
+const fontFile = (pattern) => {
+  const name = readdirSync(path.join(DIST, 'assets')).find((file) => pattern.test(file));
+  if (!name) throw new Error(`no built font matching ${pattern}`);
+  return readFileSync(path.join(DIST, 'assets', name)).toString('base64');
 };
+const FONTS = `
+  @font-face { font-family: 'STIX Two Math'; src: url(data:font/woff2;base64,${fontFile(/^STIXTwoMath.*\.woff2$/)}) format('woff2'); }
+  @font-face { font-family: 'Inter'; font-weight: 100 900; src: url(data:font/woff2;base64,${fontFile(/^Inter-latin-(?!ext).*\.woff2$/)}) format('woff2'); }
+`;
+
+// The panel is shown at the width Chrome gives a side panel by default, and
+// at the height that fits under the bar of the sign.
+const PANEL = { width: 400, height: 624 };
+const QUADRATIC = 'x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}';
+const GAUSSIAN = '\\int_0^{\\infty}e^{-x^2}\\,dx=\\frac{\\sqrt{\\pi}}{2}';
+
+// The two grounds: the brand's ink with its dark-theme blue, and the
+// high-contrast theme's black with its yellow.
+const INK = { ground: '#0e1a2e', line: '#5aabff', text: '#f4f7fc', muted: '#c3cde0', faint: 'rgb(244 247 252 / 0.14)',
+  sheet: '#f4f7fc', sheetText: '#14233c', grid: 'rgb(90 171 255 / 0.055)' };
+const CONTRAST = { ground: '#000000', line: '#ffd60a', text: '#ffffff', muted: '#ffffff', faint: 'rgb(255 255 255 / 0.4)',
+  sheet: '#000000', sheetText: '#ffffff', grid: 'rgb(255 214 10 / 0.07)' };
+
+const BASE_CSS = `
+  ${FONTS}
+  * { box-sizing: border-box; margin: 0; }
+  body { overflow: hidden; position: relative; font-family: 'Inter', sans-serif; }
+  .radical { position: absolute; inset: 0; }
+  .serif, math { font-family: 'STIX Two Math', serif; }
+  .mono { font-family: ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace; }
+`;
+
+const QUADRATIC_MATHML = `<math display="block"><mi>x</mi><mo>=</mo><mfrac><mrow><mo>−</mo><mi>b</mi><mo>±</mo><msqrt><msup><mi>b</mi><mn>2</mn></msup><mo>−</mo><mn>4</mn><mi>a</mi><mi>c</mi></msqrt></mrow><mrow><mn>2</mn><mi>a</mi></mrow></mfrac></math>`;
 
 const userDataDir = mkdtempSync(path.join(tmpdir(), 'store-images-'));
 const context = await launchExtensionContext(DIST, userDataDir);
@@ -61,14 +78,6 @@ try {
     await panel.evaluate((id) => document.getElementById(id)?.click(), `tab-${mode}`);
     await panel.waitForSelector(`#panel-${mode}:not([hidden])`, { timeout: 5000 });
   };
-  // The main copy button follows the format chosen in Settings.
-  const setCopyFormat = async (format) => {
-    await panel.evaluate((id) => {
-      document.getElementById('settings-trigger')?.click();
-      document.getElementById(id)?.click();
-    }, `set-copy-format-${format}`);
-    await panel.keyboard.press('Escape');
-  };
   const shoot = async ({ keepFocus = false } = {}) => {
     // Nothing focused, so no focus ring or caret lands in the picture –
     // except where the focus is what shows the feature.
@@ -77,14 +86,19 @@ try {
     return (await panel.screenshot()).toString('base64');
   };
 
-  // 1. The quadratic formula built in the panel, its LaTeX pasted into a
-  // TeXnique problem and accepted.
-  await panel.setViewportSize(SIDE);
-  await setCopyFormat('latex');
-  await setEquation(QUADRATIC);
-  const texEditing = await shoot();
+  // The source disclosure sits where the panel is cropped, so it is
+  // switched off in Settings for the pictures.
+  await panel.evaluate(() => {
+    document.getElementById('settings-trigger')?.click();
+    document.getElementById('set-part-source')?.click();
+  });
+  await panel.keyboard.press('Escape');
 
-  // 2. Half-way through a problem, searching for the symbol by meaning.
+  // 1. The quadratic formula in the field, mid-edit.
+  await setEquation(QUADRATIC);
+  const editing = await shoot({ keepFocus: true });
+
+  // 2. Searching for a symbol by meaning.
   await setEquation('c^2=a^2+b^2-2ab\\cos');
   await panel.fill('.symbol-search__input', 'angle');
   await panel.waitForSelector('.symbol-search__list [role="option"]', { timeout: 5000 });
@@ -104,10 +118,8 @@ try {
     }
   });
   await panel.waitForTimeout(200);
-  const texSearching = await shoot({ keepFocus: true });
+  const searching = await shoot({ keepFocus: true });
   await panel.fill('.symbol-search__input', '');
-  await panel.setViewportSize(PANEL);
-  await setCopyFormat('mathml');
 
   // 3. A drawn ∀ and its matches.
   await setEquation('');
@@ -146,64 +158,77 @@ try {
   const library = await shoot();
   await openTab('symbols');
 
-  // 5. The high-contrast theme.
-  await setEquation('\\int_0^{\\infty}e^{-x^2}\\,dx=\\frac{\\sqrt{\\pi}}{2}');
+  // 5. The high-contrast theme, and the words Read aloud says for its
+  // equation: the synthesiser is replaced so the text can be read back.
+  await setEquation(GAUSSIAN);
   await panel.evaluate(() => {
     document.documentElement.dataset.theme = 'high-contrast';
   });
   const contrast = await shoot();
+  const spoken = await panel.evaluate(async () => {
+    const heard = new Promise((resolve) => {
+      speechSynthesis.speak = (utterance) => resolve(utterance.text);
+    });
+    [...document.querySelectorAll('.actions-bar button')].find((b) => b.textContent.trim() === 'Read aloud').click();
+    return heard;
+  });
 
-  // The TeXnique pages last: while a second page is open in the context the
-  // panel's symbol search lists no results.
-  const texSolved = await texnique('Quadratic Formula', QUADRATIC);
-  const texStuck = await texnique('Law of Cosines', 'c^2 = a^2 + b^2 - 2ab \\cos');
-
-  const shots = [
+  const plates = [
     {
       file: 'screenshot-1-editing.png',
-      title: 'Build the equation, then copy its LaTeX or MathML anywhere',
-      page: texSolved,
-      panel: texEditing,
+      title: 'Write maths beside your work',
+      body: 'Type LaTeX or pick symbols in Chrome’s side panel, then copy the equation as MathML or LaTeX.',
+      specimen: specimenSheet(),
+      panel: editing,
     },
     {
       file: 'screenshot-2-search.png',
-      title: 'Stuck on a symbol? Search for it by what it means',
-      page: texStuck,
-      panel: texSearching,
+      title: 'Find a symbol by its meaning',
+      body: 'Search over 700 symbols by description, or browse them by category.',
+      specimen: specimenEntry(),
+      panel: searching,
     },
     {
       file: 'screenshot-3-drawing.png',
-      title: 'Draw it if you cannot name it',
-      body: 'Sketch a symbol with a mouse, pen or finger and insert it from the matches.',
+      title: 'Draw the symbol you cannot name',
+      body: 'Sketch it with a mouse, pen or finger and pick from the matches.',
+      specimen: specimenDrawn(),
       panel: drawing,
     },
     {
       file: 'screenshot-4-library.png',
       title: 'Keep the formulae you reuse',
-      body: 'Save equations to your library with a name, find them again and insert them in one step.',
+      body: 'Save an equation with a name and insert it again in one step.',
+      specimen: specimenContents(),
       panel: library,
     },
     {
       file: 'screenshot-5-contrast.png',
-      title: 'Made for the keyboard and screen readers',
-      body: 'Every control works from the keyboard. Equations are read aloud in ClearSpeak or MathSpeak. Light, dark and high-contrast themes.',
+      title: 'Built for keyboard and screen reader',
+      body: 'Every control works from the keyboard. Equations are read aloud in ClearSpeak or MathSpeak.',
+      specimen: specimenSpoken(spoken),
       panel: contrast,
-      dark: true,
+      theme: CONTRAST,
     },
   ];
 
   const frame = await context.newPage();
   await frame.setViewportSize({ width: 1280, height: 800 });
-  for (const shot of shots) {
-    await frame.setContent(shot.page ? browserHtml(shot) : screenshotHtml(shot));
+  for (const [index, plate] of plates.entries()) {
+    await frame.setContent(plateHtml({ ...plate, number: index + 1 }));
+    await frame.evaluate(() => document.fonts.ready);
     await frame.waitForTimeout(300);
-    await frame.screenshot({ path: path.join(OUT, shot.file) });
-    console.log(shot.file);
+    await frame.screenshot({ path: path.join(OUT, plate.file) });
+    console.log(plate.file);
   }
 
-  for (const tile of Object.values(PROMO)) {
+  for (const tile of [
+    { file: 'promo-small-440x280.png', width: 440, height: 280 },
+    { file: 'promo-marquee-1400x560.png', width: 1400, height: 560, panel: editing },
+  ]) {
     await frame.setViewportSize({ width: tile.width, height: tile.height });
-    await frame.setContent(promoHtml(texEditing, tile));
+    await frame.setContent(promoHtml(tile));
+    await frame.evaluate(() => document.fonts.ready);
     await frame.waitForTimeout(300);
     await frame.screenshot({ path: path.join(OUT, tile.file) });
     console.log(tile.file);
@@ -214,152 +239,153 @@ try {
 }
 
 /**
- * Open a TeXnique problem by title in Zen mode, type `input` into its answer
- * box and return a screenshot of the page scrolled to the problem. Requests
- * go through `curl` so they use the system's certificate and proxy settings;
- * analytics and the leaderboard backend are never requested.
+ * The radical sign as an SVG the size of the image: a short hook, a heavy
+ * down-stroke to `foot`, a fine stroke rising to the bar at `top`, and the
+ * bar running to `right`, where it turns down as a printed vinculum does.
  */
-async function texnique(title, input) {
-  const page = await context.newPage();
-  await page.setViewportSize(PAGE);
-  await page.route('**/*', async (route) => {
-    const request = route.request();
-    const url = request.url();
-    if (/googletagmanager|google-analytics|firebase/.test(url)) return route.abort();
-    if (request.method() !== 'GET' || !url.startsWith('https://')) return route.continue();
-    const bodyFile = path.join(userDataDir, 'texnique-response');
-    const [status, contentType] = execFileSync(
-      'curl',
-      ['-sS', '--max-time', '30', '-o', bodyFile, '-w', '%{http_code} %{content_type}', url],
-      { encoding: 'utf8' },
-    ).split(' ');
-    await route.fulfill({
-      status: Number(status),
-      contentType: contentType || 'application/octet-stream',
-      body: readFileSync(bodyFile),
-    });
-  });
-  await page.goto(TEXNIQUE, { waitUntil: 'load', timeout: 60000 });
-  await page.click('#start-button-untimed');
-  await page.evaluate((wanted) => {
-    const index = problems.findIndex((p) => p.title === wanted);
-    if (index < 0) throw new Error(`no TeXnique problem called "${wanted}"`);
-    problemsOrder = [index];
-    problemNumber = 0;
-    loadProblem();
-    // Keep the answer on screen once it is accepted, instead of moving on.
-    window.loadProblem = () => {};
-  }, title);
-  await page.fill('#user-input', input);
-  await page.press('#user-input', 'End');
-  await page.waitForTimeout(1500);
-  await page.evaluate(() => {
-    document.getElementById('user-input').blur();
-    const top = document.getElementById('problem-title').getBoundingClientRect().top;
-    window.scrollBy(0, top - 24);
-  });
-  await page.waitForTimeout(300);
-  const png = (await page.screenshot()).toString('base64');
-  await page.close();
-  return png;
+function radicalSvg({ width, height, foot, top, right, colour, scale = 1 }) {
+  const [fx, fy] = foot;
+  const fine = 6 * scale;
+  const heavy = 12 * scale;
+  const hookStart = [fx - 62 * scale, fy - 104 * scale];
+  const hookTurn = [fx - 40 * scale, fy - 118 * scale];
+  // The rising stroke leans as the panel's own sign does: 14 across for
+  // every 100 up.
+  const rise = [fx + (fy - top) * 0.14, top];
+  return `<svg class="radical" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" aria-hidden="true">
+    <g fill="none" stroke="${colour}" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M${hookStart} L${hookTurn}" stroke-width="${fine}"/>
+      <path d="M${hookTurn} L${fx},${fy}" stroke-width="${heavy}"/>
+      <path d="M${fx},${fy} L${rise} L${right},${top} L${right},${top + 26 * scale}" stroke-width="${fine}"/>
+    </g>
+  </svg>`;
 }
 
-function browserHtml({ title, page, panel }) {
+function plateHtml({ title, body, specimen, panel, number, theme = INK }) {
+  const t = theme;
   return `<!doctype html><html><head><meta charset="utf-8"><style>
-    * { box-sizing: border-box; margin: 0; }
-    body { width: 1280px; height: 800px; background: #0b5cad; color: #fff; overflow: hidden;
-      font-family: 'Liberation Sans', Arial, sans-serif; padding: 0 40px; display: grid;
-      grid-template-rows: 1fr ${WINDOW.height}px; }
-    header { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-    h1 { font-size: 34px; line-height: 1.15; letter-spacing: -0.01em; }
-    .brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; color: #dcebfb; flex: none; }
-    .brand img { width: 36px; height: 36px; }
-    .window { width: ${WINDOW.width}px; border-radius: 10px 10px 0 0; overflow: hidden; background: #fff;
-      display: grid; grid-template-rows: ${WINDOW.toolbar}px 1fr; box-shadow: 0 -8px 40px rgb(0 0 0 / 0.25); }
-    .toolbar { background: #dee3ea; display: flex; align-items: center; gap: 8px; padding: 0 14px; }
-    .dot { width: 12px; height: 12px; border-radius: 50%; }
-    .address { margin-left: 18px; flex: 1; max-width: 560px; background: #fff; border-radius: 99px; padding: 6px 16px;
-      font-size: 14px; color: #3d4f66; }
-    .content { display: grid; grid-template-columns: ${PAGE.width}px 1px ${PANEL.width}px; }
-    .content > img { display: block; }
-    .rule { background: #c4ccd6; }
-    .side { display: grid; grid-template-rows: ${WINDOW.panelHeader}px 1fr; }
-    .side__header { display: flex; align-items: center; gap: 8px; padding: 0 12px; background: #f3f5f8;
-      border-bottom: 1px solid #dee3ea; color: #1f2a37; font-size: 13px; font-weight: 700; }
-    .side__header img { width: 16px; height: 16px; }
-  </style></head><body>
-    <header><h1>${title}</h1><p class="brand"><img alt="" src="data:image/png;base64,${icon}">Radicand</p></header>
-    <div class="window">
-      <div class="toolbar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span>
-        <span class="address">texnique.xyz</span></div>
-      <div class="content"><img alt="" src="data:image/png;base64,${page}"><span class="rule"></span>
-        <div class="side"><div class="side__header"><img alt="" src="data:image/png;base64,${icon}">Radicand</div>
-          <img alt="" src="data:image/png;base64,${panel}"></div></div>
-    </div>
-  </body></html>`;
-}
-
-function screenshotHtml({ title, body, panel, dark }) {
-  const ground = dark ? '#0d1117' : '#eef3f9';
-  const ink = dark ? '#ffffff' : '#0f1f33';
-  const muted = dark ? '#c9d4e0' : '#3d4f66';
-  return `<!doctype html><html><head><meta charset="utf-8"><style>
-    * { box-sizing: border-box; margin: 0; }
-    body { width: 1280px; height: 800px; background: ${ground}; color: ${ink};
-      font-family: 'Liberation Sans', Arial, sans-serif; display: grid;
-      grid-template-columns: 1fr ${PANEL.width}px; gap: 72px; padding: 40px 96px 40px 96px; align-items: center; }
-    .copy { display: grid; gap: 22px; align-content: center; }
-    .brand { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 700; color: ${muted}; }
-    .brand img { width: 40px; height: 40px; }
-    h1 { font-size: 46px; line-height: 1.12; letter-spacing: -0.01em; max-width: 14em; }
-    .body { font-size: 22px; line-height: 1.5; color: ${muted}; max-width: 30em; }
-    .panel { width: ${PANEL.width}px; height: ${PANEL.height}px; border-radius: 10px; overflow: hidden;
-      box-shadow: 0 18px 50px rgb(15 31 51 / 0.22), 0 0 0 1px rgb(15 31 51 / 0.12); }
+    ${BASE_CSS}
+    body { width: 1280px; height: 800px; background: ${t.ground}; color: ${t.text};
+      background-image: linear-gradient(${t.grid} 1px, transparent 1px), linear-gradient(90deg, ${t.grid} 1px, transparent 1px);
+      background-size: 40px 40px; background-position: 19px 3px; }
+    .index { position: absolute; left: 70px; top: 388px; font-size: 54px; line-height: 1; color: ${t.line}; }
+    .copy { position: absolute; left: 236px; top: 136px; width: 520px; }
+    h1 { font-family: 'STIX Two Math', serif; font-weight: 400; font-size: 66px; line-height: 1.06; letter-spacing: -0.012em; }
+    .body { margin-top: 22px; font-size: 21px; line-height: 1.5; color: ${t.muted}; max-width: 22em; }
+    .specimen { position: absolute; left: 236px; bottom: 56px; width: 520px; height: 250px; display: flex; align-items: flex-end; color: ${t.text}; }
+    .panel { position: absolute; left: 816px; top: 124px; width: ${PANEL.width}px; height: ${PANEL.height}px; border-radius: 16px;
+      overflow: hidden; box-shadow: 0 30px 70px rgb(0 0 0 / 0.5), 0 0 0 1px ${t.faint}; }
     .panel img { display: block; width: 100%; height: 100%; }
+    .rule { border: 0; border-top: 1px solid ${t.faint}; }
+    .sheet { background: ${t.sheet}; color: ${t.sheetText}; }
+    .line { color: ${t.line}; }
+    .muted { color: ${t.muted}; }
+    .faint-edge { border: 1.5px solid ${t.faint}; }
   </style></head><body>
-    <div class="copy">
-      <p class="brand"><img alt="" src="data:image/png;base64,${icon}">Radicand</p>
-      <h1>${title}</h1>
-      <p class="body">${body}</p>
-    </div>
+    ${radicalSvg({ width: 1280, height: 800, foot: [140, 600], top: 76, right: 1216, colour: t.line })}
+    <p class="index serif" aria-hidden="true">${number}</p>
+    <div class="copy"><h1>${title}</h1><p class="body">${body}</p></div>
+    <div class="specimen">${specimen}</div>
     <div class="panel"><img alt="" src="data:image/png;base64,${panel}"></div>
   </body></html>`;
 }
 
-function promoHtml(panel, t) {
-  const blue = '#0b5cad';
-  const sketch = `<svg width="${t.sketch}" height="${t.sketch}" viewBox="0 0 56 56" aria-hidden="true" style="background:#fff;border:1.5px dashed #b8c4d2;border-radius:8px"><path d="M36 10 Q30 5 27 14 L24 42 Q22 51 15 47" fill="none" stroke="${blue}" stroke-width="3.5" stroke-linecap="round"/></svg>`;
-  const speaker = `<svg width="${t.speaker}" height="${t.speaker}" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h3l4-3v10l-4-3H2z" fill="${blue}"/><path d="M11 5q2 3 0 6M13 3q3.5 5 0 10" stroke="${blue}" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>`;
-  const [kw, kh, ks] = t.key;
-  const key = `<span style="display:inline-grid;place-items:center;width:${kw}px;height:${kh}px;border-radius:6px;background:#fff;color:#13233a;box-shadow:0 3px 0 #7db8ff;font-family:'Liberation Mono',monospace;font-size:${ks}px">\\</span>`;
-  const tools = [
-    ['Type', key],
-    ['Hear', speaker],
-    ['Find', `<span style="font-size:${t.forAll}px;line-height:1;color:${blue}">∀</span>`],
-    ['Sketch', sketch],
-  ];
-  return `<!doctype html><html><head><meta charset="utf-8"><style>
-    * { box-sizing: border-box; margin: 0; }
-    body { width: ${t.width}px; height: ${t.height}px; background: #fff; color: #0f1f33; overflow: hidden;
-      font-family: 'Liberation Sans', Arial, sans-serif; display: grid; grid-template-columns: 1fr ${t.side}px; }
-    .main { padding: ${t.pad}; display: grid; align-content: space-between; box-shadow: inset 1px 1px 0 #d5dde8, inset 0 -1px 0 #d5dde8; }
-    .name { display: flex; align-items: center; gap: ${Math.round(t.logo * 0.27)}px; font-size: ${t.name}px; font-weight: 700; line-height: 1; }
-    .name img { width: ${t.logo}px; height: ${t.logo}px; }
-    .line { font-size: ${t.line}px; font-weight: 700; line-height: 1.05; letter-spacing: -0.01em; color: ${blue}; }
-    .tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: ${t.gap}px; }
-    .tool { background: #eef3f9; border-radius: ${Math.round(t.card * 0.14)}px; height: ${t.card}px; display: grid;
-      grid-template-rows: 1fr auto; justify-items: center; align-items: center; padding: ${Math.round(t.card * 0.09)}px 0;
-      font-size: ${t.label}px; font-weight: 700; }
-    .side { background: ${blue}; padding: ${t.sidePad}; overflow: hidden; }
-    .sheet { background: #fff; border-radius: 10px 0 0 10px; padding: ${t.panelInset}px 0 ${t.panelInset}px ${t.panelInset}px;
-      height: 100%; overflow: hidden; }
-    .sheet img { display: block; width: ${t.panelWidth}px; }
-  </style></head><body>
-    <div class="main">
-      <p class="name"><img alt="" src="data:image/png;base64,${icon}">Radicand</p>
-      <p class="line">Maths, beside<br>your work.</p>
-      <div class="tools">${tools.map(([label, picture]) => `<div class="tool">${picture}<span>${label}</span></div>`).join('')}</div>
+/** Plate 1: the equation where it ends up, on a page of someone's notes. */
+function specimenSheet() {
+  return `<div class="sheet serif" style="width: 440px; padding: 26px 32px 30px; border-radius: 4px; box-shadow: 0 18px 40px rgb(0 0 0 / 0.35); transform: rotate(-1.6deg); transform-origin: left bottom;">
+    <p style="font-size: 21px; line-height: 1.4;">The roots of <math><mi>a</mi><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><mi>b</mi><mi>x</mi><mo>+</mo><mi>c</mi><mo>=</mo><mn>0</mn></math> are</p>
+    <div style="font-size: 34px; margin-top: 16px;">${QUADRATIC_MATHML}</div>
+  </div>`;
+}
+
+/** Plate 2: the symbol set as a dictionary sets a headword. */
+function specimenEntry() {
+  return `<div style="display: flex; align-items: flex-end; gap: 36px; width: 100%;">
+    <span class="serif line" style="font-size: 210px; line-height: 0.82;">∠</span>
+    <div style="padding-bottom: 6px; flex: 1;">
+      <p class="serif" style="font-size: 44px; line-height: 1;">angle</p>
+      <p class="mono muted" style="font-size: 19px; margin-top: 12px;">\\angle</p>
+      <hr class="rule" style="margin: 18px 0 14px;">
+      <p class="serif muted" style="font-size: 22px; line-height: 1.5;">∡ measured angle<br>∢ spherical angle</p>
     </div>
-    <div class="side"><div class="sheet"><img alt="" src="data:image/png;base64,${panel}"></div></div>
+  </div>`;
+}
+
+/** Plate 3: three pen strokes beside the symbol they are read as. */
+function specimenDrawn() {
+  return `<div style="display: flex; align-items: flex-end; gap: 30px;">
+    <svg width="190" height="200" viewBox="0 0 190 200" aria-hidden="true">
+      <g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 26 C34 62, 62 128, 92 180"/>
+        <path d="M168 20 C150 70, 122 126, 96 184"/>
+        <path d="M50 96 C78 90, 112 92, 142 88"/>
+      </g>
+    </svg>
+    <span class="serif muted" style="font-size: 54px; line-height: 1; padding-bottom: 66px;">→</span>
+    <div style="text-align: center;">
+      <span class="serif line" style="display: block; font-size: 210px; line-height: 0.86;">∀</span>
+      <p class="mono muted" style="font-size: 19px; margin-top: 14px;">\\forall</p>
+    </div>
+  </div>`;
+}
+
+/** Plate 4: saved formulae set as a book sets its contents. */
+function specimenContents() {
+  const rows = [
+    ['Quadratic formula', `<math><mfrac><mrow><mo>−</mo><mi>b</mi><mo>±</mo><msqrt><msup><mi>b</mi><mn>2</mn></msup><mo>−</mo><mn>4</mn><mi>a</mi><mi>c</mi></msqrt></mrow><mrow><mn>2</mn><mi>a</mi></mrow></mfrac></math>`],
+    ['Euler’s identity', `<math><msup><mi>e</mi><mrow><mi>i</mi><mi>π</mi></mrow></msup><mo>+</mo><mn>1</mn><mo>=</mo><mn>0</mn></math>`],
+    ['Pythagoras’ theorem', `<math><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup><mo>=</mo><msup><mi>c</mi><mn>2</mn></msup></math>`],
+  ];
+  return `<div class="serif" style="width: 100%; display: grid; gap: 18px;">${rows
+    .map(
+      ([name, maths]) => `<div style="display: flex; align-items: baseline; gap: 12px; font-size: 27px;">
+        <span>${name}</span>
+        <span class="muted" style="flex: 1; border-bottom: 2px dotted; opacity: 0.45; transform: translateY(-5px);"></span>
+        <span class="line">${maths}</span>
+      </div>`,
+    )
+    .join('')}</div>`;
+}
+
+/** Plate 5: the keys that do the work, and the words the equation is read as. */
+function specimenSpoken(spoken) {
+  const key = (label) =>
+    `<span class="faint-edge" style="display: inline-block; min-width: 46px; padding: 8px 12px; border-radius: 8px; border-bottom-width: 4px; font-size: 19px; font-weight: 600; text-align: center;">${label}</span>`;
+  const row = (keys, label) =>
+    `<div style="display: flex; align-items: center; gap: 8px;">${keys.map(key).join('')}<span style="margin-left: 10px; font-size: 20px;">${label}</span></div>`;
+  return `<div style="width: 100%;">
+    <p class="serif" style="font-size: 25px; line-height: 1.36;">“${spoken}”</p>
+    <hr class="rule" style="margin: 20px 0;">
+    <div style="display: flex; gap: 34px;">${row(['Alt', 'C'], 'Copy')}${row(['Ctrl', '/'], 'Find a symbol')}</div>
+  </div>`;
+}
+
+/**
+ * The promo tiles: the name is the radicand. The marquee adds the line and
+ * the panel; the small tile is the sign and the name alone.
+ */
+function promoHtml({ width, height, panel }) {
+  const t = INK;
+  const small = !panel;
+  const sign = small
+    ? { foot: [84, 196], top: 78, right: 404, scale: 0.62, name: 62, left: 116, nameTop: 104 }
+    : { foot: [150, 408], top: 96, right: 1330, scale: 1, name: 132, left: 232, nameTop: 150 };
+  return `<!doctype html><html><head><meta charset="utf-8"><style>
+    ${BASE_CSS}
+    body { width: ${width}px; height: ${height}px; background: ${t.ground}; color: ${t.text};
+      background-image: linear-gradient(${t.grid} 1px, transparent 1px), linear-gradient(90deg, ${t.grid} 1px, transparent 1px);
+      background-size: 40px 40px; background-position: 9px 15px; }
+    .name { position: absolute; left: ${sign.left}px; top: ${sign.nameTop}px; font-family: 'STIX Two Math', serif;
+      font-size: ${sign.name}px; line-height: 1; letter-spacing: -0.01em; }
+    .tag { position: absolute; left: ${sign.left + 4}px; top: ${sign.nameTop + sign.name + (small ? 12 : 30)}px;
+      font-size: ${small ? 17 : 30}px; color: ${t.muted}; }
+    .panel { position: absolute; left: 920px; top: 150px; width: ${PANEL.width}px; border-radius: 16px 16px 0 0; overflow: hidden;
+      box-shadow: 0 30px 70px rgb(0 0 0 / 0.5), 0 0 0 1px ${t.faint}; }
+    .panel img { display: block; width: 100%; }
+  </style></head><body>
+    ${radicalSvg({ width, height, foot: sign.foot, top: sign.top, right: sign.right, colour: t.line, scale: sign.scale })}
+    <p class="name">Radicand</p>
+    <p class="tag">Maths, beside your work</p>
+    ${panel ? `<div class="panel"><img alt="" src="data:image/png;base64,${panel}"></div>` : ''}
   </body></html>`;
 }
