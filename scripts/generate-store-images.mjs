@@ -48,8 +48,8 @@ const PAPER = { ground: '#dfe6f2', shade: '#f6f8fc', line: '#1f6fdc', text: '#14
   faint: 'rgb(20 35 60 / 0.2)', card: '#ffffff', paper: 'ruled', mark: 'rgb(31 111 220 / 0.13)', panel: 'dark' };
 const SKY = { ground: '#5aabff', shade: '#ffffff', line: '#14233c', accent: '#1f6fdc', text: '#14233c', muted: '#414e66',
   faint: 'rgb(20 35 60 / 0.25)', card: '#eef2f9', paper: 'dots', mark: 'rgb(20 35 60 / 0.1)', panel: 'light' };
-const BLUE = { ground: '#1f6fdc', shade: '#1859c0', line: '#ffffff', accent: '#bfdcff', text: '#ffffff', muted: '#eaf2ff',
-  faint: 'rgb(255 255 255 / 0.45)', card: '#1a5fc4', paper: 'plain', mark: 'transparent', panel: 'light' };
+const GRAPH = { ground: '#f3f5f9', shade: '#ffffff', line: '#1f6fdc', accent: '#1f6fdc', text: '#14233c', muted: '#414e66',
+  faint: 'rgb(20 35 60 / 0.25)', card: '#eef2f9', paper: 'grid', mark: 'rgb(31 111 220 / 0.14)', panel: 'dark' };
 const CONTRAST = { ground: '#000000', shade: '#141414', line: '#ffd60a', text: '#ffffff', muted: '#ffffff',
   faint: 'rgb(255 255 255 / 0.45)', card: '#000000', paper: 'grid', mark: 'rgb(255 214 10 / 0.07)', panel: 'high-contrast' };
 const SHEET = { ground: '#ffffff', text: '#14233c' };
@@ -169,7 +169,7 @@ try {
   await panel.waitForSelector('.library-row__insert', { timeout: 5000 });
   // The confirmation line clears by itself; the picture is of the list.
   await panel.waitForSelector('.actions-bar__status', { state: 'hidden', timeout: 10000 });
-  const library = await shoot({ theme: BLUE });
+  const library = await shoot({ theme: GRAPH });
   // The maths on the notes page is the field's own rendering, taken at
   // twice the size so it stays sharp when the page shows it larger.
   await panel.setViewportSize({ width: PANEL.width * 2, height: PANEL.height * 2 });
@@ -231,7 +231,7 @@ try {
       body: '',
       specimen: specimenContents(),
       panel: library,
-      theme: BLUE,
+      theme: GRAPH,
     },
     {
       file: 'screenshot-5-contrast.png',
