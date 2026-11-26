@@ -163,8 +163,8 @@ Two buttons sit just under the equation, one for each format:
   forums and anywhere else that reads LaTeX.
 
 The line under the buttons confirms what was copied. The first, filled
-button is the main format, and **Alt+C** (**Option+C** on a Mac) copies in
-it from anywhere in the panel. Settings › Copy › *Main copy format* chooses
+button is the main format. **Alt+C** (**Option+C** on a Mac) is the quick
+copy: it copies in that format from anywhere in the panel. Settings › Copy › *Main copy format* chooses
 which of the two that is, and the choice is remembered. *Tidy brackets in
 copied LaTeX*, in the same group, removes the extra braces MathLive
 sometimes writes.
@@ -317,7 +317,7 @@ Panel
 | Open or close the panel | Ctrl+Shift+U |
 | Show or hide the symbols | Ctrl+Shift+Y |
 | Search for a symbol | Ctrl+/ |
-| Copy the equation | Alt+C |
+| Quick copy | Alt+C |
 | Save to library | Alt+S |
 | Open Settings | Alt+, |
 | Return to the equation | Escape |

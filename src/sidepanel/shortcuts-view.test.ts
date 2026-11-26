@@ -17,7 +17,7 @@ describe('keyboard shortcuts reference', () => {
     );
     expect(rows).toEqual(
       expect.arrayContaining([
-        'Copy the equation',
+        'Quick copy',
         'Save to library',
         'Search for a symbol',
         'Find a command',

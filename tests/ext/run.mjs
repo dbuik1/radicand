@@ -91,8 +91,13 @@ try {
   // MathLive focuses its keyboard sink ~60 ms after a click (and after a
   // programmatic focus()), so a keystroke sent straight after the click can
   // land on whatever was focused before. Wait for the field to own focus.
-  const fieldHasFocus = () =>
-    page.waitForFunction(() => document.activeElement?.tagName === 'MATH-FIELD', undefined, { timeout: 5000 });
+  // That delayed focus also takes the keyboard back from a control focused
+  // inside the window, so the window is waited out once the field has focus.
+  const FIELD_FOCUS_SETTLE = 120;
+  const fieldHasFocus = async () => {
+    await page.waitForFunction(() => document.activeElement?.tagName === 'MATH-FIELD', undefined, { timeout: 5000 });
+    await page.waitForTimeout(FIELD_FOCUS_SETTLE);
+  };
   const focusField = async () => {
     await page.locator('math-field').click();
     await fieldHasFocus();
@@ -150,9 +155,15 @@ try {
     await page.locator('math-field').waitFor({ timeout: 15000 });
     await page.waitForFunction(() => document.activeElement?.tagName === 'MATH-FIELD', undefined, {
       timeout: 15000,
-    });
+    });    await page.waitForTimeout(FIELD_FOCUS_SETTLE);
   };
-  const closeView = () => page.locator('.mode:not([hidden]) .mode__close').click();
+  // Closing a view can put focus in the field, which opens the same window.
+  const closeView = async () => {
+    await page.locator('.mode:not([hidden]) .mode__close').click();
+    if (await page.evaluate(() => document.activeElement?.tagName === 'MATH-FIELD')) {
+      await page.waitForTimeout(FIELD_FOCUS_SETTLE);
+    }
+  };
 
   // Write one interface-part flag straight into storage, the way the
   // Ctrl+Shift+Y command's service worker does (the command itself cannot be
@@ -376,6 +387,8 @@ try {
 
     await openTab('drawing');
     await page.keyboard.press('ControlOrMeta+Slash');
+    // The Escape above focused the field, so the same window is open here.
+    await page.waitForTimeout(200);
     const fromMode = await quickState();
     check(
       'Ctrl+/ opens the quick search over another tab',
@@ -1138,6 +1151,31 @@ try {
       await page.waitForTimeout(250);
     }
     check('speech locale maps load from the extension origin', sawLocalMathmaps());
+
+    // Read aloud sends the speech engine's own wording to the synthesiser,
+    // not the field's fallback text (which says "x squared" as "x  squared"
+    // with quoted, capitalised letters).
+    await page.evaluate(() => {
+      window.__spoken = [];
+      speechSynthesis.speak = (utterance) => window.__spoken.push(utterance.text);
+    });
+    const spokenFor = async (latex) => {
+      await page.evaluate((value) => {
+        window.__spoken.length = 0;
+        document.querySelector('math-field').setValue(value);
+      }, latex);
+      await page.locator('.actions-bar > button.btn--secondary').click();
+      await page.waitForFunction(() => window.__spoken.length > 0, null, { timeout: 10000 });
+      const text = await page.evaluate(() => window.__spoken[0]);
+      // The button is a toggle: put it back to rest for the next reading.
+      await page.locator('.actions-bar > button.btn--secondary').click();
+      return text;
+    };
+    const half = await spokenFor('\\frac{1}{2}');
+    check('Read aloud says a simple fraction in ClearSpeak', half === 'one half', half);
+    const quadratic = await spokenFor('x^2+3x');
+    check('Read aloud says a power and a product in ClearSpeak', quadratic === 'x squared plus 3 x', quadratic);
+    await page.evaluate(() => document.querySelector('math-field').setValue(''));
   });
 
   await section('focus survives a Recent insert and a hidden palette', async () => {

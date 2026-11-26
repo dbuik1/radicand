@@ -24,7 +24,7 @@ Open beside the document being written, used in short bursts. The equation is th
 - Light, dark and high-contrast themes; text size is adjustable; every part of the interface can be switched off.
 
 ## Brand Commitments
-The name Radicand, and the icon: a sky-blue radical sign over a white serif R on navy.
+The name Radicand, and the icon: a white radical sign wrapping a white field with a navy R, on a brand-blue tile.
 
 ## Evidence on Hand
 Review of 2026-11-26 (link in AGENTS.md). Layout B1 approved by the owner: the equation field, then Copy LaTeX, Copy MathML and Read aloud, then four tabs (Symbols, Draw, Library, Shortcuts). The main copy format is the large button and Alt+C, set in Settings. Canvas under design/panel/layout/.
@@ -36,4 +36,4 @@ Review of 2026-11-26 (link in AGENTS.md). Layout B1 approved by the owner: the e
 - Nothing the user typed is lost by closing the panel.
 
 ## Accessibility & Inclusion
-Targets of at least 44 px in the redesign, visible focus on every control, no information by colour alone, reduced motion respected, speech in ClearSpeak or MathSpeak.
+Targets of at least 44 px in the redesign, visible focus on every control, no information by colour alone, reduced motion respected, speech in the ClearSpeak or MathSpeak speech style.
