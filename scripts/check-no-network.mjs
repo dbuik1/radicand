@@ -127,6 +127,7 @@ console.log('✓ no-network check passed: only justified, inert external referen
     'Arno Gourdol',
     'Khan Academy',
     'STIX Fonts Project',
+    'Inter Project Authors',
     'SIL OPEN FONT LICENSE',
     'Apache License',
     'Luca Ongaro',

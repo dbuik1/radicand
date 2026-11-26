@@ -237,7 +237,6 @@ const FIELD_REFOCUS_GRACE_MS = 150;
 export interface SearchComboboxOptions {
   /** Id prefix (`<prefix>-input`, `<prefix>-listbox`) and class set. */
   prefix: keyof typeof COMBOBOX_CLASSES;
-  placeholder: string;
   /**
    * Where focus goes after Enter inserts: 'stay' keeps it in the box so the
    * next search costs nothing; 'field' hands it to the equation field.
@@ -257,13 +256,13 @@ export interface SearchComboboxOptions {
  */
 function createSearchCombobox(
   editor: EditorController,
-  { prefix, placeholder, afterEnter, onListToggle, onInserted }: SearchComboboxOptions,
+  { prefix, afterEnter, onListToggle, onInserted }: SearchComboboxOptions,
 ): SearchCombobox {
   const classes = COMBOBOX_CLASSES[prefix];
   const label = document.createElement('label');
-  label.className = 'visually-hidden';
+  label.className = 'field__label';
   label.htmlFor = `${prefix}-input`;
-  label.textContent = 'Search symbols';
+  label.textContent = 'Find a symbol';
 
   const input = document.createElement('input');
   input.type = 'text';
@@ -275,7 +274,6 @@ function createSearchCombobox(
   input.setAttribute('aria-autocomplete', 'list');
   input.autocomplete = 'off';
   input.spellcheck = false;
-  input.placeholder = placeholder;
 
   // A visible "N results" caption above the list (the live announcement
   // below says the same for screen readers, so this one stays quiet).
@@ -292,7 +290,7 @@ function createSearchCombobox(
 
   const empty = document.createElement('p');
   empty.className = classes.empty;
-  empty.textContent = 'No matching symbols – try another word, or open Drawing to sketch it';
+  empty.textContent = 'No matching symbols';
   empty.hidden = true;
 
   let results: SymbolEntry[] = [];
@@ -471,28 +469,23 @@ function createSearchCombobox(
 }
 
 export interface SymbolSearchOptions {
-  /** Controls placed on the search row, after the input (the Insert… controls). */
-  trailing?: HTMLElement[];
   /** Called when the results list opens or closes, so the caller can make room. */
   onListToggle?: (open: boolean) => void;
 }
 
 /**
  * The Symbols search box, above the category chips: for browsing, so Enter
- * inserts and keeps focus here for the next search. The label is visually
- * hidden (the row is the design's "Search symbols" box) and repeated as the
- * placeholder, so the field is named for everyone.
+ * inserts and keeps focus here for the next search.
  */
 export function createSymbolSearch(
   editor: EditorController,
-  { trailing = [], onListToggle }: SymbolSearchOptions = {},
+  { onListToggle }: SymbolSearchOptions = {},
 ): HTMLElement {
   const root = document.createElement('div');
   root.className = 'symbol-search';
 
   const search = createSearchCombobox(editor, {
     prefix: 'symbol-search',
-    placeholder: 'Search symbols',
     afterEnter: 'stay',
     ...(onListToggle ? { onListToggle } : {}),
   });
@@ -534,24 +527,15 @@ export function createSymbolSearch(
 
   // The search box is one of the pieces of interface a user can switch off
   // (Settings › Interface), so a box that has just left the screen must not
-  // leave its results list showing under it. The row itself goes once the box
-  // and every control sharing it are off, rather than holding a blank band
-  // above the categories; the trailing controls answer to their own flag, so
-  // this reads their state rather than deciding it.
+  // leave its results list showing under it. The row goes with the box,
+  // rather than holding a blank band above the categories.
   bindPart('symbolSearch', input);
   bindToSettings((settings) => {
     if (!settings.parts.symbolSearch) close();
-    root.hidden = !settings.parts.symbolSearch && trailing.every((control) => control.hidden);
+    root.hidden = !settings.parts.symbolSearch;
   });
 
   root.append(search.label, input);
-  for (const control of trailing) {
-    // The trailing controls live inside this root, so the focusout guard
-    // above never fires for them – close the results list explicitly, or
-    // stale results would sit between the row and whatever they open.
-    control.addEventListener('click', () => close());
-    root.append(control);
-  }
   root.append(search.count, search.listbox, search.empty);
   return root;
 }
@@ -581,17 +565,11 @@ export function createQuickSearch(editor: EditorController): QuickSearch {
 
   const search = createSearchCombobox(editor, {
     prefix: 'quick-search',
-    placeholder: 'Search symbols by name',
     afterEnter: 'field',
     onInserted: () => close(false),
   });
   const { input } = search;
   input.setAttribute('aria-keyshortcuts', SEARCH_SHORTCUT_KEYS);
-
-  const hint = document.createElement('p');
-  hint.className = 'quick-search__hint';
-  hint.textContent = 'Enter inserts · Esc closes';
-  hint.setAttribute('aria-hidden', 'true');
 
   function close(toField: boolean): void {
     if (root.hidden) return;
@@ -614,7 +592,7 @@ export function createQuickSearch(editor: EditorController): QuickSearch {
     close(false);
   });
 
-  root.append(search.label, input, hint, search.count, search.listbox, search.empty);
+  root.append(search.label, input, search.count, search.listbox, search.empty);
 
   return {
     root,

@@ -19,7 +19,7 @@ export interface SlashHintHooks {
   openSettings: (from: HTMLElement) => void;
 }
 
-const HINT_TEXT = `Typing / built a fraction. ${SEARCH_SHORTCUT_LABEL} searches for a symbol instead. You can turn the fraction off in Settings.`;
+const HINT_TEXT = `Typing / built a fraction. ${SEARCH_SHORTCUT_LABEL} searches for a symbol.`;
 
 /**
  * Attached in the bubble phase on the field's host element: MathLive's own

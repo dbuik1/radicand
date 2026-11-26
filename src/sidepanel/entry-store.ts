@@ -1,5 +1,5 @@
 /**
- * The persisted-entry store behind My library and Custom shortcuts: one
+ * The persisted-entry store behind the Library and Shortcuts tabs: one
  * record under one `chrome.storage.local` key, the in-memory array as the
  * read source, synchronous listener notification, debounced writes with a
  * pagehide flush, and `chrome.storage.onChanged` propagation so a second

@@ -1,19 +1,18 @@
 /**
  * Side-panel entry point.
  *
- * Loads settings and mounts every part of the panel in three zones: the
- * equation header (label, Style ▾, More ▾) and field at the top, with the
- * actions bar (Copy, Speak, Save to library) directly under the field; then
- * the scrolling workspace (one mode at a time – Symbols by default – then
- * the collapsed Equation source disclosure).
+ * Loads settings and mounts every part of the panel, top to bottom: the
+ * header (the Equation heading and Settings), the field, the actions bar
+ * (the two Copy buttons and Read aloud), a skip link past the tabs, then the
+ * scrolling body: the tabbed workspace, the collapsed source disclosure and
+ * a link back to the field.
  */
 import { announce } from './a11y';
 import { createActionsBar } from './actions-bar';
 import { createEditor } from './editor';
 import { installDraft } from './draft';
 import { installAutoFit } from './editor/auto-fit';
-import { createEditorHeader } from './editor-header';
-import { installSettingsShortcut } from './more-menu';
+import { createEditorHeader, installSettingsShortcut } from './editor-header';
 import { installCopyShortcut } from './output';
 import { rememberWindowBoundsIfPopout } from './presentation';
 import { bindPart, installPartAnnouncements } from './part-visibility';
@@ -66,7 +65,7 @@ async function boot(): Promise<void> {
   // resolves) and subscribes via onSettingsChange, so they pick up the
   // persisted values the moment the round trip completes.
   void loadSettings();
-  // Same shape for the expression library: My library and the search read
+  // Same shape for the expression library: the Library tab and the search read
   // the in-memory entries synchronously and follow onLibraryChange.
   void loadLibrary();
   void loadShortcuts();
@@ -74,10 +73,8 @@ async function boot(): Promise<void> {
 
   mount.replaceChildren();
 
-  // Zone A: the "Equation" section heading, created first so the field can
-  // be labelled by it (it doubles as the field's accessible name), sharing
-  // its row with the Style ▾ and More ▾ menus. The row exists for the heading
-  // anyway, so the menus cost no vertical space and never push the field down.
+  // The "Equation" heading is created first so the field can be labelled
+  // by it (it doubles as the field's accessible name).
   const header = createEditorHeader();
 
   const fieldWrap = document.createElement('div');
@@ -98,41 +95,60 @@ async function boot(): Promise<void> {
   installAutoFit(editor); // shrink-to-fit (never enlarge) large equations
   installStaticMathStyles(); // lays out the rendered previews outside the field
 
-  // The menus are built after the field so they can read its selection,
-  // but sit before it in the DOM: the Tab walk is Style ▾, More ▾, the
-  // field, the actions toolbar, then the workspace. More ▾ opens workspace
-  // modes, so it looks the workspace up at activation time.
   let workspace: Workspace | undefined;
-  // Ctrl+/ (Cmd+/ on a Mac), the More ▾ menu's Search symbols item and
-  // Drawing's Search instead all open the quick search under the field.
+  // Ctrl+/ (Cmd+/ on a Mac) and Draw's Search instead both open the quick
+  // search under the field.
   let quickSearch: QuickSearch | undefined;
   const openQuickSearch = (): void => quickSearch?.open();
-  header.mountMenus(editor, () => workspace, {
-    searchSymbols: openQuickSearch,
-  });
+  header.settings.addEventListener('click', () => workspace?.open('settings', header.settings));
 
-  // Zone C: the scrolling workspace – one mode at a time, Symbols by
-  // default (insertion is the most frequent action, so it earns adjacency
-  // to the field) – then a hairline and the collapsed Equation source
-  // disclosure. The field and the workspace are built synchronously, in
-  // the first paint; the field is focused as soon as it is in place so the
-  // user can start typing.
+  // The scrolling body: the tabbed workspace (Symbols first, since
+  // insertion is the most frequent action), then a hairline and the
+  // collapsed source disclosure. The field and the workspace are built
+  // synchronously, in the first paint; the field is focused as soon as it
+  // is in place so the user can start typing.
   const body = document.createElement('div');
   body.className = 'panel-body';
   mount.appendChild(body);
   workspace = createWorkspace(editor, { onSearch: openQuickSearch });
   body.appendChild(workspace.root);
-  // The hairline belongs to the Equation source below it: with the source
+  // The hairline belongs to the source disclosure below it: with the source
   // switched off there is nothing under the line to separate.
   const divider = document.createElement('hr');
   divider.className = 'divider';
   bindPart('source', divider);
   body.appendChild(divider);
 
-  // Zone B: the actions bar, directly under the field and outside the
-  // scrolling workspace, so Copy, Speak and Save to library sit next to the
-  // equation they act on and stay on screen whatever the workspace shows.
-  mount.insertBefore(createActionsBar(editor, workspace.capture.button), body);
+  // "Back to equation" is the last stop in the panel, so a keyboard user
+  // who has walked the tabs returns to the field in one press.
+  const back = document.createElement('a');
+  back.id = 'back-to-equation';
+  back.className = 'skip-link skip-link--back';
+  back.href = '#equation-editor';
+  back.textContent = 'Back to equation';
+  back.addEventListener('click', (event) => {
+    event.preventDefault();
+    editor.focus();
+  });
+  body.appendChild(back);
+
+  // The actions bar sits directly under the field and outside the scrolling
+  // body, so Copy and Read aloud stay beside the equation they act on.
+  // "Skip symbols" follows it: the next stop would be the tabs, and a user
+  // who only wants the source can pass them in one press.
+  const skip = document.createElement('a');
+  skip.id = 'skip-symbols';
+  skip.className = 'skip-link';
+  skip.href = '#source-input';
+  skip.textContent = 'Skip symbols';
+  skip.addEventListener('click', (event) => {
+    event.preventDefault();
+    const summary = document.querySelector<HTMLElement>('details.source > summary');
+    if (summary && summary.checkVisibility()) summary.focus();
+    else back.focus();
+  });
+  mount.insertBefore(createActionsBar(editor), body);
+  mount.insertBefore(skip, body);
 
   // Whatever the user switches off in Settings is announced from here, once
   // per change however it arrived, and focus is rescued into the field if it
@@ -144,8 +160,7 @@ async function boot(): Promise<void> {
   installCopyShortcut(editor);
   // And Alt+S to save the equation (or selection) to the library.
   installLibrarySaveShortcut(() => workspace?.capture.open());
-  // And Alt+, to Settings, which is the route that stays open when the
-  // More ▾ menu is one of the pieces switched off.
+  // And Alt+, to Settings.
   installSettingsShortcut(() => workspace?.open('settings'));
   // And Ctrl+/ (Cmd+/ on a Mac) to the quick search, which sits under the
   // field beside the `\` finder.
@@ -172,7 +187,7 @@ async function boot(): Promise<void> {
   // persisted preference reopens it). Built a frame later so first paint
   // and focus are never gated behind its construction.
   requestAnimationFrame(() => {
-    body.appendChild(createSourceView(editor)); // optional source/preview
+    body.insertBefore(createSourceView(editor), back); // optional source/preview
   });
 
   // Warm SRE up when the browser is idle, well clear of first paint and the

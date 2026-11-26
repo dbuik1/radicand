@@ -1,5 +1,5 @@
 /**
- * "Save to library": the capture affordance in the actions bar,
+ * "Save to library": the capture affordance in the Library tab,
  * plus the panel-wide Alt+S shortcut (installed like Alt+C in output.ts).
  * Captures the selection when there is one – saving a sub-expression is
  * how a library of parts gets built – otherwise the whole equation, and

@@ -1,5 +1,5 @@
 /**
- * Custom shortcuts model and persistence: the user's own `\`-triggers, each
+ * The user's shortcuts and their persistence: `\`-triggers, each
  * mapping a letters-only trigger to a LaTeX fragment, confirmed in the
  * field with space, Tab or Enter exactly like a library trigger. Unlike a
  * library entry a shortcut *is* its trigger – it has no name to be found

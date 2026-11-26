@@ -39,7 +39,7 @@ allows us to control, and what we recommend for this editor.
 
 Because the side panel can't be widened programmatically, the practical way to
 give users "more space / their preferred form" is to let them **pop the editor
-out**. The More ▾ menu has **Open in a new window** and **Open in a new tab**:
+out**. Settings › Window has **Open in window** and **Open in tab**:
 
 - **Side panel** – the default, and where the editor already is when those two
   items are chosen.
@@ -78,7 +78,7 @@ is only allowed in response to a user gesture; a keyboard command is one.
 
 ## Possible future enhancements
 
-1. **A "pop out" affordance in the panel header** (not just in the More ▾
-   menu) for one-click switching.
+1. **A "pop out" affordance in the panel header** (not just in Settings)
+   for one-click switching.
 
 All of these layer straightforwardly on top of `presentation.ts`.

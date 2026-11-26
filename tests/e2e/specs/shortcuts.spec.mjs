@@ -1,7 +1,7 @@
 import { latex, settled, assertEqual, assertMatch, fieldTakesKeys } from '../helpers.mjs';
 
 /**
- * Custom shortcuts in the autocomplete. A shortcut is a `\`-trigger that
+ * The user's shortcuts in the autocomplete. A shortcut is a `\`-trigger that
  * belongs to no library formula – the same confirm-to-fire lane as library
  * triggers (space, Tab or Enter; never auto-accepted), reached through the
  * composed trigger registry the panel binds. These specs pin the shortcut

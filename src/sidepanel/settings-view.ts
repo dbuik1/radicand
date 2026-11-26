@@ -7,13 +7,12 @@
  * keyboard shortcut reference is shortcuts-view.ts's – Settings holds
  * preferences only.
  *
- * The form is chunked into labelled fieldsets – Interface / Appearance /
- * Editing / Speech – with labels above full-width controls, the one position that
- * never truncates at 320px. Every control is a native form element with an
+ * The form is chunked into labelled fieldsets (Copy, Appearance, Typing,
+ * Speech, Window, Interface) with labels above full-width controls, the one
+ * position that never truncates at 320px. Every control is a native form element with an
  * associated `<label>`, so it is keyboard-operable and correctly named for
  * assistive tech (WCAG 4.1.2). The form is the body of the workspace's
- * Settings mode (More ▾ › Settings); the starter-pack toggle lives with the
- * other library tools.
+ * Settings mode; the starter-pack toggle lives with the other library tools.
  */
 import type { InterfacePartSpec } from './interface-parts';
 import { INTERFACE_PARTS } from './interface-parts';
@@ -22,6 +21,7 @@ import type { Settings, Surface, Theme, SpeechRuleSet, SpeechVerbosity } from '.
 import { getSettings, updateSettings, onSettingsChange } from './settings';
 import { configureSpeech } from './speech';
 import { announce } from './a11y';
+import { openInTab, openInWindow } from './presentation';
 
 /**
  * Discrete font-size multipliers offered to the user. The multiplier maps the
@@ -218,7 +218,6 @@ function buildPartField(spec: InterfacePartSpec, shown: boolean): HTMLElement {
   input.id = id;
   input.className = 'field__checkbox';
   input.checked = shown;
-  input.setAttribute('aria-describedby', hintId);
   input.addEventListener('change', () => {
     void setPart(spec.part, input.checked);
   });
@@ -229,14 +228,18 @@ function buildPartField(spec: InterfacePartSpec, shown: boolean): HTMLElement {
   label.className = 'field__label field__label--checkbox';
   label.textContent = spec.label;
 
-  const hint = document.createElement('span');
-  hint.id = hintId;
-  hint.className = 'field__hint';
-  hint.textContent = spec.hint;
+  labelWrap.append(label);
+  if (spec.hint) {
+    const hint = document.createElement('span');
+    hint.id = hintId;
+    hint.className = 'field__hint';
+    hint.textContent = spec.hint;
+    input.setAttribute('aria-describedby', hintId);
+    labelWrap.append(hint);
+  }
 
   const row = document.createElement('div');
   row.className = 'field__row';
-  labelWrap.append(label, hint);
   row.append(input, labelWrap);
   wrap.append(row);
   return wrap;
@@ -269,6 +272,38 @@ function buildInterfaceGroup(settings: Settings): HTMLElement {
   actions.className = 'field';
   actions.appendChild(restore);
 
+  return group(
+    'Interface',
+    ...INTERFACE_PARTS.map((spec) => buildPartField(spec, settings.parts[spec.part])),
+    actions,
+  );
+}
+
+/**
+ * The Window group: move the editor to a surface that can be resized (the
+ * docked panel cannot be widened), and choose which surface the toolbar icon
+ * opens.
+ */
+function buildWindowGroup(settings: Settings): HTMLElement {
+  const openButton = (id: string, text: string, said: string, run: () => void): HTMLElement => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.id = id;
+    button.className = 'btn btn--secondary';
+    button.textContent = text;
+    button.addEventListener('click', () => {
+      announce(said);
+      run();
+    });
+    return button;
+  };
+  const actions = document.createElement('div');
+  actions.className = 'field field--buttons';
+  actions.append(
+    openButton('set-open-window', 'Open in window', 'Opening the editor in a new window', openInWindow),
+    openButton('set-open-tab', 'Open in tab', 'Opening the editor in a new tab', openInTab),
+  );
+
   const surfaceNames: Record<Surface, string> = {
     panel: 'the side panel',
     window: 'a new window',
@@ -287,15 +322,54 @@ function buildInterfaceGroup(settings: Settings): HTMLElement {
       void updateSettings({ defaultSurface });
       announce(`The toolbar icon will open ${surfaceNames[defaultSurface]}`);
     },
-    'Applies next time you click the toolbar icon or use its keyboard shortcut',
   );
 
-  return group(
-    'Interface',
-    ...INTERFACE_PARTS.map((spec) => buildPartField(spec, settings.parts[spec.part])),
-    surface,
-    actions,
-  );
+  return group('Window', actions, surface);
+}
+
+/**
+ * The Copy group: which format the main Copy button and its shortcut use.
+ * Radios, because there are two options and both should be on screen.
+ */
+function buildCopyGroup(settings: Settings): HTMLElement {
+  const wrap = document.createElement('div');
+  wrap.className = 'field field--radios';
+  wrap.setAttribute('role', 'radiogroup');
+  wrap.setAttribute('aria-labelledby', 'set-copy-format-label');
+
+  const label = document.createElement('span');
+  label.id = 'set-copy-format-label';
+  label.className = 'field__label';
+  label.textContent = 'Main copy format';
+  wrap.appendChild(label);
+
+  for (const [value, text] of [
+    ['latex', 'LaTeX'],
+    ['mathml', 'MathML'],
+  ] as const) {
+    const id = `set-copy-format-${value}`;
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = 'set-copy-format';
+    input.id = id;
+    input.value = value;
+    input.className = 'field__checkbox';
+    input.checked = settings.copyFormat === value;
+    input.addEventListener('change', () => {
+      if (!input.checked) return;
+      void updateSettings({ copyFormat: value });
+      announce(`Main copy format set to ${text}`);
+    });
+    const optionLabel = document.createElement('label');
+    optionLabel.htmlFor = id;
+    optionLabel.className = 'field__label field__label--checkbox';
+    optionLabel.textContent = text;
+    const row = document.createElement('div');
+    row.className = 'field__row';
+    row.append(input, optionLabel);
+    wrap.appendChild(row);
+  }
+  return group('Copy', wrap, buildTidyBracketsField(settings.tidyBrackets));
 }
 
 /** Render the settings form (the body of the Settings mode). */
@@ -305,8 +379,7 @@ export function createSettingsView(): HTMLElement {
   const form = document.createElement('div');
   form.className = 'settings__form';
 
-  // --- Interface ---
-  form.appendChild(buildInterfaceGroup(settings));
+  form.appendChild(buildCopyGroup(settings));
 
   // --- Appearance ---
   const currentScale =
@@ -348,11 +421,10 @@ export function createSettingsView(): HTMLElement {
   // --- Editing ---
   form.appendChild(
     group(
-      'Editing',
-      buildCommandDelayField(settings.commandDelay),
+      'Typing',
       buildSlashFractionField(settings.slashFraction),
       buildAutoFitField(settings.autoFit),
-      buildTidyBracketsField(settings.tidyBrackets),
+      buildCommandDelayField(settings.commandDelay),
     ),
   );
 
@@ -394,8 +466,9 @@ export function createSettingsView(): HTMLElement {
     ),
   );
 
-  // Display and copy formats are chosen inline (the "Show as" and "Copy as"
-  // selects), so they are not duplicated here.
+  form.appendChild(buildWindowGroup(settings));
+  // Last, because most users never need it: which pieces the panel shows.
+  form.appendChild(buildInterfaceGroup(settings));
 
   // Keep the form's controls in sync if settings change elsewhere (e.g. a
   // second editor window, arriving via chrome.storage.onChanged).
@@ -442,8 +515,7 @@ function buildCommandDelayField(value: number): HTMLElement {
   const hint = document.createElement('span');
   hint.id = 'set-command-delay-hint';
   hint.className = 'field__hint';
-  hint.textContent =
-    'How long to wait after a typed \\command before its placeholders fill in';
+  hint.textContent = 'The wait before a typed \\command fills in';
 
   wrap.append(label, row, hint);
   return wrap;
@@ -469,7 +541,6 @@ function buildSlashFractionField(value: boolean): HTMLElement {
   input.id = 'set-slash-fraction';
   input.className = 'field__checkbox';
   input.checked = value;
-  input.setAttribute('aria-describedby', 'set-slash-fraction-hint');
   input.addEventListener('change', () => {
     void updateSettings({ slashFraction: input.checked });
     announce(input.checked ? 'Slash inserts a fraction' : 'Slash types a plain slash');
@@ -483,13 +554,7 @@ function buildSlashFractionField(value: boolean): HTMLElement {
   label.className = 'field__label field__label--checkbox';
   label.textContent = 'Typing / inserts a fraction';
 
-  const hint = document.createElement('span');
-  hint.id = 'set-slash-fraction-hint';
-  hint.className = 'field__hint';
-  hint.textContent =
-    'When off, / types a plain slash';
-
-  labelWrap.append(label, hint);
+  labelWrap.append(label);
   row.append(input, labelWrap);
   wrap.append(row);
   return wrap;
@@ -513,7 +578,6 @@ function buildAutoFitField(value: boolean): HTMLElement {
   input.id = 'set-auto-fit';
   input.className = 'field__checkbox';
   input.checked = value;
-  input.setAttribute('aria-describedby', 'set-auto-fit-hint');
   input.addEventListener('change', () => {
     void updateSettings({ autoFit: input.checked });
     announce(input.checked ? 'Large equations will shrink to fit' : 'Large equations will no longer shrink to fit');
@@ -523,14 +587,9 @@ function buildAutoFitField(value: boolean): HTMLElement {
   const label = document.createElement('label');
   label.htmlFor = 'set-auto-fit';
   label.className = 'field__label field__label--checkbox';
-  label.textContent = 'Automatically shrink large equations to fit';
+  label.textContent = 'Shrink large equations to fit';
 
-  const hint = document.createElement('span');
-  hint.id = 'set-auto-fit-hint';
-  hint.className = 'field__hint';
-  hint.textContent = 'Shrinks to the panel width, never enlarges';
-
-  labelWrap.append(label, hint);
+  labelWrap.append(label);
   row.append(input, labelWrap);
   wrap.append(row);
   return wrap;
@@ -572,8 +631,7 @@ function buildTidyBracketsField(value: boolean): HTMLElement {
   const hint = document.createElement('span');
   hint.id = 'set-tidy-brackets-hint';
   hint.className = 'field__hint';
-  hint.textContent =
-    'Plain brackets replace \\left( … \\right) when copying, except around tall content';
+  hint.textContent = 'Plain brackets replace \\left( \\right) around short content';
 
   labelWrap.append(label, hint);
   row.append(input, labelWrap);
@@ -601,6 +659,10 @@ function syncControls(root: HTMLElement, settings: Settings): void {
   set('set-command-delay', String(settings.commandDelay));
   set('set-ruleset', settings.speechRuleSet);
   set('set-verbosity', settings.speechVerbosity);
+
+  for (const radio of root.querySelectorAll<HTMLInputElement>('input[name="set-copy-format"]')) {
+    radio.checked = radio.value === settings.copyFormat;
+  }
 
   // Sync checkbox controls (which use `.checked`, not `.value`)
   const slash = root.querySelector<HTMLInputElement>('#set-slash-fraction');

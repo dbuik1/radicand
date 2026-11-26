@@ -172,7 +172,20 @@ export function createEditor(host: HTMLElement, options: EditorOptions = {}): Ed
   // render the maths at the small inherited UI size.
   mf.classList.add('math-field');
 
-  host.appendChild(mf);
+  // The frame draws the radical sign around the field (styles.css). It is
+  // attached before the field goes in: some MathLive APIs throw on an
+  // element that is not yet in the document.
+  const frame = document.createElement('div');
+  frame.className = 'radical';
+  host.appendChild(frame);
+  frame.appendChild(mf);
+  // The frame is taller than a one-line equation; a press on the space
+  // above or below the field belongs to the field.
+  frame.addEventListener('pointerdown', (event) => {
+    if (event.target !== frame) return;
+    event.preventDefault();
+    mf.focus();
+  });
 
   // MathLive's internal keyboard sink (its hidden key-capture surface) ships
   // without an accessible name, which fails axe's aria-input-field-name.

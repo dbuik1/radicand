@@ -2,15 +2,16 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createActionsBar } from './actions-bar';
 import { createEditorHeader } from './editor-header';
-import { createPalette } from './palette';
 import { createSourceView } from './source';
+import { createWorkspace } from './workspace';
+import type { Workspace } from './workspace';
 import { INTERFACE_PARTS } from './interface-parts';
 import { setPart, showEveryPart } from './part-visibility';
 import type { EditorController } from './editor';
 import type { InterfacePart } from '../types';
 
 function stubEditor(): EditorController {
-  // Enough of a mathfield for the Style ▾ menu to read a state from.
+  // Enough of a mathfield for the text style keys to read a state from.
   const element = Object.assign(document.createElement('div'), {
     applyStyle: () => {},
     queryStyle: () => 'none',
@@ -46,18 +47,24 @@ const query = (selector: string): HTMLElement | null =>
  * element is built. A part with no row here has no owner, and the last test
  * in this file says so.
  */
+let workspace: Workspace;
+
 const OWNED: { part: InterfacePart; find: () => HTMLElement | null }[] = [
   { part: 'equationHeading', find: () => query('#editor-label') },
-  { part: 'styleMenu', find: () => query('#style-trigger') },
-  { part: 'moreMenu', find: () => query('#more-trigger') },
   { part: 'symbols', find: () => query('#symbols-content') },
   { part: 'symbolSearch', find: () => query('#symbol-search-input') },
   { part: 'symbolCategories', find: () => query('.palette__tabs') },
-  { part: 'symbolSources', find: () => query('.from-buttons') },
   { part: 'source', find: () => query('details.source') },
   { part: 'copy', find: () => query('.actions-bar__status') },
-  { part: 'speak', find: () => query('.actions-bar button.btn--secondary') },
-  { part: 'saveToLibrary', find: () => query('#save-to-library') },
+  { part: 'speak', find: () => query('.actions-bar > button.btn--secondary') },
+  {
+    part: 'saveToLibrary',
+    find: () => {
+      workspace.open('library', undefined, false);
+      const button = query('.library-save');
+      return button;
+    },
+  },
 ];
 
 describe('every piece of interface has an owner that switches it off', () => {
@@ -66,17 +73,12 @@ describe('every piece of interface has an owner that switches it off', () => {
     document.body.innerHTML = '<div id="sr-status"></div>';
     const editor = stubEditor();
 
-    const header = createEditorHeader();
-    header.mountMenus(editor, () => undefined, { searchSymbols: () => {} });
-    document.body.appendChild(header.root);
-    document.body.appendChild(createPalette(editor).root);
+    document.body.appendChild(createEditorHeader().root);
+    document.body.appendChild(createActionsBar(editor));
+    // The Library tab is built on first use; Save to library lives in it.
+    workspace = createWorkspace(editor, { onSearch: () => {} });
+    document.body.appendChild(workspace.root);
     document.body.appendChild(createSourceView(editor));
-
-    const save = document.createElement('button');
-    save.type = 'button';
-    save.id = 'save-to-library';
-    save.textContent = 'Save to library';
-    document.body.appendChild(createActionsBar(editor, save));
   });
 
   afterEach(async () => {
@@ -85,11 +87,13 @@ describe('every piece of interface has an owner that switches it off', () => {
 
   it('starts with everything on screen', () => {
     for (const { part, find } of OWNED) {
+      workspace.showSymbols();
       expect(gone(find()), part).toBe(false);
     }
   });
 
   it.each(OWNED)('takes $part off screen and brings it back', async ({ part, find }) => {
+    workspace.showSymbols();
     await setPart(part, false);
     expect(gone(find())).toBe(true);
     await setPart(part, true);
@@ -113,28 +117,15 @@ describe('every piece of interface has an owner that switches it off', () => {
   it('collapses the palette once everything inside it is off', async () => {
     const palette = () => query('#symbols');
     await setPart('symbolSearch', false);
-    await setPart('symbolSources', false);
     expect(palette()?.hidden).toBe(false);
     await setPart('symbolCategories', false);
     expect(palette()?.hidden).toBe(true);
   });
 
-  it('collapses the search row once the box and the From controls are both off', async () => {
-    await setPart('symbolSearch', false);
-    expect(query('.symbol-search')?.hidden).toBe(false);
-    await setPart('symbolSources', false);
-    expect(query('.symbol-search')?.hidden).toBe(true);
-  });
-
-  it('collapses the header row and the actions bar once each is empty', async () => {
-    await setPart('equationHeading', false);
-    await setPart('styleMenu', false);
-    await setPart('moreMenu', false);
-    expect(query('.editor-header')?.classList.contains('editor-header--empty')).toBe(true);
-
+  it('hides the actions bar once copy and read aloud are both off', async () => {
     await setPart('copy', false);
+    expect(query('.actions-bar')?.hidden).toBe(false);
     await setPart('speak', false);
-    await setPart('saveToLibrary', false);
     expect(query('.actions-bar')?.hidden).toBe(true);
   });
 });

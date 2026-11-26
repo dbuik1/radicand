@@ -1,18 +1,16 @@
 /**
- * Output: format conversion + clipboard, plus the accessible split "Copy" button.
+ * Output: format conversion and the clipboard, plus the two Copy buttons.
  *
- * The user picks a format (remembered as a setting) and copies on a single
- * affordance. Clipboard writes use the async Clipboard API and provide the
- * richest representation appropriate to the format so paste targets get the
- * best version.
+ * Each button copies one format; the main format is a setting. Clipboard
+ * writes use the async Clipboard API and provide the richest representation
+ * appropriate to the format so paste targets get the best version.
  */
 import type { OutputFormat } from '../types';
 import type { EditorController } from './editor';
-import { announce, report, setResultDisplay } from './a11y';
+import { report, setResultDisplay } from './a11y';
 import { stripRedundantFences } from './latex-clean';
-import { getSettings, updateSettings, onSettingsChange } from './settings';
-import { createMenu } from './menu';
-import { COPY_SHORTCUT_LABEL } from './shortcut-labels';
+import { getSettings, onSettingsChange } from './settings';
+import { COPY_SHORTCUT_KEYS, COPY_SHORTCUT_LABEL } from './shortcut-labels';
 
 interface FormatMeta {
   readonly id: OutputFormat;
@@ -128,52 +126,47 @@ export function createFormatSelect(options: {
   return wrap;
 }
 
+/** The other format: the one the secondary Copy button offers. */
+function otherFormat(format: OutputFormat): OutputFormat {
+  return format === 'latex' ? 'mathml' : 'latex';
+}
+
 /**
- * The split Copy button for the actions bar: a primary "Copy" half that
- * copies in the current format, and a narrow "▾" half that opens a
- * `menuitemradio` menu to change the format (remembered as a setting). The
- * menu opens upward – the bar is pinned to the bottom of the panel – and its
- * trigger's name always states the current format, so a screen-reader user
- * hears "Copy as MathML – change format" before deciding to open it.
+ * The two Copy buttons for the actions bar, one per format, each named for
+ * what it copies. The first is the main format (set in Settings): it is the
+ * primary action and the one Alt+C uses. Both formats are one press away, so
+ * nobody has to change a setting to get the other.
  */
 export function createCopyControls(editor: EditorController): HTMLElement {
   const group = document.createElement('div');
-  group.className = 'copy-split';
+  group.className = 'copy-pair';
   group.setAttribute('role', 'group');
   group.setAttribute('aria-label', 'Copy equation');
 
-  const copyBtn = document.createElement('button');
-  copyBtn.type = 'button';
-  copyBtn.className = 'btn btn--primary copy-split__main output__copy';
-  copyBtn.id = 'copy-button';
-  copyBtn.textContent = 'Copy';
-  copyBtn.addEventListener('click', () => void copyEquation(editor, copyBtn));
+  const mainBtn = document.createElement('button');
+  mainBtn.type = 'button';
+  mainBtn.className = 'btn btn--primary copy-pair__main output__copy';
+  mainBtn.id = 'copy-button';
+  mainBtn.setAttribute('aria-keyshortcuts', COPY_SHORTCUT_KEYS);
+  mainBtn.addEventListener('click', () => void copyEquation(editor, mainBtn));
 
-  const formatMenu = createMenu({
-    id: 'copy-format',
-    label: '',
-    triggerClass: 'btn btn--primary copy-split__more',
-    align: 'end',
-    entries: FORMATS.map((meta) => ({
-      kind: 'radio' as const,
-      label: meta.label,
-      checked: () => getSettings().copyFormat === meta.id,
-      onSelect: () => {
-        void updateSettings({ copyFormat: meta.id });
-        announce(`Copy format set to ${meta.announceName}`);
-      },
-    })),
-  });
+  const otherBtn = document.createElement('button');
+  otherBtn.type = 'button';
+  otherBtn.className = 'btn btn--secondary copy-pair__other';
+  otherBtn.id = 'copy-other-button';
+  otherBtn.addEventListener(
+    'click',
+    () => void copyEquation(editor, otherBtn, otherFormat(getSettings().copyFormat)),
+  );
 
   const describe = (format: OutputFormat): void => {
-    const name = FORMATS.find((f) => f.id === format)?.label ?? format;
-    formatMenu.trigger.setAttribute('aria-label', `Copy as ${name} – change format`);
-    formatMenu.trigger.title = `Copy as ${name} – change format`;
+    mainBtn.textContent = `Copy ${formatName(format)}`;
+    otherBtn.textContent = `Copy ${formatName(otherFormat(format))}`;
   };
   describe(getSettings().copyFormat);
   onSettingsChange((next) => describe(next.copyFormat));
 
-  group.append(copyBtn, formatMenu.root);
+  group.append(mainBtn, otherBtn);
   return group;
 }
 
@@ -182,17 +175,17 @@ const COPY_STATUS_TIMEOUT_MS = 3000;
 /** Longer results stay longer: this much reading time for each character. */
 const STATUS_MS_PER_CHARACTER = 70;
 
-/** Name the current copy format in the user's terms. */
+/** Name a copy format in the user's terms. */
 function formatName(format: OutputFormat): string {
   return FORMATS.find((f) => f.id === format)?.label ?? format;
 }
 
 /**
- * Build the caption under the actions bar. It shows the result of a copy, a
- * save or an import, which the visually hidden live region alone would leave
- * off the screen. Idle, it names the current copy format. It is `aria-hidden`: the live
- * region already announces the same result, so a screen reader would
- * otherwise hear it twice. The caption idles again after
+ * Build the result line under the actions bar. It shows the result of a
+ * copy, a save or an import, which the visually hidden live region alone
+ * would leave off the screen, and is empty and out of the layout otherwise.
+ * It is `aria-hidden`: the live region already announces the same result,
+ * so a screen reader would otherwise hear it twice. The line clears after
  * {@link COPY_STATUS_TIMEOUT_MS} or as soon as the equation changes,
  * whichever comes first, so a stale "Copied" never sits under new content.
  */
@@ -205,25 +198,20 @@ export function createCopyStatus(editor: EditorController): HTMLElement {
   const idle = (): void => {
     clearTimeout(timer);
     timer = undefined;
-    element.textContent = `Copy as ${formatName(getSettings().copyFormat)}`;
+    element.textContent = '';
+    element.hidden = true;
     element.classList.remove('actions-bar__status--done', 'actions-bar__status--error');
   };
   const show = (text: string, kind: 'done' | 'error'): void => {
     clearTimeout(timer);
     element.textContent = text;
+    element.hidden = false;
     element.classList.toggle('actions-bar__status--done', kind === 'done');
     element.classList.toggle('actions-bar__status--error', kind === 'error');
     timer = setTimeout(idle, Math.max(COPY_STATUS_TIMEOUT_MS, text.length * STATUS_MS_PER_CHARACTER));
   };
 
   idle();
-  // A format change while a result is showing is a fresh state: idle on it.
-  let shownFormat = getSettings().copyFormat;
-  onSettingsChange((next) => {
-    if (next.copyFormat === shownFormat) return;
-    shownFormat = next.copyFormat;
-    idle();
-  });
   editor.onChange(() => {
     if (timer !== undefined) idle();
   });
@@ -248,6 +236,7 @@ export function createCopyStatus(editor: EditorController): HTMLElement {
 async function copyEquation(
   editor: EditorController,
   trigger?: HTMLElement,
+  format: OutputFormat = getSettings().copyFormat,
 ): Promise<void> {
   if (editor.isEmpty()) {
     const empty = 'Nothing to copy. The equation is empty.';
@@ -255,7 +244,6 @@ async function copyEquation(
     return;
   }
 
-  const format = getSettings().copyFormat;
   const meta = FORMATS.find((f) => f.id === format);
 
   try {

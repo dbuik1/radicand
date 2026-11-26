@@ -19,52 +19,41 @@ function fakeEditor(): EditorController {
   };
 }
 
-/** The split Copy button: primary half, format menu half, and the setting round trip. */
-describe('split Copy button', () => {
-  beforeEach(() => {
+/** The two Copy buttons: one per format, the main one following the setting. */
+describe('copy buttons', () => {
+  beforeEach(async () => {
     document.body.innerHTML = '';
-    void updateSettings({ copyFormat: DEFAULT_SETTINGS.copyFormat });
-    vi.stubGlobal('requestAnimationFrame', (fn: FrameRequestCallback) => {
-      fn(0);
-      return 0;
-    });
+    await updateSettings({ copyFormat: DEFAULT_SETTINGS.copyFormat });
   });
 
-  it('names the format half after the current format and offers a radio menu', () => {
+  const labels = (group: HTMLElement): (string | null)[] =>
+    Array.from(group.querySelectorAll('button')).map((button) => button.textContent);
+
+  it('names each button for its format, the main format first', () => {
     const group = createCopyControls(fakeEditor());
     document.body.appendChild(group);
     expect(group.getAttribute('role')).toBe('group');
-    const copy = group.querySelector<HTMLButtonElement>('.copy-split__main');
-    const more = group.querySelector<HTMLButtonElement>('.copy-split__more');
-    expect(copy?.textContent).toBe('Copy');
-    expect(more?.getAttribute('aria-label')).toBe('Copy as MathML – change format');
-    expect(more?.getAttribute('aria-haspopup')).toBe('menu');
-
-    more!.click();
-    const items = Array.from(group.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]'));
-    expect(items.map((i) => i.textContent)).toEqual(['MathML', 'LaTeX']);
-    expect(items[0]!.getAttribute('aria-checked')).toBe('true');
-    expect(items[1]!.getAttribute('aria-checked')).toBe('false');
+    expect(labels(group)).toEqual(['Copy MathML', 'Copy LaTeX']);
+    const main = group.querySelector<HTMLButtonElement>('#copy-button')!;
+    expect(main.classList.contains('btn--primary')).toBe(true);
+    expect(main.getAttribute('aria-keyshortcuts')).toBe('Alt+C');
   });
 
-  it('changes the copy format from the menu and re-names the trigger', () => {
+  it('swaps the two when the main format changes in Settings', async () => {
     const group = createCopyControls(fakeEditor());
     document.body.appendChild(group);
-    const more = group.querySelector<HTMLButtonElement>('.copy-split__more')!;
-    more.click();
-    group.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]')[1]!.click();
+    await updateSettings({ copyFormat: 'latex' });
+    expect(labels(group)).toEqual(['Copy LaTeX', 'Copy MathML']);
     expect(getSettings().copyFormat).toBe('latex');
-    expect(more.getAttribute('aria-label')).toBe('Copy as LaTeX – change format');
-    expect(document.activeElement).toBe(more);
   });
 });
 
 /**
- * The visible copy caption: names the format while idle, confirms a copy on
- * screen (the live region is visually hidden), and idles again after a few
- * seconds or on the next edit – from the button and the shortcut alike.
+ * The result line: empty and out of the layout while idle, confirms a copy
+ * on screen (the live region is visually hidden), and clears after a few
+ * seconds or on the next edit – from either button and the shortcut alike.
  */
-describe('copy caption', () => {
+describe('copy result line', () => {
   let changeListeners: (() => void)[] = [];
 
   function editorWithChange(): EditorController {
@@ -97,26 +86,27 @@ describe('copy caption', () => {
     vi.unstubAllGlobals();
   });
 
-  it('is on screen (not visually hidden) and names the current format while idle', async () => {
+  it('takes no room until there is a result to show', () => {
     const status = createCopyStatus(fakeEditor());
     document.body.appendChild(status);
-    expect(status.classList.contains('visually-hidden')).toBe(false);
     expect(status.getAttribute('aria-hidden')).toBe('true');
-    expect(status.textContent).toBe('Copy as MathML');
-    await updateSettings({ copyFormat: 'latex' });
-    expect(status.textContent).toBe('Copy as LaTeX');
+    expect(status.hidden).toBe(true);
+    expect(status.textContent).toBe('');
   });
 
-  it('confirms a copy from the button, then idles again after three seconds', async () => {
+  it('confirms a copy from the button, then clears', async () => {
     const editor = fakeEditor();
     const status = createCopyStatus(editor);
     const group = createCopyControls(editor);
     document.body.append(group, status);
-    group.querySelector<HTMLButtonElement>('.copy-split__main')!.click();
-    await vi.waitFor(() => expect(status.textContent).toBe('Copied as MathML'));
+    group.querySelector<HTMLButtonElement>('#copy-button')!.click();
+    await vi.waitFor(() =>
+      expect(status.textContent).toBe('Copied as MathML'),
+    );
+    expect(status.hidden).toBe(false);
     expect(status.classList.contains('actions-bar__status--done')).toBe(true);
-    vi.advanceTimersByTime(3000);
-    expect(status.textContent).toBe('Copy as MathML');
+    vi.advanceTimersByTime(60_000);
+    expect(status.hidden).toBe(true);
     expect(status.classList.contains('actions-bar__status--done')).toBe(false);
   });
 
@@ -126,9 +116,11 @@ describe('copy caption', () => {
     document.body.appendChild(status);
     const stop = installCopyShortcut(editor);
     document.dispatchEvent(new KeyboardEvent('keydown', { altKey: true, code: 'KeyC' }));
-    await vi.waitFor(() => expect(status.textContent).toBe('Copied as MathML'));
+    await vi.waitFor(() =>
+      expect(status.textContent).toBe('Copied as MathML'),
+    );
     changeListeners.forEach((listener) => listener());
-    expect(status.textContent).toBe('Copy as MathML');
+    expect(status.hidden).toBe(true);
     stop();
   });
 
@@ -138,7 +130,7 @@ describe('copy caption', () => {
     const status = createCopyStatus(editor);
     const group = createCopyControls(editor);
     document.body.append(group, status);
-    group.querySelector<HTMLButtonElement>('.copy-split__main')!.click();
+    group.querySelector<HTMLButtonElement>('#copy-button')!.click();
     await vi.waitFor(() => expect(status.textContent).toBe('Nothing to copy. The equation is empty.'));
     expect(status.classList.contains('actions-bar__status--error')).toBe(true);
   });
@@ -146,7 +138,7 @@ describe('copy caption', () => {
     const editor = fakeEditor();
     document.body.append(createCopyControls(editor), createCopyStatus(editor));
     const writeText = navigator.clipboard.writeText as ReturnType<typeof vi.fn>;
-    const main = document.querySelector<HTMLButtonElement>('.copy-split__main')!;
+    const main = document.querySelector<HTMLButtonElement>('#copy-button')!;
 
     main.click();
     await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
@@ -162,5 +154,19 @@ describe('copy caption', () => {
     await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(3));
     expect(writeText).toHaveBeenLastCalledWith(editor.getValue('latex'));
     stop();
+  });
+
+  it('copies the other format from the second button, whatever the main one is', async () => {
+    const editor = fakeEditor();
+    const status = createCopyStatus(editor);
+    document.body.append(createCopyControls(editor), status);
+    const writeText = navigator.clipboard.writeText as ReturnType<typeof vi.fn>;
+    document.querySelector<HTMLButtonElement>('#copy-other-button')!.click();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    expect(writeText).toHaveBeenLastCalledWith(editor.getValue('latex'));
+    await vi.waitFor(() =>
+      expect(status.textContent).toBe('Copied as LaTeX'),
+    );
+    expect(getSettings().copyFormat).toBe('mathml');
   });
 });

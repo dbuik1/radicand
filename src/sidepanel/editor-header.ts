@@ -1,30 +1,22 @@
 /**
- * Zone A's header row: the "Equation" heading on the left, the Style ▾ and
- * More ▾ menus on the right.
+ * The header row above the field: the "Equation" heading on the left and the
+ * Settings button on the right, plus the keyboard route to Settings.
  *
  * The heading is the equation field's accessible name, so switching it off
- * hides it from the screen only (see interface-parts.ts). With the heading
- * and both menus switched off there is nothing left in the row, and it gives
- * up its padding rather than leaving a band of empty space above the field.
+ * hides it from the screen only (see interface-parts.ts). The Settings button
+ * is not a piece the user can switch off: it is the way back to every piece
+ * that is.
  */
-import type { EditorController } from './editor';
-import { createStyleMenu } from './style-menu';
-import { createMoreMenu } from './more-menu';
-import type { MoreMenuHooks } from './more-menu';
-import type { Workspace } from './workspace';
-import { bindPart, bindToSettings, isPartShown } from './part-visibility';
+import { bindPart } from './part-visibility';
+import { SETTINGS_SHORTCUT_KEYS } from './shortcut-labels';
 
 export interface EditorHeader {
   /** The header row; mount this above the field. */
   root: HTMLElement;
   /** The heading, which also names the field (`aria-labelledby`). */
   label: HTMLElement;
-  /** Build the menus, once the field they read exists. */
-  mountMenus: (
-    editor: EditorController,
-    getWorkspace: () => Workspace | undefined,
-    more: MoreMenuHooks,
-  ) => void;
+  /** The Settings button; the host opens the Settings mode from it. */
+  settings: HTMLButtonElement;
 }
 
 export function createEditorHeader(): EditorHeader {
@@ -34,30 +26,39 @@ export function createEditorHeader(): EditorHeader {
   label.textContent = 'Equation';
   bindPart('equationHeading', label);
 
+  const settings = document.createElement('button');
+  settings.type = 'button';
+  settings.id = 'settings-trigger';
+  settings.className = 'btn btn--secondary btn--slim editor-header__settings';
+  settings.textContent = 'Settings';
+  settings.setAttribute('aria-keyshortcuts', SETTINGS_SHORTCUT_KEYS);
+
   const root = document.createElement('div');
   root.className = 'editor-header';
+  root.append(label, settings);
 
-  const menus = document.createElement('div');
-  menus.className = 'editor-header__menus';
-  root.append(label, menus);
+  return { root, label, settings };
+}
 
-  bindToSettings(() => {
-    const empty =
-      !isPartShown('equationHeading') && !isPartShown('styleMenu') && !isPartShown('moreMenu');
-    root.classList.toggle('editor-header--empty', empty);
-  });
-
-  const mountMenus = (
-    editor: EditorController,
-    getWorkspace: () => Workspace | undefined,
-    hooks: MoreMenuHooks,
-  ): void => {
-    const style = createStyleMenu(editor).root;
-    bindPart('styleMenu', style);
-    const more = createMoreMenu(getWorkspace, hooks).root;
-    bindPart('moreMenu', more);
-    menus.append(style, more);
+/**
+ * Install the panel-wide "open Settings" shortcut (Alt+,). Matched on the
+ * physical key (`code`), not the produced character, for the reason Alt+C is
+ * (see shortcut-labels.ts). Returns an unsubscribe function.
+ */
+export function installSettingsShortcut(open: () => void): () => void {
+  const onKeydown = (event: KeyboardEvent): void => {
+    if (
+      event.altKey &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.shiftKey &&
+      event.code === 'Comma'
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      open();
+    }
   };
-
-  return { root, label, mountMenus };
+  document.addEventListener('keydown', onKeydown, { capture: true });
+  return () => document.removeEventListener('keydown', onKeydown, { capture: true });
 }

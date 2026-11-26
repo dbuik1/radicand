@@ -32,12 +32,9 @@ export type SpeechVerbosity = 'terse' | 'medium' | 'verbose';
  */
 export type InterfacePart =
   | 'equationHeading'
-  | 'styleMenu'
-  | 'moreMenu'
   | 'symbols'
   | 'symbolSearch'
   | 'symbolCategories'
-  | 'symbolSources'
   | 'source'
   | 'copy'
   | 'speak'
@@ -94,7 +91,7 @@ export interface Settings {
    * for it, open the editor in.
    */
   defaultSurface: Surface;
-  /** Open state of the Equation source disclosure. Closed by default. */
+  /** Open state of the source disclosure. Closed by default. */
   sourceOpen: boolean;
   /**
    * The symbol category last selected in the palette (by its visible name,

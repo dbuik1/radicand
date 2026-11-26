@@ -28,8 +28,8 @@ const FORBIDDEN: Array<{ pattern: RegExp; reason: string }> = [
     reason: 'point-in-time reference – state what holds now',
   },
   {
-    pattern: /\bstyle toolbar\b|\bLibrary tab\b|\bCompact view\b/i,
-    reason: 'retired control name – Style menu, My library mode, Ctrl+Shift+Y',
+    pattern: /\bstyle toolbar\b|\bStyle (▾ )?menu\b|\bMore (▾ )?menu\b|\bMy library\b|\bCompact view\b/i,
+    reason: 'retired control name – the Styles category, the Settings button, the Library tab',
   },
 ];
 

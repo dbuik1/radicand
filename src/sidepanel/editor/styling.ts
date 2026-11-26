@@ -14,7 +14,7 @@
  * {operation:'toggle'})` does the branching, and `queryStyle(style)` returns
  * `'all' | 'some' | 'none'` – a ready-made tri-state for `aria-pressed`.
  * This module owns the command → style table and the announcement copy;
- * the Style menu (style-menu.ts) and the typed-command path (index.ts) both
+ * the text style keys (style-keys.ts) and the typed-command path (index.ts) both
  * call {@link applyStyleCommand} so the two behave identically.
  *
  * Arming a sticky style changes nothing visible at a collapsed caret, so

@@ -30,34 +30,27 @@ const findings = []; // { id, severity: 'violation'|'warning', detail }
 const themes = ['light', 'dark', 'high-contrast'];
 
 /**
- * Open a workspace mode the way a user does: through the Insert… menu on the
- * search row (Drawing, My library) or the More ▾ menu in the equation
- * header (Settings, Keyboard shortcuts). At the panel's width the menus are
- * the visible path; the plain From buttons only appear on a wide surface.
+ * Open a tab or a view the way a user does: a tab from the tab bar,
+ * Settings from its button in the equation header, and the keyboard
+ * shortcut list from the button at the end of the Shortcuts tab.
  */
-async function openMode(page, menu, label) {
-  await page.evaluate(
-    ({ menu, label }) => {
-      document
-        .getElementById(`${menu}-trigger`)
-        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      // Match the item's label, not its whole text: an item that prints its
-      // keyboard shortcut carries that too.
-      const item = [...document.querySelectorAll(`#${menu}-menu [role="menuitem"]`)].find(
-        (el) => (el.querySelector('.menu__label') ?? el).textContent.trim() === label,
-      );
-      item?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    },
-    { menu, label },
-  );
+async function openMode(page, mode) {
+  await page.evaluate((mode) => {
+    const click = (selector) => document.querySelector(selector)?.click();
+    if (mode === 'settings') click('#settings-trigger');
+    else if (mode === 'shortcuts') {
+      click('#tab-customShortcuts');
+      click('.shortcut-list__open');
+    } else click(`#tab-${mode}`);
+  }, mode);
   await page.waitForTimeout(50);
   // A mode that did not open leaves the previous one on screen, and every
   // scan after that point would audit the wrong DOM – so fail here.
   const shown = await page.evaluate(
-    (l) => document.querySelector('.mode:not([hidden]) .mode__title')?.textContent?.trim() === l,
-    label,
+    (mode) => document.querySelector('.mode:not([hidden])')?.dataset.mode === mode,
+    mode,
   );
-  if (!shown) throw new Error(`mode "${label}" did not open via #${menu}-menu`);
+  if (!shown) throw new Error(`"${mode}" did not open`);
 }
 
 /** Click the visible button with exactly this text in the open mode. */
@@ -73,7 +66,7 @@ async function clickButton(page, text) {
   await page.waitForTimeout(50);
 }
 
-/** In an open Custom shortcuts mode with no shortcuts, add the common set. */
+/** In the Shortcuts tab with no shortcuts, add the common set. */
 async function addCommonShortcuts(page) {
   const label = await page.evaluate(
     () =>
@@ -81,7 +74,7 @@ async function addCommonShortcuts(page) {
         .map((el) => el.textContent.trim())
         .find((t) => /^Add \d+ common shortcuts$/.test(t)) ?? '',
   );
-  if (label === '') throw new Error('Custom shortcuts did not open on its empty state');
+  if (label === '') throw new Error('the Shortcuts tab did not open on its empty state');
   await clickButton(page, label);
   await page.waitForSelector('.mode--customShortcuts .library-row__insert', { timeout: 5000 });
 }
@@ -174,30 +167,25 @@ try {
     scans.push(await scan('finder'));
     await closeFinder(page);
 
-    // Then Drawing: draw a ∀ so its candidate list renders, and unhide the
-    // no-match text so both of its result states are in the scanned DOM.
-    await openMode(page, 'from', 'Drawing');
+    // Then Drawing: draw a ∀ so its candidate list renders.
+    await openMode(page, 'drawing');
     await drawForAll(page);
     await page.waitForSelector('.draw-find__option', { timeout: 10000 });
-    await page.evaluate(() => {
-      const block = document.querySelector('.draw-find__nomatch');
-      if (block) block.hidden = false;
-    });
     scans.push(await scan('drawing'));
 
-    // Then the modes reached from More ▾, and My library.
-    for (const [menu, label, scanLabel] of [
-      ['from', 'My library', 'my-library'],
-      ['more', 'Settings', 'settings'],
-      ['more', 'Keyboard shortcuts', 'keyboard-shortcuts'],
+    // Then the Library tab, Settings and the keyboard shortcut list.
+    for (const [mode, scanLabel] of [
+      ['library', 'my-library'],
+      ['settings', 'settings'],
+      ['shortcuts', 'keyboard-shortcuts'],
     ]) {
-      await openMode(page, menu, label);
+      await openMode(page, mode);
       scans.push(await scan(scanLabel));
     }
 
-    // Custom shortcuts in each of its states: empty (with the common set
+    // The Shortcuts tab in each of its states: empty (with the common set
     // shown), the list once the set is added, and the add form.
-    await openMode(page, 'more', 'Custom shortcuts');
+    await openMode(page, 'customShortcuts');
     scans.push(await scan('custom-shortcuts-empty'));
     await addCommonShortcuts(page);
     scans.push(await scan('custom-shortcuts-list'));
@@ -325,20 +313,19 @@ try {
 
   console.log(`  Tab order: ${tabOrder.length} stops`);
 
-  // The menus sit above the field and the actions toolbar below it, so the
-  // walk from the skip link is Style ▾, More ▾, the field, the toolbar (its
-  // one stop is Copy), then the workspace's search box, its Insert…
-  // control and the first category tab, one stop each. The user guide and
-  // the design record describe this sequence, so it is asserted as a sequence.
-  // The recorded walk is one full cycle from wherever focus starts, so it
-  // is read as a ring anchored on Style ▾.
+  // Settings sits above the field and the actions toolbar below it, so the
+  // walk is Settings, the field, the toolbar (its one stop is the main copy
+  // button), "Skip symbols", the tab bar, then the search box and the first
+  // category, one stop each. The user guide describes this sequence, so it
+  // is asserted as a sequence. The recorded walk is one full cycle from
+  // wherever focus starts, so it is read as a ring anchored on Settings.
   const EXPECTED_WALK = [
-    'style-trigger',
-    'more-trigger',
+    'settings-trigger',
     'equation-editor',
     'copy-button',
+    'skip-symbols',
+    'tab-symbols',
     'symbol-search-input',
-    'from-trigger',
     'palette-tab-0',
   ];
   const walkIds = tabOrder.map((el) => el.id || el.tag);
@@ -349,10 +336,21 @@ try {
     findings.push({
       id: 'keyboard:walk-order',
       severity: 'violation',
-      detail: `Tab walk from Style ▾ is ${walkPrefix.join(' → ') || '(Style ▾ not reached)'}; expected ${EXPECTED_WALK.join(' → ')}`,
+      detail: `Tab walk from Settings is ${walkPrefix.join(' → ') || '(Settings not reached)'}; expected ${EXPECTED_WALK.join(' → ')}`,
     });
   } else {
-    console.log(`  Tab walk from Style ▾: ${EXPECTED_WALK.join(' → ')}`);
+    console.log(`  Tab walk from Settings: ${EXPECTED_WALK.join(' → ')}`);
+  }
+  // The walk ends on "Back to equation", the last stop in the panel (the
+  // browser's own chrome shows up in the walk as body).
+  const panelStops = walkIds.filter((id) => id !== 'body');
+  const lastStop = panelStops[(panelStops.indexOf(EXPECTED_WALK[0]) - 1 + panelStops.length) % panelStops.length];
+  if (lastStop !== 'back-to-equation') {
+    findings.push({
+      id: 'keyboard:back-link-last',
+      severity: 'violation',
+      detail: `The stop before Settings is ${lastStop}; expected back-to-equation`,
+    });
   }
 
   // Assert required elements
@@ -363,15 +361,13 @@ try {
   const tabRole = tabOrder.some((el) => el.className.includes('palette__tab'));
   const textarea = tabOrder.some((el) => el.tag === 'textarea');
   const copyBtn = tabOrder.some((el) => el.text.toLowerCase().includes('copy'));
-  // Speak shares the actions toolbar's one Tab stop: the arrow keys reach it.
+  // Read aloud shares the actions toolbar's one Tab stop: the arrow keys reach it.
   await page.focus('#copy-button');
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');
-  const speakBtn = await page.evaluate(() => document.activeElement?.textContent.trim() === 'Speak');
-  const styleMenu = tabOrder.some((el) => el.text.toLowerCase().includes('style'));
-  const moreMenu = tabOrder.some((el) => el.text.toLowerCase().includes('more'));
-  // Settings moved out of the workspace's Tab sequence and behind More ▾,
-  // so what the walk must find here is the search box that opens Symbols.
+  const speakBtn = await page.evaluate(() => document.activeElement?.textContent.trim() === 'Read aloud');
+  const settingsButton = tabOrder.some((el) => el.id === 'settings-trigger');
+  // What the walk must find in the workspace is the search box.
   const searchBox = tabOrder.some((el) => el.id === 'symbol-search-input');
 
   if (!skipLink) {
@@ -382,28 +378,30 @@ try {
     });
   }
 
-  // The skip link lands on the workspace, which shows whichever mode is
-  // open (Settings, My library, …), not always the symbols – so its text
-  // must name the region it actually reaches.
-  const skipTarget = await page.evaluate(() => {
-    const link = document.querySelector('a.skip-link');
-    const target = link ? document.querySelector(link.getAttribute('href')) : null;
-    return {
-      text: link?.textContent.trim() ?? '',
-      targetLabel: target?.getAttribute('aria-label') ?? '',
-    };
-  });
-  if (
-    !skipTarget.targetLabel ||
-    !skipTarget.text.toLowerCase().includes(skipTarget.targetLabel.toLowerCase())
-  ) {
+  // "Skip symbols" passes the tabs and lands on the source disclosure, and
+  // "Back to equation" returns to the field.
+  const focusName = () =>
+    page.evaluate(() => {
+      const el = document.activeElement;
+      if (el?.matches('details.source > summary')) return 'source';
+      return el?.id || el?.tagName.toLowerCase() || '';
+    });
+  await page.evaluate(() => document.getElementById('skip-symbols')?.click());
+  const afterSkip = await focusName();
+  await page.evaluate(() => document.getElementById('back-to-equation')?.click());
+  // MathLive takes focus a moment after it is asked to.
+  await page
+    .waitForFunction(() => document.activeElement?.id === 'equation-editor', undefined, { timeout: 2000 })
+    .catch(() => {});
+  const skipTarget = { afterSkip, afterBack: await focusName() };
+  if (skipTarget.afterSkip !== 'source' || skipTarget.afterBack !== 'equation-editor') {
     findings.push({
-      id: 'keyboard:skip-link-name',
+      id: 'keyboard:skip-link-target',
       severity: 'violation',
-      detail: `Skip link "${skipTarget.text}" does not name its target region "${skipTarget.targetLabel}"`,
+      detail: `"Skip symbols" lands on ${skipTarget.afterSkip} and "Back to equation" on ${skipTarget.afterBack}`,
     });
   } else {
-    console.log(`  Skip link "${skipTarget.text}" names its target`);
+    console.log('  "Skip symbols" lands on the source and "Back to equation" on the field');
   }
   if (!mathField) {
     findings.push({
@@ -437,21 +435,14 @@ try {
     findings.push({
       id: 'keyboard:missing-speak-button',
       severity: 'violation',
-      detail: 'Speak button not reached with the arrow keys from Copy',
+      detail: 'Read aloud not reached with the arrow keys from the main copy button',
     });
   }
-  if (!styleMenu) {
+  if (!settingsButton) {
     findings.push({
-      id: 'keyboard:missing-style-menu',
+      id: 'keyboard:missing-settings-button',
       severity: 'violation',
-      detail: 'Style menu button not found in tab order',
-    });
-  }
-  if (!moreMenu) {
-    findings.push({
-      id: 'keyboard:missing-more-menu',
-      severity: 'violation',
-      detail: 'More menu button not found in tab order',
+      detail: 'Settings button not found in tab order',
     });
   }
   if (!searchBox) {
@@ -482,7 +473,7 @@ try {
   // offer the text search before any ink exists – a reachable, enabled
   // "Search instead" control, and a surface whose description names the
   // shortcut.
-  await openMode(page, 'from', 'Drawing');
+  await openMode(page, 'drawing');
   await page.waitForSelector('.draw-find__surface', { timeout: 5000 });
   await page.evaluate(() => document.querySelector('.draw-find__surface')?.focus());
   const drawingRoute = { reached: false, stops: [] };
@@ -504,10 +495,13 @@ try {
   }
   const drawingDescription = await page.evaluate(() => {
     const surface = document.querySelector('.draw-find__surface');
-    const description = document.getElementById(surface?.getAttribute('aria-describedby') ?? '');
+    const description = (surface?.getAttribute('aria-describedby') ?? '')
+      .split(/\s+/)
+      .map((id) => document.getElementById(id)?.textContent ?? '')
+      .join(' ');
     return {
       label: surface?.getAttribute('aria-label') ?? '',
-      description: description?.textContent ?? '',
+      description,
     };
   });
   if (!drawingRoute.reached) {
@@ -558,7 +552,7 @@ try {
       const styles = {};
       document.querySelectorAll(selectors.join(',')).forEach((el, index) => {
         el.dataset.focusProbe = `rest-${index}`;
-        const style = getComputedStyle(el);
+        const style = getComputedStyle(el.closest('.radical') ?? el);
         styles[el.dataset.focusProbe] = {
           outline: `${style.outlineStyle} ${style.outlineWidth} ${style.outlineColor}`,
           boxShadow: style.boxShadow,
@@ -583,7 +577,8 @@ try {
         const key = el.dataset.focusProbe;
         const match = selectors.find((sel) => el.matches?.(sel));
         if (!match) return { key, match: null };
-        const style = getComputedStyle(el);
+        // The equation field's ring is drawn on the frame around it.
+        const style = getComputedStyle(el.closest('.radical') ?? el);
         return {
           key,
           match,
@@ -656,6 +651,9 @@ try {
       const small = [];
       for (const el of interactive) {
         if (typeof el.checkVisibility === 'function' && !el.checkVisibility()) continue;
+        // A skip link takes no room until it has focus, and cannot be
+        // pressed until then; it is measured focused, below.
+        if (el.classList.contains('skip-link') && document.activeElement !== el) continue;
         const rect = el.getBoundingClientRect();
         if (rect.width === 0 && rect.height === 0) continue; // not rendered
         if (rect.width < 24 || rect.height < 24) {
@@ -701,27 +699,24 @@ try {
       record(await measureVisibleTargets());
     }
   }
-  // Open Drawing, draw a ∀ so the candidate rows (and the now-enabled
+  for (const id of ['skip-symbols', 'back-to-equation']) {
+    await targetPage.focus(`#${id}`);
+    record(await measureVisibleTargets());
+  }
+  await targetPage.evaluate(() => document.activeElement?.blur());
+  // Open the Draw tab, draw a ∀ so the candidate rows (and the now-enabled
   // Undo/Clear) are measured; Search instead is measured with them.
-  await openMode(targetPage, 'from', 'Drawing');
+  await openMode(targetPage, 'drawing');
   await drawForAll(targetPage);
   await targetPage.waitForSelector('.draw-find__option', { timeout: 10000 });
-  await targetPage.evaluate(() => {
-    const block = document.querySelector('.draw-find__nomatch');
-    if (block) block.hidden = false;
-  });
   await targetPage.waitForTimeout(50);
   record(await measureVisibleTargets());
   // Then the remaining modes, whose controls are only rendered while open.
-  for (const [menu, label] of [
-    ['from', 'My library'],
-    ['more', 'Settings'],
-    ['more', 'Keyboard shortcuts'],
-  ]) {
-    await openMode(targetPage, menu, label);
+  for (const mode of ['library', 'settings', 'shortcuts']) {
+    await openMode(targetPage, mode);
     record(await measureVisibleTargets());
   }
-  await openMode(targetPage, 'more', 'Custom shortcuts');
+  await openMode(targetPage, 'customShortcuts');
   record(await measureVisibleTargets());
   await addCommonShortcuts(targetPage);
   record(await measureVisibleTargets());
@@ -782,9 +777,8 @@ try {
   await closeFinder(reflowPage);
 
   // The panel's own font-size setting scales the root up to 24px, and every
-  // mode must still fit 320px at each step: the equation header (heading +
-  // Style ▾ + More ▾) and the Keyboard shortcuts key chips are the widest
-  // rows. The scale is applied the way the setting applies it – the root
+  // mode must still fit 320px at each step: the actions row, the tab bar
+  // and the Keyboard shortcuts key chips are the widest rows. The scale is applied the way the setting applies it – the root
   // custom property – so the check does not depend on Settings being open.
   const fontScales = [
     ['Small', 16 / 18],
@@ -794,18 +788,18 @@ try {
     ['Largest', 24 / 18],
   ];
   const reflowModes = [
-    ['symbols', null, null],
-    ['Settings', 'more', 'Settings'],
-    ['Keyboard shortcuts', 'more', 'Keyboard shortcuts'],
-    ['My library', 'from', 'My library'],
+    ['symbols', null],
+    ['Settings', 'settings'],
+    ['Keyboard shortcuts', 'shortcuts'],
+    ['Library', 'library'],
     // Empty first (the common set's grid), then the list, then the form.
-    ['Custom shortcuts', 'more', 'Custom shortcuts'],
-    ['Custom shortcuts list', 'more', 'Custom shortcuts', addCommonShortcuts],
-    ['Custom shortcuts form', 'more', 'Custom shortcuts', (page) => clickButton(page, 'Add shortcut')],
+    ['Shortcuts', 'customShortcuts'],
+    ['Shortcuts list', 'customShortcuts', addCommonShortcuts],
+    ['Shortcuts form', 'customShortcuts', (page) => clickButton(page, 'Add shortcut')],
   ];
   const scaleOverflows = [];
-  for (const [modeName, menu, label, prepare] of reflowModes) {
-    if (menu) await openMode(reflowPage, menu, label);
+  for (const [modeName, mode, prepare] of reflowModes) {
+    if (mode) await openMode(reflowPage, mode);
     if (prepare) await prepare(reflowPage);
     for (const [scaleName, scale] of fontScales) {
       await reflowPage.evaluate((value) => {
@@ -835,7 +829,10 @@ try {
         );
       }
     }
-    if (menu) await reflowPage.keyboard.press('Escape');
+    if (mode) {
+      await reflowPage.keyboard.press('Escape');
+      await openMode(reflowPage, 'symbols');
+    }
   }
   await reflowPage.evaluate(() => {
     document.documentElement.style.removeProperty('--font-size-scale');
@@ -925,7 +922,7 @@ try {
         .map((el) => el.textContent.trim()),
     );
   const copyPaths = [
-    ['Copy button', () => liveRegionPage.click('.copy-split__main')],
+    ['Copy button', () => liveRegionPage.click('#copy-button')],
     ['Alt+C', () => liveRegionPage.keyboard.press('Alt+C')],
   ];
   for (const [pathName, activate] of copyPaths) {
@@ -950,10 +947,10 @@ try {
   }
   await liveRegionPage.evaluate(() => document.querySelector('math-field')?.setValue(''));
 
-  // My library, keyboard only: the list is rebuilt around the focused row on
+  // The Library tab, keyboard only: the list is rebuilt around the focused row on
   // every change, so focus must survive Insert (a second Enter inserts
   // again), Save changes and Undo, and typing in the filter must be audible.
-  await openMode(liveRegionPage, 'from', 'My library');
+  await openMode(liveRegionPage, 'library');
   await liveRegionPage.evaluate(() => {
     [...document.querySelectorAll('.library-panel__tools button')]
       .find((button) => button.textContent.startsWith('Add starter'))
@@ -973,7 +970,7 @@ try {
       findings.push({
         id: `focus:library-${step}`,
         severity: 'violation',
-        detail: `After ${step} in My library, focus is on ${active}; expected ${expected}`,
+        detail: `After ${step} in the Library tab, focus is on ${active}; expected ${expected}`,
       });
     }
   };
@@ -997,7 +994,7 @@ try {
   await liveRegionPage.waitForTimeout(150);
   await expectLibraryFocus('undo', 'library-row__insert');
   if (libraryFocusOk.length > 0) {
-    console.log(`  My library keeps keyboard focus through: ${libraryFocusOk.join(', ')}`);
+    console.log(`  The Library tab keeps keyboard focus through: ${libraryFocusOk.join(', ')}`);
   }
 
   // Form and rows sit on the page: the Save/Edit form has no box of its own
@@ -1039,10 +1036,10 @@ try {
     findings.push({
       id: 'fidelity:library-chrome',
       severity: 'violation',
-      detail: `My library and its form are boxed: ${chromeProblems.join('; ')}`,
+      detail: `The library list and its form are boxed: ${chromeProblems.join('; ')}`,
     });
   } else {
-    console.log('  My library form and rows sit on the page: no borders or fills beyond the preview');
+    console.log('  The library form and rows sit on the page: no borders or fills beyond the preview');
   }
   await liveRegionPage.keyboard.press('Escape'); // close the Edit form
   await liveRegionPage.waitForTimeout(100);
@@ -1069,13 +1066,13 @@ try {
     });
   }
 
-  // Custom shortcuts, keyboard only: from the empty state, add a shortcut
+  // The Shortcuts tab, keyboard only: from the empty state, add a shortcut
   // through the form, insert it, delete it and undo, then Escape back to
   // the field – focus must land somewhere sensible after every step.
   await liveRegionPage.keyboard.press('Escape');
   // Closing a mode focuses the field a frame later; let that land first.
   await liveRegionPage.waitForTimeout(150);
-  await openMode(liveRegionPage, 'more', 'Custom shortcuts');
+  await openMode(liveRegionPage, 'customShortcuts');
   const shortcutFocusOk = [];
   const expectShortcutFocus = async (step, expected) => {
     const active = await liveRegionPage.evaluate(() => {
@@ -1091,10 +1088,13 @@ try {
       findings.push({
         id: `focus:shortcuts-${step}`,
         severity: 'violation',
-        detail: `After ${step} in Custom shortcuts, focus is on ${active}; expected ${expected}`,
+        detail: `After ${step} in the Shortcuts tab, focus is on ${active}; expected ${expected}`,
       });
     }
   };
+  // A tab keeps focus when it is selected; Tab moves on into its panel.
+  await liveRegionPage.focus('#tab-customShortcuts');
+  await liveRegionPage.keyboard.press('Tab');
   await expectShortcutFocus('open', 'Add shortcut');
   await liveRegionPage.keyboard.press('Enter');
   await liveRegionPage.waitForTimeout(100);
@@ -1127,7 +1127,7 @@ try {
   await liveRegionPage.waitForTimeout(100);
   await expectShortcutFocus('escape', 'field');
   if (shortcutFocusOk.length > 0) {
-    console.log(`  Custom shortcuts keeps keyboard focus through: ${shortcutFocusOk.join(', ')}`);
+    console.log(`  The Shortcuts tab keeps keyboard focus through: ${shortcutFocusOk.join(', ')}`);
   }
 
   // =========================================================================

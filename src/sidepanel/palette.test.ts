@@ -8,7 +8,14 @@ function stubEditor(): EditorController & { inserted: string[] } {
   const inserted: string[] = [];
   return {
     inserted,
-    element: {} as never,
+    // Enough of a mathfield for the text style keys to read a state from.
+    element: Object.assign(document.createElement('div'), {
+      applyStyle: () => {},
+      queryStyle: () => 'none',
+      getValue: () => '',
+      selection: { ranges: [[0, 0]] },
+      position: 0,
+    }) as unknown as EditorController['element'],
     getValue: () => '',
     getLatex: () => '',
     getSpokenText: () => '',

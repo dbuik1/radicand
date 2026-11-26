@@ -6,7 +6,6 @@ import { resolve } from 'node:path';
 import axe from 'axe-core';
 import { createCopyControls } from './output';
 import { createSourceView } from './source';
-import { createStyleMenu } from './style-menu';
 import { createWorkspace } from './workspace';
 import { INTERFACE_PARTS } from './interface-parts';
 import { setPart, showEveryPart } from './part-visibility';
@@ -16,7 +15,7 @@ import type { EditorController } from './editor';
  * Automated accessibility check.
  *
  * We assemble the real side-panel markup (from index.html) and mount the real
- * Style menu, workspace (every mode built and shown in turn), source and
+ * workspace (every tab and view built and shown in turn), source and
  * copy components, then run axe over the result.
  *
  * The live MathLive `<math-field>` is a third-party custom element that cannot
@@ -30,7 +29,7 @@ import type { EditorController } from './editor';
  * tests/a11y/AUDIT-BASELINE.md.
  */
 function stubEditor(): EditorController {
-  // The Style menu reads the field's selection and style state on creation.
+  // The text style keys read the field's selection and style state.
   const element = Object.assign(document.createElement('div'), {
     getValue: () => '',
     queryStyle: () => 'none',
@@ -83,7 +82,6 @@ describe('axe accessibility audit of the side panel', () => {
     const editor = stubEditor();
     workspace = createWorkspace(editor, { onSearch: () => {} });
     mount.append(
-      createStyleMenu(editor).root,
       workspace.root,
       createSourceView(editor),
       createCopyControls(editor),
@@ -110,7 +108,7 @@ describe('axe accessibility audit of the side panel', () => {
     await expectNoViolations();
   });
 
-  for (const mode of ['drawing', 'library', 'settings', 'shortcuts'] as const) {
+  for (const mode of ['drawing', 'library', 'customShortcuts', 'save', 'settings', 'shortcuts'] as const) {
     it(`reports zero violations with ${mode} showing`, async () => {
       workspace.open(mode);
       await expectNoViolations();

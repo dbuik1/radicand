@@ -1,7 +1,7 @@
 /**
  * How keyboard shortcuts are written wherever the panel names them: the Copy
  * button's tooltip, the Keyboard shortcuts reference, the `\` finder's empty
- * state, the Style menu, the collapsed Symbols row.
+ * state, the collapsed Symbols row.
  *
  * Each binding is one physical key everywhere (see the installers beside each
  * feature); only the LABEL is platform-aware, since the same keys are printed
@@ -32,6 +32,9 @@ export function isMacPlatform(): boolean {
  */
 export const COPY_SHORTCUT_LABEL = isMacPlatform() ? 'Option+C' : 'Alt+C';
 
+/** The same chord as `aria-keyshortcuts` spells it. */
+export const COPY_SHORTCUT_KEYS = 'Alt+C';
+
 /** Save the equation (or the selection) to the library: Alt+C's neighbour. */
 export const SAVE_SHORTCUT_LABEL = isMacPlatform() ? 'Option+S' : 'Alt+S';
 
@@ -55,10 +58,9 @@ export const PANEL_SHORTCUT_LABEL = `${PRIMARY_MODIFIER_LABEL}+Shift+U`;
 export const SYMBOLS_SHORTCUT_LABEL = `${PRIMARY_MODIFIER_LABEL}+Shift+Y`;
 
 /**
- * Open Settings from anywhere in the panel. Its own route – More ▾ ›
- * Settings – is one of the pieces of interface a user can switch off, so
- * Settings needs a route that cannot be switched off with it: the shortcut is
- * what makes every other toggle safely reversible. Alt+, is free for the same
+ * Open Settings from anywhere in the panel. The shortcut works with every
+ * piece of interface switched off, which is what makes each toggle safely
+ * reversible. Alt+, is free for the same
  * reasons Alt+C is (see above), and matches on the physical key.
  */
 export const SETTINGS_SHORTCUT_LABEL = isMacPlatform() ? 'Option+,' : 'Alt+,';
