@@ -91,8 +91,13 @@ try {
   // MathLive focuses its keyboard sink ~60 ms after a click (and after a
   // programmatic focus()), so a keystroke sent straight after the click can
   // land on whatever was focused before. Wait for the field to own focus.
-  const fieldHasFocus = () =>
-    page.waitForFunction(() => document.activeElement?.tagName === 'MATH-FIELD', undefined, { timeout: 5000 });
+  // That delayed focus also takes the keyboard back from a control focused
+  // inside the window, so the window is waited out once the field has focus.
+  const FIELD_FOCUS_SETTLE = 120;
+  const fieldHasFocus = async () => {
+    await page.waitForFunction(() => document.activeElement?.tagName === 'MATH-FIELD', undefined, { timeout: 5000 });
+    await page.waitForTimeout(FIELD_FOCUS_SETTLE);
+  };
   const focusField = async () => {
     await page.locator('math-field').click();
     await fieldHasFocus();
@@ -150,9 +155,15 @@ try {
     await page.locator('math-field').waitFor({ timeout: 15000 });
     await page.waitForFunction(() => document.activeElement?.tagName === 'MATH-FIELD', undefined, {
       timeout: 15000,
-    });
+    });    await page.waitForTimeout(FIELD_FOCUS_SETTLE);
   };
-  const closeView = () => page.locator('.mode:not([hidden]) .mode__close').click();
+  // Closing a view can put focus in the field, which opens the same window.
+  const closeView = async () => {
+    await page.locator('.mode:not([hidden]) .mode__close').click();
+    if (await page.evaluate(() => document.activeElement?.tagName === 'MATH-FIELD')) {
+      await page.waitForTimeout(FIELD_FOCUS_SETTLE);
+    }
+  };
 
   // Write one interface-part flag straight into storage, the way the
   // Ctrl+Shift+Y command's service worker does (the command itself cannot be
