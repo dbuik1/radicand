@@ -11,6 +11,7 @@
  * from the extension origin. Exits non-zero on any failure.
  */
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1134,6 +1135,34 @@ try {
       await page.waitForTimeout(250);
     }
     check('speech locale maps load from the extension origin', sawLocalMathmaps());
+  });
+
+  await section('LaTeX cannot fetch a remote address', async () => {
+    // 7b. LaTeX that names a URL must not reach it. A local server stands in
+    //     for the remote host, and a second page keeps the refusal Chrome
+    //     logs out of the main page's error count.
+    const hits = [];
+    const server = createServer((request, response) => {
+      hits.push(request.url);
+      response.end();
+    });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const probe = await context.newPage();
+    try {
+      await probe.goto(`chrome-extension://${extensionId}/${panelPath}`);
+      await probe.locator('math-field').waitFor({ timeout: 15000 });
+      const rendered = await probe.evaluate((port) => {
+        const field = document.querySelector('math-field');
+        field.setValue(`\\htmlStyle{background-image:url(http://127.0.0.1:${port}/beacon.png)}{x}`);
+        return field.getValue().includes('beacon.png');
+      }, server.address().port);
+      await probe.waitForTimeout(1000);
+      check('the field keeps the LaTeX that names a URL', rendered, 'the field dropped the URL, so the next check proves nothing');
+      check('LaTeX with a URL makes no request', hits.length === 0, hits.join(', '));
+    } finally {
+      await probe.close();
+      await new Promise((resolve) => server.close(resolve));
+    }
   });
 
   await section('errors and traffic', async () => {
