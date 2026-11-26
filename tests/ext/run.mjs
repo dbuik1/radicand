@@ -649,7 +649,7 @@ try {
       };
     });
     check('switching every piece off leaves the equation field', bare.field);
-    check('the heading, the source and the actions bar all go', bare.heading && bare.source && bare.actions);
+    check('the heading, the source and the actions bar all go', bare.heading && bare.source && bare.actions, JSON.stringify(bare));
 
     // Wait for the debounced write of the last toggle before reloading.
     await untilStored(
