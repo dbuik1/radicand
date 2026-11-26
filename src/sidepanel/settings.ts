@@ -12,6 +12,7 @@
  * identically.
  */
 import type { OutputFormat, Settings } from '../types';
+import { report } from './a11y';
 import { DEFAULT_SURFACE, normaliseSurface } from '../surface';
 import { DEFAULT_INTERFACE_PARTS, normaliseInterfaceParts } from './interface-parts';
 import {
@@ -259,13 +260,23 @@ export function getSettings(): Settings {
 /** Trailing-debounce handle for the persistence write (see updateSettings). */
 let persistTimer: ReturnType<typeof setTimeout> | undefined;
 
-/** Write the current settings to storage now, logging (never throwing) failure. */
+/** Set while writes are failing, so the failure is reported once. */
+let saveFailed = false;
+
+/** Write the current settings to storage now, reporting (never throwing) failure. */
 function persistNow(): void {
   persistTimer = undefined;
   if (!hasChromeStorage()) return;
   getStorageArea()
     .set({ [STORAGE_KEY]: current })
-    .catch((error: unknown) => console.error('Failed to save settings:', error));
+    .then(() => {
+      saveFailed = false;
+    })
+    .catch((error: unknown) => {
+      console.error('Failed to save settings:', error);
+      if (!saveFailed) report('Settings were not saved. They reset when the panel closes.', 'error');
+      saveFailed = true;
+    });
 }
 
 // Flush any pending write when the panel is closed or navigated away, so a
